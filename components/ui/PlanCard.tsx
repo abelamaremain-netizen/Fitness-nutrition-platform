@@ -2,116 +2,89 @@
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Play, Download, Star } from "lucide-react";
+import { Play, ArrowRight } from "lucide-react";
 import type { Plan } from "@/lib/data";
 
-interface Props {
-  plan: Plan;
-  score?: number;
-  showScore?: boolean;
-}
-
-const levelColors: Record<string, string> = {
-  Normal: "bg-zinc-700 text-zinc-200",
-  Pro: "bg-green-900 text-green-300",
-  VIP: "bg-yellow-900 text-yellow-300",
-};
-
-export default function PlanCard({ plan, score, showScore }: Props) {
+export default function PlanCard({ plan }: { plan: Plan }) {
   return (
-    <motion.div
-      whileHover={{ y: -6, scale: 1.01 }}
-      transition={{ type: "spring", stiffness: 300, damping: 20 }}
-      className="bg-[#111] border border-white/10 rounded-2xl overflow-hidden flex flex-col group"
-    >
-      {/* Thumbnail */}
-      <div className="relative h-52 overflow-hidden">
-        <Image
-          src={plan.image}
-          alt={plan.title}
-          fill
-          className="object-cover transition-transform duration-500 group-hover:scale-105"
-          sizes="(max-width: 768px) 100vw, 33vw"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+    <motion.article whileHover={{ y: -5 }}
+      transition={{ type: "spring", stiffness: 280, damping: 22 }}
+      className="card flex flex-col group overflow-hidden h-full">
+
+      {/* Image */}
+      <div className="relative h-52 overflow-hidden rounded-t-2xl flex-shrink-0">
+        <Image src={plan.image} alt={plan.title} fill
+          className="object-cover transition-transform duration-700 group-hover:scale-105"
+          sizes="(max-width: 768px) 100vw, 33vw" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
         {/* Badges */}
         <div className="absolute top-3 left-3 flex gap-2">
           {plan.bestseller && (
-            <span className="bg-green-500 text-black text-xs font-bold px-2 py-0.5 rounded-full">
+            <span className="bg-white text-black text-[9px] font-bold px-2.5 py-1 rounded-full tracking-wider uppercase">
               Bestseller
             </span>
           )}
           {plan.featured && !plan.bestseller && (
-            <span className="bg-white/20 backdrop-blur text-white text-xs font-bold px-2 py-0.5 rounded-full">
+            <span className="bg-white/15 backdrop-blur border border-white/25 text-white text-[9px] font-semibold px-2.5 py-1 rounded-full tracking-wider uppercase">
               Featured
             </span>
           )}
         </div>
 
-        {/* Goal tag */}
-        <span className="absolute bottom-3 left-3 bg-black/60 backdrop-blur text-green-400 text-xs px-2 py-0.5 rounded-full border border-green-500/30">
+        {/* Goal */}
+        <span className="absolute bottom-3 left-3 text-[9px] font-semibold tracking-widest uppercase text-white/75 bg-black/50 backdrop-blur px-2.5 py-1 rounded-full">
           {plan.goalLabel}
         </span>
-
-        {/* Score badge */}
-        {showScore && score !== undefined && (
-          <span className="absolute bottom-3 right-3 bg-green-500 text-black text-xs font-bold px-2 py-0.5 rounded-full">
-            {score}% match
-          </span>
-        )}
       </div>
 
-      {/* Content */}
-      <div className="p-5 flex flex-col flex-1">
-        <h3 className="text-lg font-bold text-white mb-1">{plan.title}</h3>
-        <p className="text-sm text-zinc-400 mb-4 flex-1 line-clamp-2">
-          {plan.description}
-        </p>
+      {/* Body */}
+      <div className="flex flex-col flex-1 p-5 gap-4">
+        <div>
+          <h3 className="text-white font-bold text-base leading-snug mb-1.5"
+            style={{ fontFamily: "var(--font-serif)" }}>
+            {plan.title}
+          </h3>
+          <p className="text-white/45 text-sm leading-relaxed line-clamp-2">
+            {plan.description}
+          </p>
+        </div>
 
         {/* Tags */}
-        <div className="flex flex-wrap gap-1 mb-4">
+        <div className="flex flex-wrap gap-1.5">
           {plan.tags.map((tag) => (
-            <span
-              key={tag}
-              className="text-xs bg-white/5 text-zinc-400 px-2 py-0.5 rounded-full"
-            >
+            <span key={tag}
+              className="text-[10px] tracking-widest uppercase text-white/30 border border-white/10 px-2.5 py-0.5 rounded-full">
               {tag}
             </span>
           ))}
         </div>
 
-        {/* Levels & Prices */}
-        <div className="flex gap-2 mb-4">
+        {/* Pricing */}
+        <div className="grid grid-cols-3 gap-2">
           {plan.levels.map(({ level, price }) => (
-            <div
-              key={level}
-              className={`flex-1 text-center rounded-lg py-1 text-xs font-semibold ${levelColors[level]}`}
-            >
-              <div>{level}</div>
-              <div className="font-bold text-sm">{price} ETB</div>
+            <div key={level}
+              style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.09)", borderRadius: "0.5rem" }}
+              className="text-center py-2.5 px-1">
+              <p className="text-[9px] font-semibold tracking-widest uppercase text-white/30">{level}</p>
+              <p className="text-white font-bold text-sm mt-0.5">{price}</p>
+              <p className="text-[9px] text-white/22 tracking-wide">ETB</p>
             </div>
           ))}
         </div>
 
         {/* Actions */}
-        <div className="flex gap-2">
-          <a
-            href={plan.videoUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1 bg-white/5 hover:bg-white/10 border border-white/10 text-white text-sm px-3 py-2 rounded-lg transition-colors flex-1 justify-center"
-          >
-            <Play size={14} /> Preview
+        <div className="flex gap-2.5 mt-auto">
+          <a href={plan.videoUrl} target="_blank" rel="noopener noreferrer"
+            className="btn btn-outline flex-1 py-2.5 text-[10px]">
+            <Play size={11} /> Preview
           </a>
-          <Link
-            href={`/plans/${plan.id}`}
-            className="flex items-center gap-1 bg-green-500 hover:bg-green-400 text-black text-sm font-bold px-3 py-2 rounded-lg transition-colors flex-1 justify-center"
-          >
-            View Plan
+          <Link href={`/plans/${plan.id}`}
+            className="btn btn-white flex-1 py-2.5 text-[10px]">
+            View Plan <ArrowRight size={11} />
           </Link>
         </div>
       </div>
-    </motion.div>
+    </motion.article>
   );
 }

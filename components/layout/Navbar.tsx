@@ -3,140 +3,113 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Zap } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { NAV_LINKS } from "@/lib/data";
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
-  const [lang, setLang] = useState<"EN" | "አማ">("EN");
+  const [lang, setLang] = useState<"EN" | "AM">("EN");
   const pathname = usePathname();
 
   useEffect(() => {
-    const handler = () => setScrolled(window.scrollY > 30);
-    window.addEventListener("scroll", handler);
-    return () => window.removeEventListener("scroll", handler);
+    const h = () => setScrolled(window.scrollY > 24);
+    window.addEventListener("scroll", h, { passive: true });
+    return () => window.removeEventListener("scroll", h);
   }, []);
-
-  // Close menu on route change
   useEffect(() => setOpen(false), [pathname]);
 
   return (
     <>
-      <header
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          scrolled
-            ? "bg-[#0a0a0a]/95 backdrop-blur-md border-b border-white/10 py-3"
-            : "bg-transparent py-5"
-        }`}
-      >
-        <div className="max-w-7xl mx-auto px-4 flex items-center justify-between">
+      <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        scrolled
+          ? "bg-[#0d0d0d]/95 backdrop-blur-md border-b border-white/[0.08]"
+          : "bg-transparent"
+      }`}>
+        <div className="max-w-6xl mx-auto px-8 flex items-center justify-between gap-6" style={{ height: "72px" }}>
+
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center group-hover:bg-green-400 transition-colors">
-              <Zap size={18} className="text-black" fill="black" />
-            </div>
-            <span className="text-xl font-black tracking-tight text-white">
-              FBA<span className="text-green-500">.</span>
+          <Link href="/" className="flex flex-col items-start leading-none flex-shrink-0">
+            <span className="text-white text-xl font-black tracking-widest uppercase"
+              style={{ fontFamily: "var(--font-serif)" }}>
+              FBA
+            </span>
+            <span className="text-white/40 text-[8px] font-semibold tracking-[0.3em] uppercase -mt-0.5">
+              FITNESS
             </span>
           </Link>
 
-          {/* Desktop Nav */}
-          <nav className="hidden lg:flex items-center gap-1">
-            {NAV_LINKS.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                  pathname === link.href
-                    ? "text-green-400 bg-green-500/10"
-                    : "text-zinc-400 hover:text-white hover:bg-white/5"
-                }`}
-              >
-                {link.label}
+          {/* Center nav */}
+          <nav className="hidden lg:flex items-center gap-8">
+            {NAV_LINKS.map((l) => (
+              <Link key={l.href} href={l.href}
+                className={`text-[11px] font-semibold tracking-[0.12em] uppercase transition-colors ${
+                  pathname === l.href ? "text-white" : "text-white/45 hover:text-white/80"
+                }`}>
+                {l.label}
               </Link>
             ))}
           </nav>
 
-          {/* Right side */}
-          <div className="flex items-center gap-3">
-            {/* Language toggle */}
-            <button
-              onClick={() => setLang(lang === "EN" ? "አማ" : "EN")}
-              className="hidden md:flex items-center gap-1 text-xs font-bold text-zinc-400 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 px-3 py-1.5 rounded-full transition-colors"
-            >
-              {lang === "EN" ? "🇺🇸 EN" : "🇪🇹 አማ"}
+          {/* Right */}
+          <div className="flex items-center gap-5 flex-shrink-0">
+            <button onClick={() => setLang(l => l === "EN" ? "AM" : "EN")}
+              className="hidden md:block text-[10px] font-semibold tracking-[0.14em] uppercase text-white/35 hover:text-white/70 transition-colors">
+              {lang === "EN" ? "አማ" : "EN"}
             </button>
-
-            <Link
-              href="/login"
-              className="hidden md:block text-sm text-zinc-400 hover:text-white transition-colors font-medium"
-            >
+            <Link href="/login"
+              className="hidden md:block text-[11px] font-semibold tracking-[0.1em] uppercase text-white/45 hover:text-white transition-colors">
               Login
             </Link>
-            <Link
-              href="/register"
-              className="hidden md:block bg-green-500 hover:bg-green-400 text-black text-sm font-bold px-4 py-2 rounded-lg transition-colors"
-            >
+            <Link href="/register" className="btn btn-white text-[10px] py-2.5 px-6">
               Get Started
             </Link>
-
-            {/* Mobile menu button */}
-            <button
-              onClick={() => setOpen(!open)}
-              className="lg:hidden p-2 text-zinc-400 hover:text-white transition-colors"
-            >
-              {open ? <X size={22} /> : <Menu size={22} />}
+            <button onClick={() => setOpen(!open)}
+              className="lg:hidden text-white/60 hover:text-white transition-colors">
+              {open ? <X size={20} /> : <Menu size={20} />}
             </button>
           </div>
         </div>
       </header>
 
-      {/* Mobile Menu Overlay */}
+      {/* Mobile drawer */}
       <AnimatePresence>
         {open && (
-          <motion.div
-            initial={{ opacity: 0, x: "100%" }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: "100%" }}
-            transition={{ type: "spring", damping: 30, stiffness: 300 }}
-            className="fixed inset-0 z-40 bg-[#0a0a0a] flex flex-col pt-20 px-6 pb-8 lg:hidden"
-          >
-            <nav className="flex flex-col gap-1 flex-1">
-              {NAV_LINKS.map((link, i) => (
-                <motion.div
-                  key={link.href}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.05 }}
-                >
-                  <Link
-                    href={link.href}
-                    className={`block text-lg font-semibold py-3 border-b border-white/5 transition-colors ${
-                      pathname === link.href ? "text-green-400" : "text-zinc-300 hover:text-white"
-                    }`}
-                  >
-                    {link.label}
+          <>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
+              onClick={() => setOpen(false)} />
+            <motion.div
+              initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 28, stiffness: 260 }}
+              className="fixed top-0 right-0 bottom-0 z-50 w-72 bg-[#111] border-l border-white/[0.08] flex flex-col lg:hidden">
+              <div className="flex items-center justify-between px-8 h-[72px] border-b border-white/[0.08]">
+                <span className="text-white text-lg font-black tracking-widest uppercase"
+                  style={{ fontFamily: "var(--font-serif)" }}>FBA</span>
+                <button onClick={() => setOpen(false)} className="text-white/50 hover:text-white">
+                  <X size={18} />
+                </button>
+              </div>
+              <nav className="flex-1 px-6 py-8 flex flex-col gap-6">
+                {NAV_LINKS.map((l) => (
+                  <Link key={l.href} href={l.href}
+                    className={`text-[11px] font-semibold tracking-[0.16em] uppercase transition-colors ${
+                      pathname === l.href ? "text-white" : "text-white/40 hover:text-white"
+                    }`}>
+                    {l.label}
                   </Link>
-                </motion.div>
-              ))}
-            </nav>
-
-            <div className="flex flex-col gap-3 mt-6">
-              <button
-                onClick={() => setLang(lang === "EN" ? "አማ" : "EN")}
-                className="flex items-center justify-center gap-2 text-sm font-bold text-zinc-400 bg-white/5 border border-white/10 px-4 py-3 rounded-xl"
-              >
-                {lang === "EN" ? "🇺🇸 Switch to Amharic" : "🇪🇹 Switch to English"}
-              </button>
-              <Link href="/login" className="text-center text-white font-semibold bg-white/10 py-3 rounded-xl">
-                Login
-              </Link>
-              <Link href="/register" className="text-center text-black font-bold bg-green-500 py-3 rounded-xl">
-                Get Started
-              </Link>
-            </div>
-          </motion.div>
+                ))}
+              </nav>
+              <div className="px-6 pb-8 pt-6 border-t border-white/[0.08] flex flex-col gap-3">
+                <button onClick={() => setLang(l => l === "EN" ? "AM" : "EN")}
+                  className="text-[10px] font-semibold tracking-widest uppercase text-white/35 text-left">
+                  {lang === "EN" ? "Switch to አማርኛ" : "Switch to English"}
+                </button>
+                <Link href="/login" className="btn btn-outline py-3 text-[10px] text-center">Login</Link>
+                <Link href="/register" className="btn btn-white py-3 text-[10px] text-center">Get Started</Link>
+              </div>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
     </>

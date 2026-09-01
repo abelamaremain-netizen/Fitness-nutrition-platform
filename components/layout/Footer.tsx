@@ -1,7 +1,6 @@
 import Link from "next/link";
-import { Zap, Instagram, Youtube, Facebook } from "lucide-react";
 
-const footerLinks = {
+const cols = {
   Plans: [
     { label: "All Plans", href: "/plans" },
     { label: "Fitness Plans", href: "/fitness-plan" },
@@ -24,52 +23,43 @@ const footerLinks = {
 
 export default function Footer() {
   return (
-    <footer className="bg-[#0d0d0d] border-t border-white/10">
-      <div className="max-w-7xl mx-auto px-4 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10">
-          {/* Brand */}
-          <div className="lg:col-span-2">
-            <Link href="/" className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
-                <Zap size={18} className="text-black" fill="black" />
-              </div>
-              <span className="text-xl font-black text-white">
-                FBA<span className="text-green-500">.</span>
-              </span>
+    <footer style={{ background: "#0a0a0a", borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+      <div className="max-w-5xl mx-auto px-8 pt-20 pb-10">
+
+        {/* Top: brand + links */}
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-12 md:gap-10 mb-16">
+          {/* Brand — 2 cols */}
+          <div className="md:col-span-2">
+            <Link href="/" className="inline-block mb-6">
+              <span className="text-white text-2xl font-black tracking-widest uppercase block"
+                style={{ fontFamily: "var(--font-serif)" }}>FBA</span>
+              <span className="text-white/30 text-[8px] font-semibold tracking-[0.32em] uppercase mt-0.5 block">FITNESS</span>
             </Link>
-            <p className="text-zinc-400 text-sm leading-relaxed max-w-xs mb-6">
-              Science-backed fitness and diet plans designed for real results.
-              Transform your body, transform your life.
+            <p className="text-white/40 text-sm leading-7 max-w-[220px] mb-8">
+              Science-backed fitness &amp; nutrition plans. Built for Ethiopia, built for results.
             </p>
             <div className="flex gap-3">
-              {[
-                { icon: Instagram, href: "#" },
-                { icon: Youtube, href: "#" },
-                { icon: Facebook, href: "#" },
-              ].map(({ icon: Icon, href }, i) => (
-                <a
-                  key={i}
-                  href={href}
-                  className="w-9 h-9 rounded-lg bg-white/5 hover:bg-green-500/20 hover:text-green-400 flex items-center justify-center text-zinc-400 transition-colors border border-white/10"
-                >
-                  <Icon size={16} />
+              {["IG", "YT", "TK"].map((s) => (
+                <a key={s} href="#"
+                  className="w-9 h-9 rounded-lg border border-white/15 hover:border-white/45 flex items-center justify-center text-[10px] font-bold text-white/35 hover:text-white transition-all tracking-wider">
+                  {s}
                 </a>
               ))}
             </div>
           </div>
 
-          {/* Links */}
-          {Object.entries(footerLinks).map(([section, links]) => (
-            <div key={section}>
-              <h4 className="text-white font-bold text-sm mb-4">{section}</h4>
-              <ul className="space-y-2">
-                {links.map((link) => (
-                  <li key={link.href}>
-                    <Link
-                      href={link.href}
-                      className="text-zinc-500 hover:text-green-400 text-sm transition-colors"
-                    >
-                      {link.label}
+          {/* Link cols — 3 cols */}
+          {Object.entries(cols).map(([title, links]) => (
+            <div key={title}>
+              <p className="text-[9px] font-bold tracking-[0.26em] uppercase text-white/35 mb-6">
+                {title}
+              </p>
+              <ul className="space-y-4">
+                {links.map((l) => (
+                  <li key={l.href}>
+                    <Link href={l.href}
+                      className="text-sm leading-relaxed text-white/40 hover:text-white/80 transition-colors">
+                      {l.label}
                     </Link>
                   </li>
                 ))}
@@ -78,13 +68,12 @@ export default function Footer() {
           ))}
         </div>
 
-        <div className="mt-12 pt-6 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-zinc-600 text-sm">
+        {/* Bottom bar */}
+        <div className="pt-8 border-t border-white/[0.07] flex flex-col sm:flex-row items-center justify-between gap-3">
+          <p className="text-[11px] text-white/20 tracking-widest uppercase">
             © 2026 FBA Fitness. All rights reserved.
           </p>
-          <p className="text-zinc-600 text-sm">
-            Built with ❤️ in Ethiopia
-          </p>
+          <p className="text-[11px] text-white/20 tracking-widest uppercase">Made with ♥ in Ethiopia</p>
         </div>
       </div>
     </footer>
