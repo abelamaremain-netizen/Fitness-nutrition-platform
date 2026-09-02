@@ -50,7 +50,7 @@ function RegisterForm() {
         <div className="relative z-10 px-14 py-20">
           <Link href="/" className="inline-block mb-14">
             <span className="text-white text-2xl font-black tracking-widest uppercase"
-              style={{ fontFamily: "var(--font-serif)" }}>FBA</span>
+              style={{ fontFamily: "var(--font-serif)" }}>Naodi & Samri</span>
             <span className="block text-white/30 text-[8px] font-semibold tracking-[0.3em] uppercase">
               FITNESS
             </span>
@@ -97,7 +97,7 @@ function RegisterForm() {
 
           <Link href="/" className="inline-block mb-10 lg:hidden">
             <span className="text-white text-xl font-black tracking-widest uppercase"
-              style={{ fontFamily: "var(--font-serif)" }}>FBA</span>
+              style={{ fontFamily: "var(--font-serif)" }}>Naodi & Samri</span>
           </Link>
 
           {/* Context message if coming from checkout */}

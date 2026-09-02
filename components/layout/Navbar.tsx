@@ -30,9 +30,9 @@ export default function Navbar() {
 
           {/* Logo */}
           <Link href="/" className="flex flex-col items-start leading-none flex-shrink-0">
-            <span className="text-white text-xl font-black tracking-widest uppercase"
+            <span className="text-white text-base font-black tracking-wider uppercase"
               style={{ fontFamily: "var(--font-serif)" }}>
-              FBA
+              Naodi <span className="text-white/50">&</span> Samri
             </span>
             <span className="text-white/40 text-[8px] font-semibold tracking-[0.3em] uppercase -mt-0.5">
               FITNESS
@@ -84,8 +84,8 @@ export default function Navbar() {
               transition={{ type: "spring", damping: 28, stiffness: 260 }}
               className="fixed top-0 right-0 bottom-0 z-50 w-72 bg-[#111] border-l border-white/[0.08] flex flex-col lg:hidden">
               <div className="flex items-center justify-between px-8 h-[72px] border-b border-white/[0.08]">
-                <span className="text-white text-lg font-black tracking-widest uppercase"
-                  style={{ fontFamily: "var(--font-serif)" }}>FBA</span>
+                <span className="text-white text-sm font-black tracking-wider uppercase"
+                  style={{ fontFamily: "var(--font-serif)" }}>Naodi & Samri</span>
                 <button onClick={() => setOpen(false)} className="text-white/50 hover:text-white">
                   <X size={18} />
                 </button>

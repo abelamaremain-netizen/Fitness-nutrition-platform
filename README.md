@@ -1,4 +1,4 @@
-# FBA Fitness — Frontend Demo
+# Naodi & Samri Fitness — Frontend Demo
 
 Next.js 16 · Tailwind CSS v4 · Framer Motion · TypeScript
 

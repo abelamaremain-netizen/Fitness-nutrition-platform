@@ -28,7 +28,7 @@ export default function HowItWorksPage() {
           <p className="text-[10px] font-semibold tracking-[0.28em] uppercase text-white/35 mb-4">Process</p>
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-4"
             style={{ fontFamily: "var(--font-serif)" }}>
-            How <em>FBA Works</em>
+            How <em>It Works</em>
           </h1>
           <p className="text-white/40 text-sm leading-relaxed max-w-md mx-auto">
             From your first visit to your first result — four steps to a better you.

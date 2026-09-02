@@ -31,8 +31,8 @@ export default function Footer() {
           {/* Brand — 2 cols */}
           <div className="md:col-span-2">
             <Link href="/" className="inline-block mb-6">
-              <span className="text-white text-2xl font-black tracking-widest uppercase block"
-                style={{ fontFamily: "var(--font-serif)" }}>FBA</span>
+              <span className="text-white text-lg font-black tracking-wider uppercase block"
+                style={{ fontFamily: "var(--font-serif)" }}>Naodi <span className="text-white/50">&</span> Samri</span>
               <span className="text-white/30 text-[8px] font-semibold tracking-[0.32em] uppercase mt-0.5 block">FITNESS</span>
             </Link>
             <p className="text-white/40 text-sm leading-7 max-w-[220px] mb-8">
@@ -71,7 +71,7 @@ export default function Footer() {
         {/* Bottom bar */}
         <div className="pt-8 border-t border-white/[0.07] flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-[11px] text-white/20 tracking-widest uppercase">
-            © 2026 FBA Fitness. All rights reserved.
+            © 2026 Naodi & Samri Fitness. All rights reserved.
           </p>
           <p className="text-[11px] text-white/20 tracking-widest uppercase">Made with ♥ in Ethiopia</p>
         </div>

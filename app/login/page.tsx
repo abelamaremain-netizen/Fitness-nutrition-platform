@@ -43,7 +43,7 @@ function LoginForm() {
               ))}
             </div>
             <p className="text-white/70 text-sm italic leading-relaxed mb-3">
-              &ldquo;FBA completely changed how I approach fitness. The plans are clear and actually work.&rdquo;
+              &ldquo;Naodi &amp; Samri completely changed how I approach fitness. The plans are clear and actually work.&rdquo;
             </p>
             <p className="text-white/40 text-xs font-semibold tracking-widest uppercase">
               — Selam T., Lost 12kg
@@ -59,7 +59,7 @@ function LoginForm() {
 
           <Link href="/" className="inline-block mb-10">
             <span className="text-white text-xl font-black tracking-widest uppercase"
-              style={{ fontFamily: "var(--font-serif)" }}>FBA</span>
+              style={{ fontFamily: "var(--font-serif)" }}>Naodi & Samri</span>
             <span className="block text-white/30 text-[8px] font-semibold tracking-[0.3em] uppercase">
               FITNESS
             </span>

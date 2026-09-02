@@ -9,8 +9,8 @@ const geist = Geist({ variable: "--font-sans", subsets: ["latin"] });
 const playfair = Playfair_Display({ variable: "--font-serif", subsets: ["latin"], weight: ["400","700","900"] });
 
 export const metadata: Metadata = {
-  title: "FBA Fitness — Transform Your Body",
-  description: "Science-backed fitness and diet plans tailored to your goals.",
+  title: "Naodi & Samri Fitness — Transform Your Body",
+  description: "Science-backed fitness and diet plans by Naodi & Samri, tailored to your goals.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

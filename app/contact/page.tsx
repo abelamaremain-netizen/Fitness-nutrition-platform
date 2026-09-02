@@ -106,7 +106,7 @@ export default function ContactPage() {
       <section className="border-t border-white/10 max-w-5xl mx-auto px-8 py-16">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           {[
-            { icon: Mail, label: "Email", value: "hello@fbafitness.com", href: "mailto:hello@fbafitness.com" },
+            { icon: Mail, label: "Email", value: "hello@naodiansamri.com", href: "mailto:hello@naodiansamri.com" },
             { icon: Phone, label: "Phone", value: "+251 91 234 5678", href: "tel:+251912345678" },
             { icon: MapPin, label: "Location", value: "Addis Ababa, Ethiopia", href: "#" },
           ].map((info, i) => (

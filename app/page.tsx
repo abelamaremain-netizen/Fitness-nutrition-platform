@@ -15,10 +15,11 @@ export default function HomePage() {
     <div>
       {/* ── HERO ─────────────────────────────────────────────── */}
       <section className="relative min-h-screen flex items-center justify-center text-center">
-        <Image src={IMAGES.hero4} alt="FBA Fitness Hero" fill priority
+        {/* Both owners as hero background */}
+        <Image src={IMAGES.both} alt="Naodi & Samri Fitness" fill priority
           className="object-cover object-top" sizes="100vw" />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/75 via-black/55 to-[#0d0d0d]" />
-        <div className="absolute inset-0 bg-black/30" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-[#0d0d0d]" />
+        <div className="absolute inset-0 bg-black/25" />
         <div className="relative z-10 w-full max-w-4xl mx-auto px-8 pt-20">
           <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
             className="text-[10px] font-semibold tracking-[0.3em] uppercase text-white/55 mb-6">
@@ -32,8 +33,8 @@ export default function HomePage() {
           </motion.h1>
           <motion.p initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
             className="text-white/55 text-base md:text-lg leading-relaxed mb-10 max-w-xl mx-auto">
-            Expert-crafted fitness and nutrition plans tailored to your goals.
-            Calculate your BMI, get personalised recommendations, and start today.
+            Expert-crafted fitness and nutrition plans by <span className="text-white font-semibold">Naodi &amp; Samri</span>,
+            tailored to your goals. Calculate your BMI, get personalised recommendations, and start today.
           </motion.p>
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
             className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -60,8 +61,76 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── HOW IT WORKS ──────────────────────────────────────── */}
+      {/* ── MEET THE FOUNDERS ─────────────────────────────────── */}
       <section className="py-28">
+        <div className="max-w-6xl mx-auto px-8">
+          <AnimatedSection className="text-center mb-16">
+            <p className="text-[10px] font-semibold tracking-[0.28em] uppercase text-white/35 mb-4">The Experts</p>
+            <h2 style={{ fontFamily: "var(--font-serif)" }}
+              className="text-4xl md:text-5xl font-bold text-white">
+              Meet <em>Naodi &amp; Samri</em>
+            </h2>
+            <p className="text-white/40 mt-4 max-w-lg mx-auto text-sm leading-relaxed">
+              Real coaches. Real results. Every plan on this platform is designed and tested by Naodi &amp; Samri themselves.
+            </p>
+          </AnimatedSection>
+
+          <div className="grid md:grid-cols-2 gap-8">
+            {/* Naodi */}
+            <AnimatedSection direction="left">
+              <div className="card overflow-hidden group hover:border-white/20 transition-colors">
+                <div className="relative h-[480px] overflow-hidden">
+                  <Image src={IMAGES.naodi1} alt="Naodi" fill
+                    className="object-cover object-top transition-transform duration-700 group-hover:scale-105"
+                    sizes="600px" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-7">
+                    <p className="text-[10px] font-semibold tracking-[0.22em] uppercase text-white/45 mb-1">
+                      Co-Founder
+                    </p>
+                    <h3 className="text-white text-3xl font-bold mb-2"
+                      style={{ fontFamily: "var(--font-serif)" }}>Naodi</h3>
+                    <p className="text-white/60 text-sm leading-relaxed">
+                      Certified fitness coach specialising in body recomposition, strength training, and women&apos;s wellness.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </AnimatedSection>
+
+            {/* Samri */}
+            <AnimatedSection direction="right" delay={0.1}>
+              <div className="card overflow-hidden group hover:border-white/20 transition-colors">
+                <div className="relative h-[480px] overflow-hidden">
+                  <Image src={IMAGES.samri3} alt="Samri" fill
+                    className="object-cover object-top transition-transform duration-700 group-hover:scale-105"
+                    sizes="600px" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-7">
+                    <p className="text-[10px] font-semibold tracking-[0.22em] uppercase text-white/45 mb-1">
+                      Co-Founder
+                    </p>
+                    <h3 className="text-white text-3xl font-bold mb-2"
+                      style={{ fontFamily: "var(--font-serif)" }}>Samri</h3>
+                    <p className="text-white/60 text-sm leading-relaxed">
+                      Nutrition specialist and certified personal trainer focused on sustainable diet plans and hormonal health.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </AnimatedSection>
+          </div>
+
+          <AnimatedSection className="mt-8 text-center">
+            <Link href="/about" className="text-[11px] tracking-[0.16em] uppercase text-white/35 hover:text-white transition-colors inline-flex items-center gap-2">
+              Our Full Story <ArrowRight size={12} />
+            </Link>
+          </AnimatedSection>
+        </div>
+      </section>
+
+      {/* ── HOW IT WORKS ──────────────────────────────────────── */}
+      <section className="py-28" style={{ background: "#111", borderTop: "1px solid rgba(255,255,255,0.07)" }}>
         <div className="max-w-6xl mx-auto px-8">
           <AnimatedSection className="text-center mb-16">
             <p className="text-[10px] font-semibold tracking-[0.28em] uppercase text-white/35 mb-4">Process</p>
@@ -92,9 +161,10 @@ export default function HomePage() {
       {/* ── SPLIT PROMO ───────────────────────────────────────── */}
       <section style={{ borderTop: "1px solid rgba(255,255,255,0.07)", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
         <div className="max-w-6xl mx-auto px-8 grid md:grid-cols-2 gap-12 items-center py-20">
-          <div className="relative h-80 md:h-[460px] rounded-2xl overflow-hidden">
-            <Image src={IMAGES.hero5} alt="" fill className="object-cover" sizes="50vw" />
-            <div className="absolute inset-0 bg-black/25" />
+          <div className="relative h-80 md:h-[500px] rounded-2xl overflow-hidden">
+            <Image src={IMAGES.samri1} alt="Samri training" fill
+              className="object-cover object-top" sizes="50vw" />
+            <div className="absolute inset-0 bg-black/20" />
           </div>
           <AnimatedSection direction="left">
             <p className="text-[10px] font-semibold tracking-[0.28em] uppercase text-white/35 mb-5">Personalised</p>
@@ -103,7 +173,8 @@ export default function HomePage() {
               The plan that fits<br /><em>your exact goals.</em>
             </h2>
             <p className="text-white/45 text-sm leading-relaxed mb-8 max-w-sm">
-              Our recommendation engine analyses your BMI, age, gender, activity level, and goals to find the most suitable plans for you.
+              Our recommendation engine analyses your BMI, age, gender, activity level, and goals to surface
+              the plans Naodi &amp; Samri designed specifically for your profile.
             </p>
             <Link href="/fitness-plan" className="btn btn-white py-3.5 px-8 inline-flex">
               Get My Recommendation <ArrowRight size={14} />
@@ -179,7 +250,7 @@ export default function HomePage() {
 
       {/* ── CTA ───────────────────────────────────────────────── */}
       <section className="relative overflow-hidden py-32 text-center">
-        <Image src={IMAGES.hero6} alt="" fill className="object-cover" sizes="100vw" />
+        <Image src={IMAGES.naodi2} alt="" fill className="object-cover object-top" sizes="100vw" />
         <div className="absolute inset-0 bg-black/75" />
         <AnimatedSection className="relative z-10 max-w-2xl mx-auto px-8">
           <p className="text-[10px] font-semibold tracking-[0.28em] uppercase text-white/40 mb-5">Start Today</p>
@@ -188,7 +259,7 @@ export default function HomePage() {
             Ready to <em>Transform?</em>
           </h2>
           <p className="text-white/45 text-base leading-relaxed mb-10 max-w-lg mx-auto">
-            Calculate your BMI, get a personalised plan recommendation, and take the first step.
+            Calculate your BMI, get a personalised plan recommendation from Naodi &amp; Samri, and take the first step.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/bmi" className="btn btn-white py-4 px-12">

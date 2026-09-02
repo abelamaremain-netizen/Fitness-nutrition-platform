@@ -1,11 +1,21 @@
 // ─── IMAGE PATHS ────────────────────────────────────────────────────────────
 export const IMAGES = {
+  // Original stock images (kept for plans/blog/misc use)
   hero1: "/images/female images (2).jpg",
   hero2: "/images/female images1 (2).jpg",
   hero3: "/images/gettyimages-1860710155-612x612.jpg",
   hero4: "/images/images2 (2).jpg",
   hero5: "/images/Strength-Training-for-Women-Square.webp",
   hero6: "/images/Red Notice (2021).avi_snapshot_00.37.43.586.jpg",
+
+  // Owner photos — Naodi & Samri
+  naodi1: "/images/owners/naodi-1.JPG",
+  naodi2: "/images/owners/naodi-2.JPG",
+  naodi3: "/images/owners/naodi-3.JPG",
+  samri1: "/images/owners/samri-1.JPG",
+  samri2: "/images/owners/samri-2.JPG",
+  samri3: "/images/owners/samri-3.JPG",
+  both:   "/images/owners/both-1.JPG",
 };
 
 // ─── NAVIGATION ─────────────────────────────────────────────────────────────
@@ -280,7 +290,7 @@ export const TESTIMONIALS = [
     role: "Lost 12kg in 3 months",
     image: IMAGES.hero1,
     rating: 5,
-    text: "FBA's Fat Burn Express plan completely changed my life. The structured program with video guides made it so easy to follow. I never felt lost.",
+    text: "Naodi & Samri's Fat Burn Express plan completely changed my life. The structured program with video guides made it so easy to follow. I never felt lost.",
     plan: "Fat Burn Express",
   },
   {
@@ -307,7 +317,7 @@ export const TESTIMONIALS = [
     role: "Body recomposition success",
     image: IMAGES.hero5,
     rating: 5,
-    text: "I've tried so many programs. FBA is different — the plans are science-backed, well-structured, and actually work for Ethiopian body types and food culture.",
+    text: "I've tried so many programs. Naodi & Samri is different — the plans are science-backed, well-structured, and actually work for Ethiopian body types and food culture.",
     plan: "Body Recomposition",
   },
   {
@@ -340,7 +350,7 @@ export const BLOG_POSTS = [
     category: "Nutrition",
     date: "August 20, 2026",
     readTime: "5 min read",
-    author: "FBA Team",
+    author: "Naodi & Samri",
   },
   {
     id: "hiit-vs-steady-state",
@@ -350,7 +360,7 @@ export const BLOG_POSTS = [
     category: "Training",
     date: "August 14, 2026",
     readTime: "4 min read",
-    author: "FBA Team",
+    author: "Naodi & Samri",
   },
   {
     id: "bmi-guide",
@@ -360,7 +370,7 @@ export const BLOG_POSTS = [
     category: "Health",
     date: "August 8, 2026",
     readTime: "6 min read",
-    author: "FBA Team",
+    author: "Naodi & Samri",
   },
   {
     id: "ethiopian-diet-fitness",
@@ -370,7 +380,7 @@ export const BLOG_POSTS = [
     category: "Nutrition",
     date: "July 30, 2026",
     readTime: "7 min read",
-    author: "FBA Team",
+    author: "Naodi & Samri",
   },
   {
     id: "sleep-and-recovery",
@@ -380,7 +390,7 @@ export const BLOG_POSTS = [
     category: "Recovery",
     date: "July 22, 2026",
     readTime: "5 min read",
-    author: "FBA Team",
+    author: "Naodi & Samri",
   },
   {
     id: "women-weight-training",
@@ -390,7 +400,7 @@ export const BLOG_POSTS = [
     category: "Training",
     date: "July 15, 2026",
     readTime: "6 min read",
-    author: "FBA Team",
+    author: "Naodi & Samri",
   },
 ];
 
@@ -457,22 +467,18 @@ export const HOW_IT_WORKS = [
 // ─── TEAM ─────────────────────────────────────────────────────────────────────
 export const TEAM = [
   {
-    name: "Dr. Ayana Bekele",
-    role: "Head Nutritionist",
-    bio: "PhD in Sports Nutrition. 10+ years helping athletes and everyday people transform through targeted dietary strategies.",
-    image: IMAGES.hero3,
+    name: "Naodi",
+    role: "Co-Founder & Fitness Coach",
+    bio: "Certified fitness coach specialising in body recomposition, strength training, and women's wellness. Naodi built her own transformation and now helps others do the same.",
+    image: IMAGES.naodi2,
+    images: [IMAGES.naodi1, IMAGES.naodi2, IMAGES.naodi3],
   },
   {
-    name: "Coach Mihret Tadesse",
-    role: "Lead Fitness Trainer",
-    bio: "Certified personal trainer and strength coach. Specialist in body recomposition and women's fitness programming.",
-    image: IMAGES.hero2,
-  },
-  {
-    name: "Frehiwot Girma",
-    role: "Wellness Coach",
-    bio: "Holistic wellness specialist focused on sustainable lifestyle change, stress management, and long-term health.",
-    image: IMAGES.hero5,
+    name: "Samri",
+    role: "Co-Founder & Nutrition Expert",
+    bio: "Nutrition specialist and certified personal trainer focused on sustainable diet plans, hormonal health, and helping women achieve lasting results through science-backed guidance.",
+    image: IMAGES.samri2,
+    images: [IMAGES.samri1, IMAGES.samri2, IMAGES.samri3],
   },
 ];
 
