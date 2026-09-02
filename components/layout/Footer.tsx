@@ -73,7 +73,13 @@ export default function Footer() {
           <p className="text-[11px] text-white/20 tracking-widest uppercase">
             © 2026 Naodi & Samri Fitness. All rights reserved.
           </p>
-          <p className="text-[11px] text-white/20 tracking-widest uppercase">Made with ♥ in Ethiopia</p>
+          <div className="flex items-center gap-6">
+            <p className="text-[11px] text-white/20 tracking-widest uppercase">Made in Ethiopia</p>
+            <Link href="/admin/login"
+              className="text-[10px] text-white/15 hover:text-white/40 tracking-widest uppercase transition-colors">
+              Admin
+            </Link>
+          </div>
         </div>
       </div>
     </footer>
