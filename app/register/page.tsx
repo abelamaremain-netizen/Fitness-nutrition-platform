@@ -1,9 +1,10 @@
 "use client";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { Eye, EyeOff, ArrowRight, CheckCircle2 } from "lucide-react";
+import { Eye, EyeOff, ArrowRight, CheckCircle2, Lock } from "lucide-react";
 import { IMAGES } from "@/lib/data";
 
 const PERKS = [
@@ -13,16 +14,23 @@ const PERKS = [
   "Plans in Amharic & English",
 ];
 
-export default function RegisterPage() {
-  const [form, setForm] = useState({ name: "", email: "", password: "" });
-  const [showPw, setShowPw] = useState(false);
-  const [agreed, setAgreed] = useState(false);
+function RegisterForm() {
+  const router       = useRouter();
+  const searchParams = useSearchParams();
+  const redirect     = searchParams.get("redirect") ?? "/plans";
+
+  const [form,    setForm]    = useState({ name: "", email: "", password: "" });
+  const [showPw,  setShowPw]  = useState(false);
+  const [agreed,  setAgreed]  = useState(false);
   const [loading, setLoading] = useState(false);
+
   const set = (k: string, v: string) => setForm((p) => ({ ...p, [k]: v }));
 
-  const pwStrength = form.password.length === 0 ? 0 : form.password.length < 6 ? 1 : form.password.length < 10 ? 2 : 3;
-  const strengthColor = ["", "bg-red-400", "bg-yellow-400", "bg-green-400"][pwStrength];
+  const pwStrength  = form.password.length === 0 ? 0 : form.password.length < 6 ? 1 : form.password.length < 10 ? 2 : 3;
+  const strengthColor = ["", "bg-red-400", "bg-yellow-400", "bg-white"][pwStrength];
   const strengthLabel = ["", "Weak", "Fair", "Strong"][pwStrength];
+
+  const comingFromCheckout = redirect.includes("/checkout");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,12 +38,12 @@ export default function RegisterPage() {
     setLoading(true);
     await new Promise((r) => setTimeout(r, 1200));
     setLoading(false);
-    window.location.href = "/fitness-plan";
+    router.push(redirect);
   };
 
   return (
     <div className="min-h-screen flex">
-      {/* Left: Benefits panel */}
+      {/* Left: Benefits */}
       <div className="hidden lg:flex flex-1 flex-col justify-center relative overflow-hidden"
         style={{ background: "#111" }}>
         <Image src={IMAGES.hero2} alt="" fill className="object-cover opacity-20" sizes="50vw" />
@@ -43,7 +51,9 @@ export default function RegisterPage() {
           <Link href="/" className="inline-block mb-14">
             <span className="text-white text-2xl font-black tracking-widest uppercase"
               style={{ fontFamily: "var(--font-serif)" }}>FBA</span>
-            <span className="block text-white/30 text-[8px] font-semibold tracking-[0.3em] uppercase">FITNESS</span>
+            <span className="block text-white/30 text-[8px] font-semibold tracking-[0.3em] uppercase">
+              FITNESS
+            </span>
           </Link>
 
           <h2 className="text-4xl font-bold text-white mb-3 leading-tight"
@@ -57,7 +67,7 @@ export default function RegisterPage() {
           <div className="space-y-4 mb-12">
             {PERKS.map((p) => (
               <div key={p} className="flex items-center gap-3">
-                <CheckCircle2 size={16} className="text-white/50 flex-shrink-0" />
+                <CheckCircle2 size={16} className="text-white/50 flex-shrink-0" strokeWidth={1.5} />
                 <span className="text-white/55 text-sm">{p}</span>
               </div>
             ))}
@@ -81,7 +91,7 @@ export default function RegisterPage() {
       </div>
 
       {/* Right: Form */}
-      <div className="flex-1 flex items-center justify-center px-6 py-20">
+      <div className="flex-1 flex items-center justify-center px-8 py-20">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
           className="w-full max-w-sm">
 
@@ -90,6 +100,20 @@ export default function RegisterPage() {
               style={{ fontFamily: "var(--font-serif)" }}>FBA</span>
           </Link>
 
+          {/* Context message if coming from checkout */}
+          {comingFromCheckout && (
+            <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+              className="flex items-start gap-3 card p-4 mb-7">
+              <Lock size={15} className="text-white/50 mt-0.5 flex-shrink-0" strokeWidth={1.5} />
+              <div>
+                <p className="text-white text-sm font-semibold mb-0.5">Account required to purchase</p>
+                <p className="text-white/40 text-xs leading-relaxed">
+                  Create your free account to complete your purchase. Takes 30 seconds.
+                </p>
+              </div>
+            </motion.div>
+          )}
+
           <h1 className="text-3xl font-bold text-white mb-1.5"
             style={{ fontFamily: "var(--font-serif)" }}>
             Create account
@@ -97,7 +121,8 @@ export default function RegisterPage() {
           <p className="text-white/40 text-sm mb-9">Free to join. No subscription required.</p>
 
           {/* Google */}
-          <button className="w-full flex items-center justify-center gap-3 bg-white hover:bg-white/90 text-black font-semibold py-3 rounded-lg text-sm transition-all mb-7">
+          <button className="w-full flex items-center justify-center gap-3 bg-white
+            hover:bg-white/90 text-black font-semibold py-3 rounded-lg text-sm transition-all mb-7">
             <svg width="17" height="17" viewBox="0 0 18 18" fill="none">
               <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
               <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/>
@@ -139,7 +164,9 @@ export default function RegisterPage() {
                 <div className="mt-2 px-1">
                   <div className="flex gap-1">
                     {[1,2,3].map((s) => (
-                      <div key={s} className={`h-1 flex-1 rounded-full transition-all ${s <= pwStrength ? strengthColor : "bg-white/10"}`} />
+                      <div key={s} className={`h-1 flex-1 rounded-full transition-all ${
+                        s <= pwStrength ? strengthColor : "bg-white/10"
+                      }`} />
                     ))}
                   </div>
                   <p className="text-[11px] text-white/30 mt-1">{strengthLabel}</p>
@@ -174,12 +201,22 @@ export default function RegisterPage() {
 
           <p className="text-center text-white/30 text-sm mt-7">
             Already have an account?{" "}
-            <Link href="/login" className="text-white hover:text-white/70 font-semibold transition-colors">
+            <Link
+              href={`/login${comingFromCheckout ? `?redirect=${encodeURIComponent(redirect)}` : ""}`}
+              className="text-white hover:text-white/70 font-semibold transition-colors">
               Log in
             </Link>
           </p>
         </motion.div>
       </div>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense>
+      <RegisterForm />
+    </Suspense>
   );
 }
