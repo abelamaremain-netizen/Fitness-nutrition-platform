@@ -55,6 +55,7 @@ function CheckoutContent({ id }: { id: string }) {
   const [step,          setStep]          = useState<Step>("review");
   const [paymentMethod, setPaymentMethod] = useState(PAYMENT_METHODS[0].id);
   const [phoneNumber,   setPhoneNumber]   = useState("");
+  const [email,         setEmail]         = useState("");
   const [loading,       setLoading]       = useState(false);
   const [agreed,        setAgreed]        = useState(false);
 
@@ -141,6 +142,24 @@ function CheckoutContent({ id }: { id: string }) {
                     </div>
                   </div>
 
+                  {/* Email — no login required, just collect email for receipt */}
+                  <div className="card p-5">
+                    <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-white/35 mb-3">
+                      Your Email
+                    </p>
+                    <input
+                      type="email"
+                      required
+                      placeholder="your@email.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="pill-input"
+                    />
+                    <p className="text-white/22 text-[11px] mt-2 pl-1">
+                      We&apos;ll send your receipt and download link here.
+                    </p>
+                  </div>
+
                   {/* Terms */}
                   <label className="flex items-start gap-3 cursor-pointer">
                     <button type="button" onClick={() => setAgreed(!agreed)}
@@ -183,8 +202,8 @@ function CheckoutContent({ id }: { id: string }) {
                       </div>
                     </div>
 
-                    <button onClick={() => agreed && setStep("payment")}
-                      disabled={!agreed}
+                    <button onClick={() => agreed && email && setStep("payment")}
+                      disabled={!agreed || !email}
                       className="btn btn-white w-full py-4 text-[11px] disabled:opacity-40 disabled:cursor-not-allowed">
                       Continue to Payment <ArrowRight size={14} />
                     </button>
@@ -367,7 +386,7 @@ function CheckoutContent({ id }: { id: string }) {
                 unlocked and added to your dashboard.
               </p>
               <p className="text-white/28 text-xs mb-10">
-                A confirmation email has been sent to your registered address.
+                A confirmation email has been sent to <span className="text-white/50">{email || "your email address"}</span>.
               </p>
 
               {/* Unlocked content links */}

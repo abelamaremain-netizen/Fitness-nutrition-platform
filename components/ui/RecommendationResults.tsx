@@ -4,14 +4,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Play, Download, ExternalLink, ArrowLeft, ArrowRight, Lock, Clock } from "lucide-react";
+import { Play, Download, ExternalLink, ArrowLeft, ArrowRight, Clock } from "lucide-react";
 import type { Plan, UserProfile, DurationOption } from "@/lib/data";
 import { calculateBMI, getBMICategory, calculateTDEE, getCalorieTarget } from "@/lib/data";
 
 interface Props { plans: Plan[]; profile: UserProfile; onReset: () => void; }
-
-// Demo flag
-const IS_LOGGED_IN = false;
 
 const levelStyle: Record<string, string> = {
   Normal: "bg-white/10 text-white/60",
@@ -23,13 +20,9 @@ function PlanRow({ plan, rank }: { plan: Plan; rank: number }) {
   const router = useRouter();
   const [selected, setSelected] = useState<DurationOption>(plan.durations[0]);
 
+  // No auth gate — go straight to checkout
   const handleGetPlan = () => {
-    const dest = `/checkout/${plan.id}?duration=${selected.key}`;
-    if (!IS_LOGGED_IN) {
-      router.push(`/login?redirect=${encodeURIComponent(dest)}`);
-    } else {
-      router.push(dest);
-    }
+    router.push(`/checkout/${plan.id}?duration=${selected.key}`);
   };
 
   return (
@@ -47,11 +40,11 @@ function PlanRow({ plan, rank }: { plan: Plan; rank: number }) {
             sizes="208px" />
           <div className="absolute inset-0 bg-black/45 group-hover:bg-black/25 transition-colors" />
 
-          {/* Play button */}
+          {/* Play — locked until purchase, shown on detail page */}
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="w-11 h-11 rounded-full bg-white/15 backdrop-blur border border-white/30
               flex items-center justify-center">
-              <Lock size={14} className="text-white/60" />
+              <Play size={14} className="text-white ml-0.5" fill="white" />
             </div>
           </div>
 
@@ -111,7 +104,6 @@ function PlanRow({ plan, rank }: { plan: Plan; rank: number }) {
 
           {/* Price + Actions */}
           <div className="flex flex-col sm:flex-row sm:items-end gap-4">
-            {/* Price */}
             <div className="flex items-baseline gap-1.5 flex-1">
               <span className="text-2xl font-black text-white">
                 {selected.price.toLocaleString()}
@@ -120,7 +112,6 @@ function PlanRow({ plan, rank }: { plan: Plan; rank: number }) {
               <span className="text-white/22 text-xs">/ {selected.label}</span>
             </div>
 
-            {/* Buttons */}
             <div className="flex gap-2 flex-shrink-0">
               <Link href={`/plans/${plan.id}`}
                 className="btn btn-outline text-[10px] py-2.5 px-4">
@@ -128,10 +119,7 @@ function PlanRow({ plan, rank }: { plan: Plan; rank: number }) {
               </Link>
               <button onClick={handleGetPlan}
                 className="btn btn-white text-[10px] py-2.5 px-5">
-                {IS_LOGGED_IN
-                  ? <><ArrowRight size={11} /> Get Plan</>
-                  : <><Lock size={11} /> Get Plan</>
-                }
+                <ArrowRight size={11} /> Get Plan
               </button>
             </div>
           </div>
@@ -155,10 +143,10 @@ export default function RecommendationResults({ plans, profile, onReset }: Props
         className="grid grid-cols-2 md:grid-cols-4 gap-px rounded-xl overflow-hidden"
         style={{ background: "rgba(255,255,255,0.06)" }}>
         {[
-          { v: String(bmi),               label: "Your BMI",    sub: bmiCat.label },
-          { v: tdee.toLocaleString(),      label: "Maintenance", sub: "kcal / day" },
-          { v: target.toLocaleString(),    label: "Daily Target",sub: "kcal / day" },
-          { v: String(plans.length),       label: "Plans Found", sub: "Ranked for you" },
+          { v: String(bmi),            label: "Your BMI",    sub: bmiCat.label },
+          { v: tdee.toLocaleString(),   label: "Maintenance", sub: "kcal / day" },
+          { v: target.toLocaleString(), label: "Daily Target",sub: "kcal / day" },
+          { v: String(plans.length),    label: "Plans Found", sub: "Ranked for you" },
         ].map((s, i) => (
           <div key={i} className="text-center px-5 py-5" style={{ background: "#161616" }}>
             <p className="text-2xl font-black text-white"

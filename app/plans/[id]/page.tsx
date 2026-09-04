@@ -12,9 +12,7 @@ import {
 import AnimatedSection from "@/components/ui/AnimatedSection";
 import { PLANS, TESTIMONIALS, type DurationOption } from "@/lib/data";
 
-// Demo flag — replace with real auth check
-const IS_LOGGED_IN = false;
-
+// No auth required — customers go straight to checkout
 const levelStyle: Record<string, { bg: string; text: string }> = {
   Normal: { bg: "bg-white/10",  text: "text-white/70" },
   Pro:    { bg: "bg-white/15",  text: "text-white/85" },
@@ -35,12 +33,7 @@ export default function PlanDetailPage({
   const [selected, setSelected] = useState<DurationOption>(plan.durations[0]);
 
   const handleGetPlan = () => {
-    const dest = `/checkout/${plan.id}?duration=${selected.key}`;
-    if (!IS_LOGGED_IN) {
-      router.push(`/login?redirect=${encodeURIComponent(dest)}`);
-    } else {
-      router.push(dest);
-    }
+    router.push(`/checkout/${plan.id}?duration=${selected.key}`);
   };
 
   // Related plans — same goal, different id
@@ -245,11 +238,7 @@ export default function PlanDetailPage({
                 {/* CTA */}
                 <button onClick={handleGetPlan}
                   className="btn btn-white w-full py-4 text-[11px]">
-                  {IS_LOGGED_IN ? (
-                    <><ArrowRight size={14} /> Get This Plan</>
-                  ) : (
-                    <><Lock size={14} /> Login to Purchase</>
-                  )}
+                  <ArrowRight size={14} /> Get This Plan
                 </button>
 
                 {/* Trust note */}

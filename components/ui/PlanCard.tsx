@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Play, ArrowRight, Lock } from "lucide-react";
+import { Play, ArrowRight } from "lucide-react";
 import type { Plan, DurationOption } from "@/lib/data";
 
 const levelStyle: Record<string, string> = {
@@ -13,20 +13,12 @@ const levelStyle: Record<string, string> = {
   VIP:    "bg-white/20 text-white",
 };
 
-// Demo: treat user as NOT logged in
-const IS_LOGGED_IN = false;
-
 export default function PlanCard({ plan }: { plan: Plan }) {
-  const router = useRouter();
+  const router   = useRouter();
   const [selected, setSelected] = useState<DurationOption>(plan.durations[0]);
 
   const handleGetPlan = () => {
-    if (!IS_LOGGED_IN) {
-      // Redirect to login with return URL so user comes back after auth
-      router.push(`/login?redirect=/checkout/${plan.id}?duration=${selected.key}`);
-    } else {
-      router.push(`/checkout/${plan.id}?duration=${selected.key}`);
-    }
+    router.push(`/checkout/${plan.id}?duration=${selected.key}`);
   };
 
   return (
@@ -117,11 +109,7 @@ export default function PlanCard({ plan }: { plan: Plan }) {
           </Link>
           <button onClick={handleGetPlan}
             className="btn btn-white flex-1 py-2.5 text-[10px]">
-            {IS_LOGGED_IN ? (
-              <><ArrowRight size={11} /> Get Plan</>
-            ) : (
-              <><Lock size={11} /> Get Plan</>
-            )}
+            <ArrowRight size={11} /> Get Plan
           </button>
         </div>
       </div>
