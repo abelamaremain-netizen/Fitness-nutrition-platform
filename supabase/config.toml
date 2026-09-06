@@ -1,0 +1,17 @@
+project_id = "rveltlbhgnehjfohcgnh"
+
+[functions.create-order]
+verify_jwt = false
+entrypoint = "./functions/create-order/index.ts"
+
+[functions.telebirr-notify]
+verify_jwt = false
+entrypoint = "./functions/telebirr-notify/index.ts"
+
+[functions.verify-payment]
+verify_jwt = false
+entrypoint = "./functions/verify-payment/index.ts"
+
+[functions.get-paid-content]
+verify_jwt = false
+entrypoint = "./functions/get-paid-content/index.ts"

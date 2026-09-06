@@ -1,13 +1,13 @@
 import {
-  createServerClient,
   createAdminClient,
+  createServerClient,
 } from "@/src/lib/supabase/server";
 import type {
   Order,
   OrderAccess,
-  PlanDurationKey,
-  PaymentMethod,
   OrderStatus,
+  PaymentMethod,
+  PlanDurationKey,
 } from "@/src/types/database.types";
 
 // ---------------------------------------------------------------------------
@@ -105,7 +105,9 @@ export async function createOrderSecure(input: {
   if (!plan.published) throw new Error("Plan is not available for purchase");
 
   // 3. Generate a unique transaction reference
-  const tx_ref = `order_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+  const tx_ref = `order_${Date.now()}_${
+    Math.random().toString(36).slice(2, 10)
+  }`;
 
   // 4. Create the order with the server-verified price
   const { data: order, error: orderError } = await admin
@@ -121,7 +123,7 @@ export async function createOrderSecure(input: {
       currency: "ETB",
       payment_method: input.payment_method,
       status: "pending",
-      chapa_tx_ref: tx_ref,
+      tx_ref: tx_ref,
     })
     .select()
     .single();
@@ -144,7 +146,7 @@ export async function verifyAndUnlockOrder(
   const { data: order, error: orderError } = await admin
     .from("orders")
     .select("*")
-    .eq("chapa_tx_ref", txRef)
+    .eq("tx_ref", txRef)
     .maybeSingle();
 
   if (orderError) throw orderError;
@@ -164,16 +166,18 @@ export async function verifyAndUnlockOrder(
   if (updateError) throw updateError;
 
   // 4. Create or update order_access to unlock content
-  const { error: accessError } = await admin.from("order_access").upsert(
-    {
-      order_id: order.id,
-      plan_id: order.plan_id,
-      email: order.customer_email,
-      unlocked: true,
-      unlocked_at: new Date().toISOString(),
-    },
-    { onConflict: "order_id" },
-  );
+  const { error: accessError } = await admin
+    .from("order_access")
+    .upsert(
+      {
+        order_id: order.id,
+        plan_id: order.plan_id,
+        email: order.customer_email,
+        unlocked: true,
+        unlocked_at: new Date().toISOString(),
+      },
+      { onConflict: "order_id" },
+    );
 
   if (accessError) throw accessError;
 
