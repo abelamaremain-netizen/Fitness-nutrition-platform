@@ -3,21 +3,34 @@ import { useState } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle2, MessageCircle, Mail, Phone, MapPin } from "lucide-react";
+import { submitContactMessage } from "@/src/lib/services/content-public";
 import { IMAGES } from "@/lib/data";
 
 export default function ContactPage() {
   const [form, setForm] = useState({ name: "", email: "", message: "" });
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const set = (k: string, v: string) => setForm((p) => ({ ...p, [k]: v }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 1000));
-    setLoading(false);
-    setSent(true);
+    setError("");
+    try {
+      await submitContactMessage({
+        name:    form.name,
+        email:   form.email,
+        subject: "General Enquiry",
+        message: form.message,
+      });
+      setSent(true);
+    } catch {
+      setError("Something went wrong. Please try again or contact us directly.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -95,6 +108,9 @@ export default function ContactPage() {
                       : "SUBMIT"
                     }
                   </motion.button>
+                  {error && (
+                    <p className="text-red-400/80 text-xs text-center mt-2">{error}</p>
+                  )}
                 </div>
               </motion.form>
             )}

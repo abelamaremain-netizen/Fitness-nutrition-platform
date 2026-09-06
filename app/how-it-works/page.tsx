@@ -1,12 +1,11 @@
-"use client";
 import Image from "next/image";
 import Link from "next/link";
-import { motion } from "framer-motion";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
 import AnimatedSection from "@/components/ui/AnimatedSection";
-import { HOW_IT_WORKS, IMAGES } from "@/lib/data";
+import { getHowItWorksSteps } from "@/src/lib/services/content-public";
+import { IMAGES } from "@/lib/data";
 
-const STEP_IMAGES = [IMAGES.hero4, IMAGES.hero1, IMAGES.hero2, IMAGES.hero5];
+export const revalidate = 60;
 
 const FEATURES = [
   "Instant PDF download after purchase",
@@ -15,19 +14,28 @@ const FEATURES = [
   "Normal, Pro, and VIP levels",
   "BMI-based plan recommendations",
   "Secure payment via Chapa & Stripe",
-  "Mobile-friendly dashboard access",
+  "Mobile-friendly access",
   "Expert-reviewed plans",
 ];
 
-export default function HowItWorksPage() {
+export default async function HowItWorksPage() {
+  const dbSteps = await getHowItWorksSteps().catch(() => []);
+
+  // Fallback steps if DB is empty
+  const steps = dbSteps.length > 0 ? dbSteps : [
+    { id: "1", step_number: 1, title: "Calculate Your BMI",   description: "Enter your details — age, weight, height, gender, and goals. Our calculator gives you your BMI and daily calorie target.", image_url: IMAGES.hero4, sort_order: 1, created_at: "" },
+    { id: "2", step_number: 2, title: "Get Recommendations",  description: "Based on your profile, we surface the plans that best match your body, goals, and fitness level.", image_url: IMAGES.hero1, sort_order: 2, created_at: "" },
+    { id: "3", step_number: 3, title: "Choose Your Duration", description: "Each plan offers multiple duration options. Pick the timeframe that fits your goals and budget.", image_url: IMAGES.hero2, sort_order: 3, created_at: "" },
+    { id: "4", step_number: 4, title: "Purchase & Access",    description: "Complete payment securely. Your plan is instantly available — download the PDF and access video content.", image_url: IMAGES.hero5, sort_order: 4, created_at: "" },
+  ];
+
   return (
     <div className="min-h-screen">
       {/* Hero */}
       <div className="pt-36 pb-16 text-center px-8">
         <AnimatedSection>
           <p className="text-[10px] font-semibold tracking-[0.28em] uppercase text-white/35 mb-4">Process</p>
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4"
-            style={{ fontFamily: "var(--font-serif)" }}>
+          <h1 style={{ fontFamily: "var(--font-serif)" }} className="text-4xl md:text-5xl font-bold text-white mb-4">
             How <em>It Works</em>
           </h1>
           <p className="text-white/40 text-sm leading-relaxed max-w-md mx-auto">
@@ -37,54 +45,52 @@ export default function HowItWorksPage() {
       </div>
 
       <div className="max-w-6xl mx-auto px-8 pb-24">
-        {/* Steps — alternating layout */}
+        {/* Steps */}
         <div className="space-y-24">
-          {HOW_IT_WORKS.map((step, i) => (
-            <AnimatedSection key={step.step} direction={i % 2 === 0 ? "left" : "right"}>
-              <div className={`grid md:grid-cols-2 gap-12 items-center ${i % 2 === 1 ? "md:[&>*:first-child]:order-2" : ""}`}>
-                {/* Text */}
-                <div>
-                  <p className="text-8xl font-black leading-none mb-5"
-                    style={{ color: "rgba(255,255,255,0.04)", fontFamily: "var(--font-serif)" }}>
-                    {step.step}
-                  </p>
-                  <div className="w-11 h-11 card rounded-xl flex items-center justify-center mb-5">
-                    <span className="text-white/60 font-bold text-sm">{step.step}</span>
+          {steps.map((step, i) => {
+            const isEven = i % 2 === 0;
+            const imgSrc = step.image_url ?? IMAGES.hero1;
+            return (
+              <AnimatedSection key={step.id} direction={isEven ? "left" : "right"}>
+                <div className={`grid md:grid-cols-2 gap-12 items-center`}>
+                  <div className={!isEven ? "md:order-2" : ""}>
+                    <p className="text-8xl font-black leading-none mb-5"
+                      style={{ color: "rgba(255,255,255,0.04)", fontFamily: "var(--font-serif)" }}>
+                      0{step.step_number}
+                    </p>
+                    <div className="w-11 h-11 card rounded-xl flex items-center justify-center mb-5">
+                      <span className="text-white/60 font-bold text-sm">0{step.step_number}</span>
+                    </div>
+                    <h2 className="text-3xl font-bold text-white mb-4" style={{ fontFamily: "var(--font-serif)" }}>
+                      {step.title}
+                    </h2>
+                    <p className="text-white/45 text-base leading-relaxed">{step.description}</p>
+                    {i === steps.length - 1 && (
+                      <Link href="/plans" className="btn btn-white mt-8 inline-flex">
+                        Browse Plans <ArrowRight size={14} />
+                      </Link>
+                    )}
                   </div>
-                  <h2 className="text-3xl font-bold text-white mb-4"
-                    style={{ fontFamily: "var(--font-serif)" }}>
-                    {step.title}
-                  </h2>
-                  <p className="text-white/45 text-base leading-relaxed">{step.description}</p>
-                  {i === HOW_IT_WORKS.length - 1 && (
-                    <Link href="/plans" className="btn btn-white mt-8 inline-flex">
-                      Browse Plans <ArrowRight size={14} />
-                    </Link>
-                  )}
-                </div>
-
-                {/* Image */}
-                <div className="relative h-72 md:h-96 rounded-2xl overflow-hidden">
-                  <Image src={STEP_IMAGES[i]} alt={step.title} fill
-                    className="object-cover" sizes="600px" />
-                  <div className="absolute inset-0 bg-black/20" />
-                  <div className="absolute top-4 right-4 w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-lg">
-                    <span className="text-black font-black text-base">{step.step}</span>
+                  <div className={`relative h-72 md:h-96 rounded-2xl overflow-hidden ${!isEven ? "md:order-1" : ""}`}>
+                    <Image src={imgSrc} alt={step.title} fill className="object-cover" sizes="600px" />
+                    <div className="absolute inset-0 bg-black/20" />
+                    <div className="absolute top-4 right-4 w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-lg">
+                      <span className="text-black font-black text-base">0{step.step_number}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </AnimatedSection>
-          ))}
+              </AnimatedSection>
+            );
+          })}
         </div>
 
-        {/* Features checklist */}
+        {/* Features */}
         <AnimatedSection className="mt-24">
           <div className="card p-10 md:p-14">
             <div className="grid md:grid-cols-2 gap-10 items-center">
               <div>
                 <p className="text-[10px] font-semibold tracking-[0.28em] uppercase text-white/35 mb-4">Included</p>
-                <h2 className="text-3xl font-bold text-white mb-8"
-                  style={{ fontFamily: "var(--font-serif)" }}>
+                <h2 className="text-3xl font-bold text-white mb-8" style={{ fontFamily: "var(--font-serif)" }}>
                   Everything you need<br /><em>to succeed</em>
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -106,8 +112,7 @@ export default function HowItWorksPage() {
 
         {/* CTA */}
         <AnimatedSection className="text-center mt-20">
-          <h2 className="text-3xl font-bold text-white mb-4"
-            style={{ fontFamily: "var(--font-serif)" }}>
+          <h2 className="text-3xl font-bold text-white mb-4" style={{ fontFamily: "var(--font-serif)" }}>
             Ready to get <em>started?</em>
           </h2>
           <p className="text-white/40 text-sm mb-8">Calculate your BMI and find your perfect plan.</p>
@@ -115,9 +120,7 @@ export default function HowItWorksPage() {
             <Link href="/bmi" className="btn btn-white py-3.5 px-10">
               Calculate BMI <ArrowRight size={14} />
             </Link>
-            <Link href="/plans" className="btn btn-outline py-3.5 px-10">
-              Browse Plans
-            </Link>
+            <Link href="/plans" className="btn btn-outline py-3.5 px-10">Browse Plans</Link>
           </div>
         </AnimatedSection>
       </div>
