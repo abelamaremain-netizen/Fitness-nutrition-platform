@@ -523,9 +523,9 @@ export function getCalorieTarget(tdee: number, goal: UserProfile["goal"]): numbe
   return tdee;
 }
 
-export function recommendPlans(profile: UserProfile): Plan[] {
+export function recommendPlans(profile: UserProfile, plansToSearch: Plan[] = PLANS): Plan[] {
   const bmi = calculateBMI(profile.weight, profile.height);
-  const scored = PLANS.map((plan) => {
+  const scored = plansToSearch.map((plan) => {
     let score = 0;
     if (plan.goal === profile.goal)                           score += 40;
     if (bmi >= plan.minBmi && bmi <= plan.maxBmi)            score += 20;
