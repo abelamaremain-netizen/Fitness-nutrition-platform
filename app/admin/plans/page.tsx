@@ -1,28 +1,21 @@
 "use client";
-import { useState } from "react";
+export const dynamic = "force-dynamic";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  Plus, Pencil, Trash2, Eye, EyeOff, X,
-  Check, ChevronDown, Upload, ArrowUpDown,
-} from "lucide-react";
-import { ADMIN_PLANS, type AdminPlan } from "@/lib/admin-data";
-import { PLANS, type DurationKey } from "@/lib/data";
+import { Plus, Pencil, Trash2, Eye, EyeOff, X, Check, Upload } from "lucide-react";
+import { createBrowserClient } from "@/src/lib/supabase/client";
+import type { DurationKey } from "@/lib/data";
 
-// ─── STATUS BADGE ─────────────────────────────────────────────────────────────
-function LevelBadge({ level }: { level: string }) {
-  const s: Record<string, string> = {
-    Normal: "bg-white/8 text-white/55",
-    Pro:    "bg-white/12 text-white/75",
-    VIP:    "bg-white/18 text-white",
-  };
-  return (
-    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-widest uppercase ${s[level]}`}>
-      {level}
-    </span>
-  );
+interface DBPlan {
+  id: string;
+  title: string;
+  description: string;
+  goal: string;
+  level: string;
+  published: boolean;
+  created_at: string;
 }
 
-// ─── DURATION ROW in form ─────────────────────────────────────────────────────
 const DURATION_OPTIONS: { key: DurationKey; label: string }[] = [
   { key: "1-week",   label: "1 Week" },
   { key: "1-month",  label: "1 Month" },
@@ -30,59 +23,152 @@ const DURATION_OPTIONS: { key: DurationKey; label: string }[] = [
   { key: "6-months", label: "6 Months" },
 ];
 
+const levelStyle: Record<string, string> = {
+  Normal: "bg-white/8 text-white/55",
+  Pro:    "bg-white/12 text-white/75",
+  VIP:    "bg-white/18 text-white",
+};
+
 // ─── PLAN FORM MODAL ──────────────────────────────────────────────────────────
 function PlanFormModal({
-  plan, onClose,
+  plan, onClose, onSaved,
 }: {
-  plan: AdminPlan | null;
+  plan: DBPlan | null;
   onClose: () => void;
+  onSaved: () => void;
 }) {
   const isEdit = !!plan;
-  const existing = plan ? PLANS.find((p) => p.id === plan.id) : null;
 
   const [form, setForm] = useState({
-    title:       existing?.title       ?? "",
-    description: existing?.description ?? "",
-    goal:        existing?.goalLabel   ?? "Weight Loss",
-    level:       (existing?.level      ?? "Normal") as "Normal" | "Pro" | "VIP",
-    published:   plan?.published       ?? true,
-    videoUrl:    existing?.videoUrl    ?? "",
-    pdfNote:     "Upload PDF",
+    title:            plan?.title       ?? "",
+    description:      plan?.description ?? "",
+    long_description: "",
+    goal:             plan?.goal        ?? "lifestyle",
+    level:            (plan?.level      ?? "Normal") as "Normal" | "Pro" | "VIP",
+    published:        plan?.published   ?? true,
+    video_url:        "",
+    video_thumb:      "",
+    tags:             "",
+    includes:         "",
   });
 
   const [durations, setDurations] = useState<Record<DurationKey, { enabled: boolean; price: string }>>(
     DURATION_OPTIONS.reduce((acc, d) => {
-      const existingDur = existing?.durations.find((ed) => ed.key === d.key);
-      acc[d.key] = { enabled: !!existingDur, price: existingDur ? String(existingDur.price) : "" };
+      acc[d.key] = { enabled: false, price: "" };
       return acc;
     }, {} as Record<DurationKey, { enabled: boolean; price: string }>)
   );
 
-  const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error,  setError]  = useState("");
 
-  const handleSave = () => {
-    setSaved(true);
-    setTimeout(() => { setSaved(false); onClose(); }, 800);
+  // Load existing durations when editing
+  useEffect(() => {
+    if (!plan) return;
+    const supabase = createBrowserClient();
+    supabase.from("plan_durations").select("*").eq("plan_id", plan.id).then(({ data }) => {
+      if (!data) return;
+      setDurations((prev) => {
+        const next = { ...prev };
+        for (const d of data) {
+          if (next[d.key as DurationKey]) {
+            next[d.key as DurationKey] = { enabled: true, price: String(d.price) };
+          }
+        }
+        return next;
+      });
+    });
+    // Also load full plan details
+    supabase.from("plans").select("*").eq("id", plan.id).maybeSingle().then(({ data }) => {
+      if (!data) return;
+      setForm((prev) => ({
+        ...prev,
+        long_description: data.long_description ?? "",
+        video_url:        data.video_url        ?? "",
+        video_thumb:      data.video_thumb      ?? "",
+        tags:             (data.tags   ?? []).join(", "),
+        includes:         (data.includes ?? []).join("\n"),
+      }));
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [plan]);
+
+  const handleSave = async () => {
+    if (!form.title.trim()) { setError("Title is required"); return; }
+    setSaving(true);
+    setError("");
+    const supabase = createBrowserClient();
+    try {
+      const goalMap: Record<string, string> = {
+        "Weight Loss":  "weight-loss",
+        "Muscle Gain":  "muscle-gain",
+        "Nutrition":    "nutrition",
+        "Lifestyle":    "lifestyle",
+      };
+      const goalKey = goalMap[form.goal] ?? form.goal;
+
+      const payload = {
+        title:            form.title.trim(),
+        description:      form.description.trim(),
+        long_description: form.long_description.trim(),
+        goal:             goalKey as "weight-loss" | "muscle-gain" | "nutrition" | "lifestyle",
+        level:            form.level.toLowerCase() as "normal" | "pro" | "vip",
+        published:        form.published,
+        video_url:        form.video_url.trim() || null,
+        video_thumb:      form.video_thumb.trim() || null,
+        tags:             form.tags.split(",").map((t) => t.trim()).filter(Boolean),
+        includes:         form.includes.split("\n").map((t) => t.trim()).filter(Boolean),
+        updated_at:       new Date().toISOString(),
+      };
+
+      let planId = plan?.id;
+
+      if (isEdit) {
+        const { error: e } = await supabase.from("plans").update(payload).eq("id", plan!.id);
+        if (e) throw e;
+      } else {
+        const { data, error: e } = await supabase.from("plans").insert(payload).select("id").single();
+        if (e) throw e;
+        planId = data.id;
+      }
+
+      // Upsert durations
+      if (planId) {
+        await supabase.from("plan_durations").delete().eq("plan_id", planId);
+        const durationRows = DURATION_OPTIONS
+          .filter((d) => durations[d.key].enabled && durations[d.key].price)
+          .map((d, i) => ({
+            plan_id:    planId as string,
+            key:        d.key,
+            label:      d.label,
+            price:      parseInt(durations[d.key].price, 10),
+            sort_order: i + 1,
+          }));
+        if (durationRows.length > 0) {
+          const { error: de } = await supabase.from("plan_durations").insert(durationRows);
+          if (de) throw de;
+        }
+      }
+
+      onSaved();
+      onClose();
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Save failed");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const inp = "w-full bg-[#0f0f0f] border border-white/[0.09] text-white placeholder-white/20 px-3.5 py-2.5 rounded-xl text-sm focus:outline-none focus:border-white/30 transition-colors";
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
-      onClick={(e) => e.target === e.currentTarget && onClose()}
-    >
-      <motion.div
-        initial={{ scale: 0.96, y: 16 }}
-        animate={{ scale: 1, y: 0 }}
-        exit={{ scale: 0.96, y: 16 }}
+      onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <motion.div initial={{ scale: 0.96, y: 16 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.96, y: 16 }}
         className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-white/[0.1]"
-        style={{ background: "#111" }}
-      >
-        {/* Header */}
+        style={{ background: "#111" }}>
+
         <div className="flex items-center justify-between px-6 py-5 border-b border-white/[0.07]">
           <h2 className="text-lg font-bold text-white" style={{ fontFamily: "var(--font-serif)" }}>
             {isEdit ? "Edit Plan" : "New Plan"}
@@ -92,37 +178,43 @@ function PlanFormModal({
           </button>
         </div>
 
-        <div className="p-6 space-y-6">
+        <div className="p-6 space-y-5">
           {/* Title */}
           <div>
-            <label className="field-label">Plan Title</label>
+            <label className="field-label">Title</label>
             <input type="text" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })}
               placeholder="e.g. Fat Burn Express" className={inp} />
           </div>
 
           {/* Description */}
           <div>
-            <label className="field-label">Short Description</label>
-            <textarea rows={3} value={form.description}
+            <label className="field-label">Short Description (shown on cards)</label>
+            <textarea rows={2} value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
-              placeholder="Brief description shown on plan cards..."
-              className={`${inp} resize-none`} />
+              placeholder="Brief description..." className={`${inp} resize-none`} />
           </div>
 
-          {/* Goal + Level row */}
+          {/* Long description */}
+          <div>
+            <label className="field-label">Full Description (shown on detail page)</label>
+            <textarea rows={4} value={form.long_description}
+              onChange={(e) => setForm({ ...form, long_description: e.target.value })}
+              placeholder="Detailed description..." className={`${inp} resize-none`} />
+          </div>
+
+          {/* Goal + Level */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="field-label">Goal Category</label>
-              <select value={form.goal} onChange={(e) => setForm({ ...form, goal: e.target.value })}
-                className={inp}>
-                <option>Weight Loss</option>
-                <option>Muscle Gain</option>
-                <option>Nutrition</option>
-                <option>Lifestyle</option>
+              <label className="field-label">Goal</label>
+              <select value={form.goal} onChange={(e) => setForm({ ...form, goal: e.target.value })} className={inp}>
+                <option value="weight-loss">Weight Loss</option>
+                <option value="muscle-gain">Muscle Gain</option>
+                <option value="nutrition">Nutrition</option>
+                <option value="lifestyle">Lifestyle</option>
               </select>
             </div>
             <div>
-              <label className="field-label">Plan Level</label>
+              <label className="field-label">Level</label>
               <select value={form.level}
                 onChange={(e) => setForm({ ...form, level: e.target.value as "Normal"|"Pro"|"VIP" })}
                 className={inp}>
@@ -133,38 +225,47 @@ function PlanFormModal({
             </div>
           </div>
 
-          {/* Duration pricing */}
+          {/* Tags */}
           <div>
-            <label className="field-label mb-3">Duration Options &amp; Pricing (ETB)</label>
+            <label className="field-label">Tags (comma separated)</label>
+            <input type="text" value={form.tags}
+              onChange={(e) => setForm({ ...form, tags: e.target.value })}
+              placeholder="Cardio, HIIT, Fat Loss" className={inp} />
+          </div>
+
+          {/* Includes */}
+          <div>
+            <label className="field-label">What&apos;s Included (one per line)</label>
+            <textarea rows={4} value={form.includes}
+              onChange={(e) => setForm({ ...form, includes: e.target.value })}
+              placeholder={"Detailed PDF workout guide\nVideo demonstrations\n..."}
+              className={`${inp} resize-none`} />
+          </div>
+
+          {/* Durations */}
+          <div>
+            <label className="field-label mb-3">Durations &amp; Prices (ETB)</label>
             <div className="space-y-2">
               {DURATION_OPTIONS.map((d) => (
                 <div key={d.key} className="flex items-center gap-3">
                   <button type="button"
                     onClick={() => setDurations((prev) => ({
-                      ...prev,
-                      [d.key]: { ...prev[d.key], enabled: !prev[d.key].enabled },
+                      ...prev, [d.key]: { ...prev[d.key], enabled: !prev[d.key].enabled },
                     }))}
                     className={`w-5 h-5 rounded flex items-center justify-center border flex-shrink-0 transition-all ${
-                      durations[d.key].enabled
-                        ? "bg-white border-white"
-                        : "bg-transparent border-white/20 hover:border-white/50"
+                      durations[d.key].enabled ? "bg-white border-white" : "bg-transparent border-white/20 hover:border-white/50"
                     }`}>
                     {durations[d.key].enabled && <Check size={11} className="text-black" />}
                   </button>
                   <span className={`text-sm w-24 flex-shrink-0 ${durations[d.key].enabled ? "text-white/70" : "text-white/25"}`}>
                     {d.label}
                   </span>
-                  <input
-                    type="number"
-                    disabled={!durations[d.key].enabled}
-                    placeholder="Price in ETB"
+                  <input type="number" disabled={!durations[d.key].enabled} placeholder="Price in ETB"
                     value={durations[d.key].price}
                     onChange={(e) => setDurations((prev) => ({
-                      ...prev,
-                      [d.key]: { ...prev[d.key], price: e.target.value },
+                      ...prev, [d.key]: { ...prev[d.key], price: e.target.value },
                     }))}
-                    className={`${inp} flex-1 disabled:opacity-30 disabled:cursor-not-allowed`}
-                  />
+                    className={`${inp} flex-1 disabled:opacity-30 disabled:cursor-not-allowed`} />
                 </div>
               ))}
             </div>
@@ -172,22 +273,26 @@ function PlanFormModal({
 
           {/* Video URL */}
           <div>
-            <label className="field-label">Video URL (YouTube / Vimeo)</label>
-            <input type="url" value={form.videoUrl}
-              onChange={(e) => setForm({ ...form, videoUrl: e.target.value })}
+            <label className="field-label">Video URL (hidden until payment)</label>
+            <input type="url" value={form.video_url}
+              onChange={(e) => setForm({ ...form, video_url: e.target.value })}
               placeholder="https://youtube.com/watch?v=..." className={inp} />
-            <p className="text-white/20 text-[11px] mt-1.5 pl-1">
-              This link is only revealed to customers after purchase.
-            </p>
           </div>
 
-          {/* PDF Upload */}
+          {/* Video Thumbnail */}
+          <div>
+            <label className="field-label">Video Thumbnail URL</label>
+            <input type="url" value={form.video_thumb}
+              onChange={(e) => setForm({ ...form, video_thumb: e.target.value })}
+              placeholder="https://img.youtube.com/vi/.../hqdefault.jpg" className={inp} />
+          </div>
+
+          {/* PDF */}
           <div>
             <label className="field-label">PDF Guide</label>
-            <button
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-dashed border-white/20 hover:border-white/40 text-white/40 hover:text-white/70 transition-all">
+            <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-dashed border-white/20 hover:border-white/40 text-white/40 hover:text-white/70 transition-all">
               <Upload size={15} strokeWidth={1.5} />
-              <span className="text-sm">Click to upload PDF — locked until payment</span>
+              <span className="text-sm">Click to upload PDF (Supabase Storage)</span>
             </button>
           </div>
 
@@ -198,23 +303,23 @@ function PlanFormModal({
               <p className="text-[11px] text-white/30">Visible to customers on the shop page</p>
             </div>
             <button onClick={() => setForm({ ...form, published: !form.published })}
-              className={`w-11 h-6 rounded-full transition-all flex items-center px-0.5 ${
-                form.published ? "bg-white" : "bg-white/15"
-              }`}>
+              className={`w-11 h-6 rounded-full transition-all flex items-center px-0.5 ${form.published ? "bg-white" : "bg-white/15"}`}>
               <motion.div animate={{ x: form.published ? 20 : 0 }}
                 className={`w-5 h-5 rounded-full transition-colors ${form.published ? "bg-black" : "bg-white/40"}`} />
             </button>
           </div>
 
+          {/* Error */}
+          {error && <p className="text-red-400/80 text-xs">{error}</p>}
+
           {/* Actions */}
           <div className="flex gap-3 pt-2">
-            <button onClick={onClose}
-              className="btn btn-outline flex-1 py-3">
-              Cancel
-            </button>
-            <button onClick={handleSave}
-              className="btn btn-white flex-1 py-3">
-              {saved ? <><Check size={14} /> Saved!</> : isEdit ? "Save Changes" : "Create Plan"}
+            <button onClick={onClose} className="btn btn-outline flex-1 py-3">Cancel</button>
+            <button onClick={handleSave} disabled={saving} className="btn btn-white flex-1 py-3">
+              {saving
+                ? <span className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+                : isEdit ? "Save Changes" : "Create Plan"
+              }
             </button>
           </div>
         </div>
@@ -225,19 +330,37 @@ function PlanFormModal({
 
 // ─── PLANS PAGE ───────────────────────────────────────────────────────────────
 export default function AdminPlansPage() {
-  const [plans,     setPlans]     = useState<AdminPlan[]>(ADMIN_PLANS);
-  const [modal,     setModal]     = useState<"new" | AdminPlan | null>(null);
-  const [deleteId,  setDeleteId]  = useState<string | null>(null);
-  const [search,    setSearch]    = useState("");
+  const [plans,    setPlans]    = useState<DBPlan[]>([]);
+  const [loading,  setLoading]  = useState(true);
+  const [modal,    setModal]    = useState<"new" | DBPlan | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [search,   setSearch]   = useState("");
+
+  const loadPlans = async () => {
+    const supabase = createBrowserClient();
+    setLoading(true);
+    const { data } = await supabase
+      .from("plans").select("id, title, description, goal, level, published, created_at")
+      .order("created_at", { ascending: false });
+    setPlans((data as DBPlan[]) ?? []);
+    setLoading(false);
+  };
+
+  useEffect(() => { loadPlans(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const filtered = plans.filter((p) =>
     p.title.toLowerCase().includes(search.toLowerCase())
   );
 
-  const togglePublish = (id: string) =>
-    setPlans((prev) => prev.map((p) => p.id === id ? { ...p, published: !p.published } : p));
+  const togglePublish = async (id: string, current: boolean) => {
+    const supabase = createBrowserClient();
+    await supabase.from("plans").update({ published: !current }).eq("id", id);
+    setPlans((prev) => prev.map((p) => p.id === id ? { ...p, published: !current } : p));
+  };
 
-  const confirmDelete = (id: string) => {
+  const confirmDelete = async (id: string) => {
+    const supabase = createBrowserClient();
+    await supabase.from("plans").delete().eq("id", id);
     setPlans((prev) => prev.filter((p) => p.id !== id));
     setDeleteId(null);
   };
@@ -245,100 +368,94 @@ export default function AdminPlansPage() {
   return (
     <>
       <div className="space-y-6 max-w-6xl">
-
-        {/* Header */}
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
             <p className="text-[10px] font-semibold tracking-[0.24em] uppercase text-white/35 mb-1">Management</p>
-            <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "var(--font-serif)" }}>
-              Plans
-            </h1>
+            <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "var(--font-serif)" }}>Plans</h1>
           </div>
           <button onClick={() => setModal("new")} className="btn btn-white py-2.5 px-5">
             <Plus size={14} /> New Plan
           </button>
         </div>
 
-        {/* Search */}
         <input type="text" placeholder="Search plans…" value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="w-full max-w-sm bg-[#141414] border border-white/[0.09] text-white placeholder-white/20 px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:border-white/25 transition-colors" />
 
-        {/* Table */}
         <div className="card overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-white/[0.07]">
-                  {["Plan", "Level", "Goal", "Sales", "Revenue (ETB)", "Status", "Actions"].map((h) => (
-                    <th key={h}
-                      className="px-5 py-3.5 text-left text-[10px] font-semibold tracking-[0.18em] uppercase text-white/25">
-                      <span className="flex items-center gap-1">
-                        {h}
-                        {["Sales", "Revenue (ETB)"].includes(h) && <ArrowUpDown size={10} className="opacity-40" />}
-                      </span>
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((plan) => (
-                  <tr key={plan.id}
-                    className="border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors">
-                    <td className="px-5 py-4">
-                      <p className="text-sm text-white font-medium">{plan.title}</p>
-                      <p className="text-[11px] text-white/25 mt-0.5">{plan.createdAt}</p>
-                    </td>
-                    <td className="px-5 py-4">
-                      <LevelBadge level={plan.level} />
-                    </td>
-                    <td className="px-5 py-4 text-sm text-white/50">{plan.goal}</td>
-                    <td className="px-5 py-4 text-sm font-semibold text-white/70">{plan.sales}</td>
-                    <td className="px-5 py-4 text-sm font-semibold text-white/70">
-                      {plan.revenue.toLocaleString()}
-                    </td>
-                    <td className="px-5 py-4">
-                      <button onClick={() => togglePublish(plan.id)}
-                        className={`flex items-center gap-1.5 text-[10px] font-semibold tracking-widest uppercase transition-colors ${
-                          plan.published ? "text-white/60 hover:text-white" : "text-white/25 hover:text-white/50"
-                        }`}>
-                        {plan.published
-                          ? <><Eye size={12} /> Published</>
-                          : <><EyeOff size={12} /> Hidden</>
-                        }
-                      </button>
-                    </td>
-                    <td className="px-5 py-4">
-                      <div className="flex items-center gap-2">
-                        <button onClick={() => setModal(plan)}
-                          className="p-1.5 rounded-lg text-white/30 hover:text-white hover:bg-white/[0.06] transition-all">
-                          <Pencil size={13} />
-                        </button>
-                        <button onClick={() => setDeleteId(plan.id)}
-                          className="p-1.5 rounded-lg text-white/30 hover:text-red-400 hover:bg-red-500/10 transition-all">
-                          <Trash2 size={13} />
-                        </button>
-                      </div>
-                    </td>
+            {loading ? (
+              <div className="flex items-center justify-center py-16">
+                <div className="w-6 h-6 border-2 border-white/20 border-t-white/60 rounded-full animate-spin" />
+              </div>
+            ) : filtered.length === 0 ? (
+              <p className="text-white/25 text-sm text-center py-16">
+                {plans.length === 0 ? "No plans yet. Create your first plan." : "No plans match your search."}
+              </p>
+            ) : (
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-white/[0.07]">
+                    {["Plan", "Level", "Goal", "Status", "Created", "Actions"].map((h) => (
+                      <th key={h} className="px-5 py-3.5 text-left text-[10px] font-semibold tracking-[0.18em] uppercase text-white/25">{h}</th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {filtered.map((plan) => (
+                    <tr key={plan.id} className="border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors">
+                      <td className="px-5 py-4">
+                        <p className="text-sm text-white font-medium">{plan.title}</p>
+                        <p className="text-[11px] text-white/25 mt-0.5 max-w-[220px] truncate">{plan.description}</p>
+                      </td>
+                      <td className="px-5 py-4">
+                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-widest uppercase ${levelStyle[plan.level] ?? "bg-white/8 text-white/55"}`}>
+                          {plan.level}
+                        </span>
+                      </td>
+                      <td className="px-5 py-4 text-sm text-white/50 capitalize">{plan.goal.replace("-", " ")}</td>
+                      <td className="px-5 py-4">
+                        <button onClick={() => togglePublish(plan.id, plan.published)}
+                          className={`flex items-center gap-1.5 text-[10px] font-semibold tracking-widest uppercase transition-colors ${
+                            plan.published ? "text-white/60 hover:text-white" : "text-white/25 hover:text-white/50"
+                          }`}>
+                          {plan.published ? <><Eye size={12} /> Published</> : <><EyeOff size={12} /> Hidden</>}
+                        </button>
+                      </td>
+                      <td className="px-5 py-4 text-[11px] text-white/30">
+                        {new Date(plan.created_at).toLocaleDateString("en-GB")}
+                      </td>
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => setModal(plan)}
+                            className="p-1.5 rounded-lg text-white/30 hover:text-white hover:bg-white/[0.06] transition-all">
+                            <Pencil size={13} />
+                          </button>
+                          <button onClick={() => setDeleteId(plan.id)}
+                            className="p-1.5 rounded-lg text-white/30 hover:text-red-400 hover:bg-red-500/10 transition-all">
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Plan form modal */}
       <AnimatePresence>
         {modal && (
           <PlanFormModal
             plan={modal === "new" ? null : modal}
             onClose={() => setModal(null)}
+            onSaved={loadPlans}
           />
         )}
       </AnimatePresence>
 
-      {/* Delete confirm */}
       <AnimatePresence>
         {deleteId && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -349,9 +466,7 @@ export default function AdminPlansPage() {
                 <Trash2 size={18} className="text-red-400" />
               </div>
               <h3 className="text-white font-bold text-lg mb-2">Delete Plan?</h3>
-              <p className="text-white/40 text-sm mb-6">
-                This will permanently remove the plan and all its content. This cannot be undone.
-              </p>
+              <p className="text-white/40 text-sm mb-6">This will permanently remove the plan. This cannot be undone.</p>
               <div className="flex gap-3">
                 <button onClick={() => setDeleteId(null)} className="btn btn-outline flex-1 py-3">Cancel</button>
                 <button onClick={() => confirmDelete(deleteId)}
