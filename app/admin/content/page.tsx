@@ -2,12 +2,13 @@
 export const dynamic = "force-dynamic";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, Plus, Trash2, GripVertical, Upload, Save, Loader2 } from "lucide-react";
+import { Check, Plus, Trash2, GripVertical, Upload, Save, Loader2, Eye, EyeOff, Pencil } from "lucide-react";
 import { createBrowserClient } from "@/src/lib/supabase/client";
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
-interface Faq { id: string; question: string; answer: string; sort_order: number; }
-interface Testimonial { id: string; name: string; role: string; text: string; plan_name: string; }
+interface Faq        { id: string; question: string; answer: string; sort_order: number; }
+interface Testimonial{ id: string; name: string; role: string; text: string; plan_name: string; }
+interface BlogPost   { id: string; title: string; excerpt: string; body: string; category: string; author: string; published: boolean; }
 interface SiteContentMap { [key: string]: string; }
 
 // ─── SAVE BUTTON ─────────────────────────────────────────────────────────────
@@ -65,6 +66,9 @@ export default function AdminContentPage() {
   const [content,      setContent]      = useState<SiteContentMap>({});
   const [faqs,         setFaqs]         = useState<Faq[]>([]);
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [blogPosts,    setBlogPosts]    = useState<BlogPost[]>([]);
+  const [editingPost,  setEditingPost]  = useState<BlogPost | null>(null);
+  const [newPost,      setNewPost]      = useState(false);
 
   // Load all data on mount
   useEffect(() => {
@@ -73,12 +77,14 @@ export default function AdminContentPage() {
       supabase.from("site_content").select("key, value"),
       supabase.from("faqs").select("*").order("sort_order"),
       supabase.from("testimonials").select("id, name, role, text, plan_name").order("sort_order"),
-    ]).then(([contentRes, faqRes, testRes]) => {
+      supabase.from("blog_posts").select("id, title, excerpt, body, category, author, published").order("created_at", { ascending: false }),
+    ]).then(([contentRes, faqRes, testRes, blogRes]) => {
       const map: SiteContentMap = {};
       for (const row of contentRes.data ?? []) map[row.key] = row.value;
       setContent(map);
       setFaqs((faqRes.data as Faq[]) ?? []);
       setTestimonials((testRes.data as Testimonial[]) ?? []);
+      setBlogPosts((blogRes.data as BlogPost[]) ?? []);
       setLoading(false);
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -136,6 +142,57 @@ export default function AdminContentPage() {
     }));
     await supabase.from("testimonials").delete().neq("id", "00000000-0000-0000-0000-000000000000");
     if (rows.length > 0) await supabase.from("testimonials").upsert(rows);
+  };
+
+  const saveTerms = async () => {
+    const supabase = createBrowserClient();
+    await supabase.from("site_content").upsert({ key: "terms_content", value: content.terms_content ?? "" }, { onConflict: "key" });
+  };
+
+  const savePrivacy = async () => {
+    const supabase = createBrowserClient();
+    await supabase.from("site_content").upsert({ key: "privacy_content", value: content.privacy_content ?? "" }, { onConflict: "key" });
+  };
+
+  // ── Blog post helpers ──
+  const saveBlogPost = async (post: BlogPost) => {
+    const supabase = createBrowserClient();
+    const payload = {
+      title:     post.title,
+      excerpt:   post.excerpt,
+      body:      post.body,
+      category:  post.category,
+      author:    post.author,
+      published: post.published,
+      updated_at: new Date().toISOString(),
+    };
+    if (post.id.startsWith("new-")) {
+      const { data } = await supabase.from("blog_posts").insert(payload).select("id").single();
+      if (data) setBlogPosts((prev) => prev.map((p) => p.id === post.id ? { ...post, id: data.id } : p));
+    } else {
+      await supabase.from("blog_posts").update(payload).eq("id", post.id);
+    }
+    setEditingPost(null);
+    setNewPost(false);
+  };
+
+  const deleteBlogPost = async (id: string) => {
+    const supabase = createBrowserClient();
+    await supabase.from("blog_posts").delete().eq("id", id);
+    setBlogPosts((prev) => prev.filter((p) => p.id !== id));
+  };
+
+  const toggleBlogPublish = async (id: string, current: boolean) => {
+    const supabase = createBrowserClient();
+    await supabase.from("blog_posts").update({ published: !current }).eq("id", id);
+    setBlogPosts((prev) => prev.map((p) => p.id === id ? { ...p, published: !current } : p));
+  };
+
+  const startNewPost = () => {
+    const draft: BlogPost = { id: `new-${Date.now()}`, title: "", excerpt: "", body: "", category: "General", author: "Naodi & Samri", published: false };
+    setBlogPosts((prev) => [draft, ...prev]);
+    setEditingPost(draft);
+    setNewPost(true);
   };
 
   // ── FAQ helpers ──
@@ -333,6 +390,166 @@ export default function AdminContentPage() {
           </div>
         </div>
       </Section>
+
+      {/* ── TERMS & CONDITIONS ── */}
+      <Section title="Terms & Conditions" desc="Shown at /terms">
+        <div className="space-y-4">
+          <p className="text-white/35 text-xs leading-relaxed">
+            Write the full terms text below. Plain text — each paragraph displayed as-is on the page.
+          </p>
+          <textarea rows={16} value={content.terms_content ?? ""}
+            onChange={(e) => setKey("terms_content", e.target.value)}
+            placeholder="Enter your Terms & Conditions text here..." className={ta} />
+          <div className="flex justify-end">
+            <SaveButton onSave={saveTerms} />
+          </div>
+        </div>
+      </Section>
+
+      {/* ── PRIVACY POLICY ── */}
+      <Section title="Privacy Policy" desc="Shown at /privacy">
+        <div className="space-y-4">
+          <p className="text-white/35 text-xs leading-relaxed">
+            Write the full privacy policy text below. Plain text — each paragraph displayed as-is on the page.
+          </p>
+          <textarea rows={16} value={content.privacy_content ?? ""}
+            onChange={(e) => setKey("privacy_content", e.target.value)}
+            placeholder="Enter your Privacy Policy text here..." className={ta} />
+          <div className="flex justify-end">
+            <SaveButton onSave={savePrivacy} />
+          </div>
+        </div>
+      </Section>
+
+      {/* ── BLOG POSTS ── */}
+      <Section title="Blog Posts" desc={`${blogPosts.length} posts`}>
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <p className="text-white/35 text-xs">Create and manage articles shown at /blog</p>
+            <button onClick={startNewPost} className="btn btn-white py-2 px-4 text-[10px]">
+              <Plus size={13} /> New Post
+            </button>
+          </div>
+
+          <div className="space-y-3">
+            {blogPosts.map((post) => (
+              <motion.div key={post.id} layout
+                initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                className="border border-white/[0.07] rounded-xl overflow-hidden">
+
+                {editingPost?.id === post.id ? (
+                  /* ── Edit mode ── */
+                  <div className="p-4 space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="col-span-2">
+                        <label className="field-label">Title</label>
+                        <input value={editingPost.title}
+                          onChange={(e) => setEditingPost({ ...editingPost, title: e.target.value })}
+                          placeholder="Post title" className={inp} />
+                      </div>
+                      <div>
+                        <label className="field-label">Category</label>
+                        <select value={editingPost.category}
+                          onChange={(e) => setEditingPost({ ...editingPost, category: e.target.value })}
+                          className={inp}>
+                          <option>Nutrition</option>
+                          <option>Training</option>
+                          <option>Health</option>
+                          <option>Recovery</option>
+                          <option>General</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="field-label">Author</label>
+                        <input value={editingPost.author}
+                          onChange={(e) => setEditingPost({ ...editingPost, author: e.target.value })}
+                          className={inp} />
+                      </div>
+                      <div className="col-span-2">
+                        <label className="field-label">Excerpt (shown on blog listing)</label>
+                        <textarea rows={2} value={editingPost.excerpt}
+                          onChange={(e) => setEditingPost({ ...editingPost, excerpt: e.target.value })}
+                          placeholder="Short summary..." className={ta} />
+                      </div>
+                      <div className="col-span-2">
+                        <label className="field-label">Body (full article content)</label>
+                        <textarea rows={12} value={editingPost.body}
+                          onChange={(e) => setEditingPost({ ...editingPost, body: e.target.value })}
+                          placeholder="Full article content..." className={ta} />
+                      </div>
+                    </div>
+
+                    {/* Publish toggle */}
+                    <div className="flex items-center justify-between py-3 border-t border-white/[0.07]">
+                      <div>
+                        <p className="text-sm text-white font-medium">Published</p>
+                        <p className="text-[11px] text-white/30">Visible on the blog page</p>
+                      </div>
+                      <button type="button"
+                        onClick={() => setEditingPost({ ...editingPost, published: !editingPost.published })}
+                        className={`w-11 h-6 rounded-full transition-all flex items-center px-0.5 ${editingPost.published ? "bg-white" : "bg-white/15"}`}>
+                        <motion.div animate={{ x: editingPost.published ? 20 : 0 }}
+                          className={`w-5 h-5 rounded-full transition-colors ${editingPost.published ? "bg-black" : "bg-white/40"}`} />
+                      </button>
+                    </div>
+
+                    <div className="flex gap-3">
+                      <button onClick={() => {
+                        setEditingPost(null);
+                        setNewPost(false);
+                        if (post.id.startsWith("new-")) setBlogPosts((prev) => prev.filter((p) => p.id !== post.id));
+                      }} className="btn btn-outline flex-1 py-2.5 text-[10px]">
+                        Cancel
+                      </button>
+                      <button onClick={() => saveBlogPost(editingPost)}
+                        className="btn btn-white flex-1 py-2.5 text-[10px]">
+                        <Save size={13} /> Save Post
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  /* ── View mode ── */
+                  <div className="flex items-center gap-4 px-4 py-3.5">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-white font-medium truncate">{post.title || "Untitled"}</p>
+                      <div className="flex items-center gap-3 mt-0.5">
+                        <span className="text-[10px] text-white/30">{post.category}</span>
+                        <span className={`text-[9px] font-bold tracking-widest uppercase px-2 py-0.5 rounded-full ${
+                          post.published ? "bg-white/10 text-white/55" : "bg-yellow-500/15 text-yellow-400"
+                        }`}>
+                          {post.published ? "Published" : "Draft"}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <button onClick={() => toggleBlogPublish(post.id, post.published)}
+                        title={post.published ? "Unpublish" : "Publish"}
+                        className="p-1.5 rounded-lg text-white/25 hover:text-white hover:bg-white/[0.06] transition-all">
+                        {post.published ? <EyeOff size={13} /> : <Eye size={13} />}
+                      </button>
+                      <button onClick={() => setEditingPost(post)}
+                        className="p-1.5 rounded-lg text-white/25 hover:text-white hover:bg-white/[0.06] transition-all">
+                        <Pencil size={13} />
+                      </button>
+                      <button onClick={() => deleteBlogPost(post.id)}
+                        className="p-1.5 rounded-lg text-white/25 hover:text-red-400 hover:bg-red-500/10 transition-all">
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+            ))}
+
+            {blogPosts.length === 0 && !newPost && (
+              <p className="text-white/25 text-sm text-center py-8">
+                No blog posts yet. Click &ldquo;New Post&rdquo; to create one.
+              </p>
+            )}
+          </div>
+        </div>
+      </Section>
+
     </div>
   );
 }
