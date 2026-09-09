@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Play, Download, ExternalLink, ArrowLeft, ArrowRight, Clock } from "lucide-react";
+import { useLang } from "@/context/LangContext";
 import type { Plan, UserProfile, DurationOption } from "@/lib/data";
 import { calculateBMI, getBMICategory, calculateTDEE, getCalorieTarget } from "@/lib/data";
 
@@ -17,10 +18,10 @@ const levelStyle: Record<string, string> = {
 };
 
 function PlanRow({ plan, rank }: { plan: Plan; rank: number }) {
-  const router = useRouter();
+  const router   = useRouter();
+  const { t }    = useLang();
   const [selected, setSelected] = useState<DurationOption>(plan.durations[0]);
 
-  // No auth gate — go straight to checkout
   const handleGetPlan = () => {
     router.push(`/checkout/${plan.id}?duration=${selected.key}`);
   };
@@ -33,29 +34,26 @@ function PlanRow({ plan, rank }: { plan: Plan; rank: number }) {
       <div className="flex flex-col sm:flex-row">
 
         {/* Thumbnail */}
-        <div className="relative sm:w-52 h-44 sm:h-auto flex-shrink-0 overflow-hidden
-          rounded-tl-2xl rounded-tr-2xl sm:rounded-tr-none sm:rounded-bl-2xl">
+        <div className="relative sm:w-52 h-44 sm:h-auto flex-shrink-0 overflow-hidden rounded-tl-2xl rounded-tr-2xl sm:rounded-tr-none sm:rounded-bl-2xl">
           <Image src={plan.videoThumb} alt={plan.title} fill
             className="object-cover transition-transform duration-500 group-hover:scale-105"
             sizes="208px" />
           <div className="absolute inset-0 bg-black/45 group-hover:bg-black/25 transition-colors" />
 
-          {/* Play — locked until purchase, shown on detail page */}
+          {/* Play */}
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-11 h-11 rounded-full bg-white/15 backdrop-blur border border-white/30
-              flex items-center justify-center">
+            <div className="w-11 h-11 rounded-full bg-white/15 backdrop-blur border border-white/30 flex items-center justify-center">
               <Play size={14} className="text-white ml-0.5" fill="white" />
             </div>
           </div>
 
           {/* Rank badge */}
-          <div className={`absolute top-3 left-3 text-[9px] font-bold tracking-widest uppercase
-            px-2.5 py-1 rounded-full ${
-              rank === 0
-                ? "bg-white text-black"
-                : "bg-black/60 backdrop-blur text-white/60 border border-white/15"
-            }`}>
-            {rank === 0 ? "Best Match" : `#${rank + 1}`}
+          <div className={`absolute top-3 left-3 text-[9px] font-bold tracking-widest uppercase px-2.5 py-1 rounded-full ${
+            rank === 0
+              ? "bg-white text-black"
+              : "bg-black/60 backdrop-blur text-white/60 border border-white/15"
+          }`}>
+            {rank === 0 ? t("results.bestMatch") : `#${rank + 1}`}
           </div>
         </div>
 
@@ -65,19 +63,23 @@ function PlanRow({ plan, rank }: { plan: Plan; rank: number }) {
             <div className="flex items-start justify-between gap-3 mb-2">
               <div>
                 <div className="flex items-center gap-2 mb-1.5">
-                  <span className={`text-[9px] font-bold tracking-widest uppercase px-2 py-0.5 rounded-full ${levelStyle[plan.level]}`}>
-                    {plan.level}
+                  {/* Level badge — translated */}
+                  <span className={`text-[9px] font-bold tracking-widest uppercase px-2 py-0.5 rounded-full ${levelStyle[plan.level] ?? levelStyle.Normal}`}>
+                    {t(`filter.${plan.level.toLowerCase()}` as "filter.normal" | "filter.pro" | "filter.vip")}
                   </span>
+                  {/* Goal label — from DB, shown as-is */}
                   <span className="text-[9px] text-white/30 tracking-widest uppercase">
                     {plan.goalLabel}
                   </span>
                 </div>
+                {/* Title — from DB */}
                 <h3 className="text-white font-bold text-base leading-tight"
                   style={{ fontFamily: "var(--font-serif)" }}>
                   {plan.title}
                 </h3>
               </div>
             </div>
+            {/* Description — from DB */}
             <p className="text-white/40 text-sm leading-relaxed line-clamp-2 mb-3">
               {plan.description}
             </p>
@@ -85,7 +87,7 @@ function PlanRow({ plan, rank }: { plan: Plan; rank: number }) {
             {/* Duration selector */}
             <div>
               <p className="text-[9px] font-semibold tracking-[0.18em] uppercase text-white/25 mb-2 flex items-center gap-1.5">
-                <Clock size={10} /> Select Duration
+                <Clock size={10} /> {t("results.selectDur")}
               </p>
               <div className="flex flex-wrap gap-2">
                 {plan.durations.map((d) => (
@@ -95,6 +97,7 @@ function PlanRow({ plan, rank }: { plan: Plan; rank: number }) {
                         ? "bg-white text-black border-white"
                         : "bg-transparent text-white/45 border-white/15 hover:border-white/35 hover:text-white"
                     }`}>
+                    {/* Duration labels come from DB */}
                     {d.label}
                   </button>
                 ))}
@@ -105,9 +108,7 @@ function PlanRow({ plan, rank }: { plan: Plan; rank: number }) {
           {/* Price + Actions */}
           <div className="flex flex-col sm:flex-row sm:items-end gap-4">
             <div className="flex items-baseline gap-1.5 flex-1">
-              <span className="text-2xl font-black text-white">
-                {selected.price.toLocaleString()}
-              </span>
+              <span className="text-2xl font-black text-white">{selected.price.toLocaleString()}</span>
               <span className="text-white/35 text-sm">ETB</span>
               <span className="text-white/22 text-xs">/ {selected.label}</span>
             </div>
@@ -115,11 +116,11 @@ function PlanRow({ plan, rank }: { plan: Plan; rank: number }) {
             <div className="flex gap-2 flex-shrink-0">
               <Link href={`/plans/${plan.id}`}
                 className="btn btn-outline text-[10px] py-2.5 px-4">
-                <ExternalLink size={11} /> Details
+                <ExternalLink size={11} /> {t("plan.details")}
               </Link>
               <button onClick={handleGetPlan}
                 className="btn btn-white text-[10px] py-2.5 px-5">
-                <ArrowRight size={11} /> Get Plan
+                <ArrowRight size={11} /> {t("results.getPlan")}
               </button>
             </div>
           </div>
@@ -130,6 +131,7 @@ function PlanRow({ plan, rank }: { plan: Plan; rank: number }) {
 }
 
 export default function RecommendationResults({ plans, profile, onReset }: Props) {
+  const { t } = useLang();
   const bmi    = calculateBMI(profile.weight, profile.height);
   const bmiCat = getBMICategory(bmi);
   const tdee   = calculateTDEE(profile);
@@ -143,14 +145,13 @@ export default function RecommendationResults({ plans, profile, onReset }: Props
         className="grid grid-cols-2 md:grid-cols-4 gap-px rounded-xl overflow-hidden"
         style={{ background: "rgba(255,255,255,0.06)" }}>
         {[
-          { v: String(bmi),            label: "Your BMI",    sub: bmiCat.label },
-          { v: tdee.toLocaleString(),   label: "Maintenance", sub: "kcal / day" },
-          { v: target.toLocaleString(), label: "Daily Target",sub: "kcal / day" },
-          { v: String(plans.length),    label: "Plans Found", sub: "Ranked for you" },
+          { v: String(bmi),            label: t("results.yourBMI"),    sub: bmiCat.label },
+          { v: tdee.toLocaleString(),   label: t("results.maintenance"),sub: t("results.kcalDay") },
+          { v: target.toLocaleString(), label: t("results.target"),     sub: t("results.kcalDay") },
+          { v: String(plans.length),    label: t("results.plansFound"), sub: t("results.rankedForYou") },
         ].map((s, i) => (
           <div key={i} className="text-center px-5 py-5" style={{ background: "#161616" }}>
-            <p className="text-2xl font-black text-white"
-              style={{ fontFamily: "var(--font-serif)" }}>{s.v}</p>
+            <p className="text-2xl font-black text-white" style={{ fontFamily: "var(--font-serif)" }}>{s.v}</p>
             <p className="text-[10px] font-semibold tracking-widest uppercase text-white/35 mt-1">{s.label}</p>
             <p className="text-[11px] text-white/22 mt-0.5">{s.sub}</p>
           </div>
@@ -159,13 +160,12 @@ export default function RecommendationResults({ plans, profile, onReset }: Props
 
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-white"
-          style={{ fontFamily: "var(--font-serif)" }}>
-          Recommended <em>for You</em>
+        <h2 className="text-xl font-bold text-white" style={{ fontFamily: "var(--font-serif)" }}>
+          {t("results.recommended")}
         </h2>
         <button onClick={onReset}
           className="flex items-center gap-1.5 text-[11px] tracking-widest uppercase text-white/35 hover:text-white transition-colors">
-          <ArrowLeft size={13} /> Update Profile
+          <ArrowLeft size={13} /> {t("form.updateProfile")}
         </button>
       </div>
 

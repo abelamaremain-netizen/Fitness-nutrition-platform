@@ -3,10 +3,12 @@ import { useState } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle2, MessageCircle, Mail, Phone, MapPin } from "lucide-react";
+import { useLang } from "@/context/LangContext";
 import { submitContactMessage } from "@/src/lib/services/content-public";
 import { IMAGES } from "@/lib/data";
 
 export default function ContactPage() {
+  const { t } = useLang();
   const [form, setForm] = useState({ name: "", email: "", message: "" });
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -54,12 +56,12 @@ export default function ContactPage() {
           <motion.h1 initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
             style={{ fontFamily: "var(--font-serif)" }}
             className="text-5xl md:text-6xl font-bold text-white leading-tight mb-3">
-            GET IN <em>TOUCH</em>
+            {t("contact.heading")}
           </motion.h1>
 
           <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }}
             className="text-white/45 text-sm leading-relaxed mb-12 max-w-md mx-auto">
-            Send us a message using the form below and we&apos;ll get back to you as soon as we can.
+            {t("contact.subtext")}
           </motion.p>
 
           {/* Form — FenleyFit exact style */}
@@ -73,12 +75,12 @@ export default function ContactPage() {
                 </div>
                 <p style={{ fontFamily: "var(--font-serif)" }}
                   className="text-white text-2xl italic font-bold mb-2">
-                  Message Sent!
+                  {t("contact.sent")}
                 </p>
-                <p className="text-white/40 text-sm mb-6">We&apos;ll get back to you within 24 hours.</p>
+                <p className="text-white/40 text-sm mb-6">{t("contact.sentSub")}</p>
                 <button onClick={() => { setSent(false); setForm({ name: "", email: "", message: "" }); }}
                   className="text-[11px] tracking-[0.18em] uppercase text-white/40 hover:text-white transition-colors">
-                  Send another →
+                  {t("contact.another")}
                 </button>
               </motion.div>
             ) : (
@@ -87,13 +89,13 @@ export default function ContactPage() {
                 className="w-full space-y-4">
                 {/* Two-col row: Name + Email */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <input type="text" required placeholder="Full Name" value={form.name}
+                  <input type="text" required placeholder={t("contact.fullName")} value={form.name}
                     onChange={(e) => set("name", e.target.value)} className="pill-input" />
-                  <input type="email" required placeholder="Email" value={form.email}
+                  <input type="email" required placeholder={t("contact.email")} value={form.email}
                     onChange={(e) => set("email", e.target.value)} className="pill-input" />
                 </div>
                 {/* Message */}
-                <textarea required rows={4} placeholder="How can I Help?" value={form.message}
+                <textarea required rows={4} placeholder={t("contact.message")} value={form.message}
                   onChange={(e) => set("message", e.target.value)} className="pill-textarea" />
                 {/* Submit */}
                 <div className="pt-2">
@@ -103,9 +105,9 @@ export default function ContactPage() {
                     {loading
                       ? <span className="flex items-center gap-2 justify-center">
                           <span className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
-                          SENDING...
+                          {t("contact.sending")}
                         </span>
-                      : "SUBMIT"
+                      : t("contact.submit")
                     }
                   </motion.button>
                   {error && (
@@ -140,7 +142,7 @@ export default function ContactPage() {
           <a href="https://wa.me/251912345678" target="_blank" rel="noopener noreferrer"
             className="inline-flex items-center gap-3 btn btn-outline py-3.5 px-10 text-[11px]">
             <MessageCircle size={15} strokeWidth={1.5} />
-            CHAT ON WHATSAPP
+            {t("contact.whatsapp")}
           </a>
         </div>
       </section>

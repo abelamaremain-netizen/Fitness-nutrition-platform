@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowRight, RotateCcw } from "lucide-react";
+import { useLang } from "@/context/LangContext";
 import type { UserProfile } from "@/lib/data";
 
 interface Props {
@@ -9,6 +10,8 @@ interface Props {
   onSubmit: (profile: UserProfile) => void;
 }
 
+// Health conditions & allergies — kept in English as they are medical terms
+// that map to DB storage values. Admin can add Amharic versions in content.
 const HEALTH_CONDITIONS = [
   "Diabetes", "Hypertension", "Heart condition",
   "Back pain", "Knee injury", "Asthma", "None",
@@ -24,15 +27,9 @@ function Chip({ label, active, onClick }: { label: string; active: boolean; onCl
   );
 }
 
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-3">
-      {children}
-    </p>
-  );
-}
-
 export default function RecommendationForm({ mode, onSubmit }: Props) {
+  const { t } = useLang();
+
   const [form, setForm] = useState({
     gender: "" as "male" | "female" | "",
     age: "", weight: "", height: "",
@@ -56,9 +53,9 @@ export default function RecommendationForm({ mode, onSubmit }: Props) {
   const validate = () => {
     const e: Record<string, string> = {};
     if (!form.gender) e.gender = "Required";
-    if (!form.age || +form.age < 13 || +form.age > 100) e.age = "Valid age 13–100";
-    if (!form.weight || +form.weight < 30) e.weight = "Valid weight";
-    if (!form.height || +form.height < 100) e.height = "Valid height";
+    if (!form.age || +form.age < 13 || +form.age > 100) e.age = "13–100";
+    if (!form.weight || +form.weight < 30) e.weight = "Required";
+    if (!form.height || +form.height < 100) e.height = "Required";
     if (!form.goal) e.goal = "Required";
     if (!form.activityLevel) e.activityLevel = "Required";
     setErrors(e);
@@ -77,61 +74,86 @@ export default function RecommendationForm({ mode, onSubmit }: Props) {
     });
   };
 
-  const reset = () => { setForm({ gender: "", age: "", weight: "", height: "", goal: "", activityLevel: "", healthConditions: [], allergies: [] }); setErrors({}); };
+  const reset = () => {
+    setForm({ gender: "", age: "", weight: "", height: "", goal: "", activityLevel: "", healthConditions: [], allergies: [] });
+    setErrors({});
+  };
 
-  const goals = mode === "fitness"
-    ? [{ v: "weight-loss", l: "Lose Weight" }, { v: "muscle-gain", l: "Build Muscle" }, { v: "lifestyle", l: "Tone & Lifestyle" }]
-    : [{ v: "weight-loss", l: "Lose Weight" }, { v: "muscle-gain", l: "Gain Mass" }, { v: "nutrition", l: "Clean Nutrition" }, { v: "lifestyle", l: "Balanced Diet" }];
+  // Goal options — value is always the DB key, label is translated
+  const fitnessGoals = [
+    { v: "weight-loss",  l: t("form.loseWeight") },
+    { v: "muscle-gain",  l: t("form.buildMuscle") },
+    { v: "lifestyle",    l: t("form.toneLifestyle") },
+  ];
+  const mealGoals = [
+    { v: "weight-loss",  l: t("form.loseWeight") },
+    { v: "muscle-gain",  l: t("form.gainMass") },
+    { v: "nutrition",    l: t("form.cleanNutrition") },
+    { v: "lifestyle",    l: t("form.balancedDiet") },
+  ];
+  const goals = mode === "fitness" ? fitnessGoals : mealGoals;
 
+  // Activity options — value is always the DB key
   const activities = [
-    { v: "sedentary", l: "Sedentary", s: "Little / no exercise" },
-    { v: "light", l: "Light", s: "1–3 days/week" },
-    { v: "moderate", l: "Moderate", s: "3–5 days/week" },
-    { v: "active", l: "Very Active", s: "6–7 days/week" },
+    { v: "sedentary", l: t("form.sedentary"), s: t("form.sedentarySub") },
+    { v: "light",     l: t("form.light"),     s: t("form.lightSub") },
+    { v: "moderate",  l: t("form.moderate"),  s: t("form.moderateSub") },
+    { v: "active",    l: t("form.active"),    s: t("form.activeSub") },
   ];
 
-  const errMsg = (k: string) => errors[k] ? (
-    <p className="text-red-400/80 text-[11px] mt-1.5 pl-1">{errors[k]}</p>
-  ) : null;
+  const errMsg = (k: string) => errors[k]
+    ? <p className="text-red-400/80 text-[11px] mt-1.5 pl-1">{errors[k]}</p>
+    : null;
+
+  const SectionLabel = ({ children }: { children: React.ReactNode }) => (
+    <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-white/40 mb-3">
+      {children}
+    </p>
+  );
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
 
-      {/* ── GENDER ── */}
+      {/* Gender */}
       <div>
-        <SectionLabel>Gender {errors.gender && <span className="text-red-400/80 ml-2 normal-case">— {errors.gender}</span>}</SectionLabel>
+        <SectionLabel>
+          {t("form.gender")}
+          {errors.gender && <span className="text-red-400/80 ml-2 normal-case font-normal">— {errors.gender}</span>}
+        </SectionLabel>
         <div className="flex gap-3">
-          {(["Female", "Male"] as const).map((g) => (
-            <Chip key={g} label={g} active={form.gender === g.toLowerCase()} onClick={() => set("gender", g.toLowerCase())} />
-          ))}
+          <Chip label={t("bmi.female")} active={form.gender === "female"} onClick={() => set("gender", "female")} />
+          <Chip label={t("bmi.male")}   active={form.gender === "male"}   onClick={() => set("gender", "male")} />
         </div>
       </div>
 
-      {/* ── MEASUREMENTS ── */}
+      {/* Measurements */}
       <div>
-        <SectionLabel>Measurements</SectionLabel>
+        <SectionLabel>{t("form.measurements")}</SectionLabel>
         <div className="grid grid-cols-3 gap-3">
           <div>
-            <input type="number" placeholder="Age" value={form.age}
+            <input type="number" placeholder={t("form.age")} value={form.age}
               onChange={(e) => set("age", e.target.value)} className="pill-input" />
             {errMsg("age")}
           </div>
           <div>
-            <input type="number" placeholder="Weight (kg)" value={form.weight}
+            <input type="number" placeholder={t("form.weight")} value={form.weight}
               onChange={(e) => set("weight", e.target.value)} className="pill-input" />
             {errMsg("weight")}
           </div>
           <div>
-            <input type="number" placeholder="Height (cm)" value={form.height}
+            <input type="number" placeholder={t("form.height")} value={form.height}
               onChange={(e) => set("height", e.target.value)} className="pill-input" />
             {errMsg("height")}
           </div>
         </div>
       </div>
 
-      {/* ── GOAL ── */}
+      {/* Goal — values are DB keys, labels translated */}
       <div>
-        <SectionLabel>Your Goal {errors.goal && <span className="text-red-400/80 ml-2 normal-case">— {errors.goal}</span>}</SectionLabel>
+        <SectionLabel>
+          {t("form.yourGoal")}
+          {errors.goal && <span className="text-red-400/80 ml-2 normal-case font-normal">— {errors.goal}</span>}
+        </SectionLabel>
         <div className="flex flex-wrap gap-2">
           {goals.map((g) => (
             <Chip key={g.v} label={g.l} active={form.goal === g.v} onClick={() => set("goal", g.v)} />
@@ -139,19 +161,28 @@ export default function RecommendationForm({ mode, onSubmit }: Props) {
         </div>
       </div>
 
-      {/* ── ACTIVITY ── */}
+      {/* Activity — values are DB keys, labels translated */}
       <div>
-        <SectionLabel>Activity Level {errors.activityLevel && <span className="text-red-400/80 ml-2 normal-case">— {errors.activityLevel}</span>}</SectionLabel>
+        <SectionLabel>
+          {t("form.activityLevel")}
+          {errors.activityLevel && <span className="text-red-400/80 ml-2 normal-case font-normal">— {errors.activityLevel}</span>}
+        </SectionLabel>
         <div className="flex flex-wrap gap-2">
           {activities.map((a) => (
-            <Chip key={a.v} label={a.l} active={form.activityLevel === a.v} onClick={() => set("activityLevel", a.v)} />
+            <button key={a.v} type="button" onClick={() => set("activityLevel", a.v)}
+              className={`toggle-chip ${form.activityLevel === a.v ? "active" : ""}`}>
+              {a.l}
+            </button>
           ))}
         </div>
       </div>
 
-      {/* ── HEALTH CONDITIONS ── */}
+      {/* Health conditions */}
       <div>
-        <SectionLabel>Health Conditions <span className="normal-case font-normal">(select all that apply)</span></SectionLabel>
+        <SectionLabel>
+          {t("form.healthConditions")}{" "}
+          <span className="normal-case font-normal">{t("form.selectAll")}</span>
+        </SectionLabel>
         <div className="flex flex-wrap gap-2">
           {HEALTH_CONDITIONS.map((c) => (
             <Chip key={c} label={c} active={form.healthConditions.includes(c)} onClick={() => toggleArr("healthConditions", c)} />
@@ -159,10 +190,13 @@ export default function RecommendationForm({ mode, onSubmit }: Props) {
         </div>
       </div>
 
-      {/* ── ALLERGIES (meal only) ── */}
+      {/* Allergies — meal only */}
       {mode === "meal" && (
         <div>
-          <SectionLabel>Food Allergies <span className="normal-case font-normal">(select all that apply)</span></SectionLabel>
+          <SectionLabel>
+            {t("form.allergies")}{" "}
+            <span className="normal-case font-normal">{t("form.selectAll")}</span>
+          </SectionLabel>
           <div className="flex flex-wrap gap-2">
             {ALLERGIES.map((a) => (
               <Chip key={a} label={a} active={form.allergies.includes(a)} onClick={() => toggleArr("allergies", a)} />
@@ -171,17 +205,14 @@ export default function RecommendationForm({ mode, onSubmit }: Props) {
         </div>
       )}
 
-      {/* ── SUBMIT ── */}
+      {/* Submit */}
       <div className="flex gap-3 pt-2">
-        <motion.button
-          type="submit"
+        <motion.button type="submit"
           whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}
-          className="btn btn-white flex-1 py-3.5 text-[11px]"
-        >
-          Find My Plans <ArrowRight size={14} />
+          className="btn btn-white flex-1 py-3.5 text-[11px]">
+          {t("form.findPlans")} <ArrowRight size={14} />
         </motion.button>
-        <button type="button" onClick={reset}
-          className="btn btn-outline px-4 py-3.5">
+        <button type="button" onClick={reset} className="btn btn-outline px-4 py-3.5">
           <RotateCcw size={14} />
         </button>
       </div>
