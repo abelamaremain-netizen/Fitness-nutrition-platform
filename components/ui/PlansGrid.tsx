@@ -3,42 +3,38 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search } from "lucide-react";
 import PlanCard from "@/components/ui/PlanCard";
+import { useLang } from "@/context/LangContext";
 import {
-  DURATION_FILTERS, LEVEL_FILTERS,
   type Plan, type PlanGoal, type PlanLevel, type DurationKey,
 } from "@/lib/data";
 
-const GOAL_FILTERS: { value: PlanGoal | "all"; label: string }[] = [
-  { value: "all",         label: "All Goals" },
-  { value: "weight-loss", label: "Weight Loss" },
-  { value: "muscle-gain", label: "Muscle Gain" },
-  { value: "nutrition",   label: "Nutrition" },
-  { value: "lifestyle",   label: "Lifestyle" },
-];
-
-const SORTS = [
-  { value: "featured",  label: "Featured" },
-  { value: "price-asc", label: "Price ↑" },
-  { value: "price-desc",label: "Price ↓" },
-];
+// ─── FILTER DEFINITIONS ───────────────────────────────────────────────────────
+// Values are always DB keys — only labels are translated
+const GOAL_VALUES:     (PlanGoal | "all")[]  = ["all", "weight-loss", "muscle-gain", "nutrition", "lifestyle"];
+const LEVEL_VALUES:    (PlanLevel | "all")[] = ["all", "Normal", "Pro", "VIP"];
+const DURATION_VALUES: (DurationKey | "all")[] = ["all", "1-week", "1-month", "3-months", "6-months"];
+const SORT_VALUES      = ["featured", "price-asc", "price-desc"];
 
 export default function PlansGrid({ plans }: { plans: Plan[] }) {
+  const { t, lang } = useLang();
+
   const [goal,     setGoal]     = useState<PlanGoal | "all">("all");
   const [level,    setLevel]    = useState<PlanLevel | "all">("all");
   const [duration, setDuration] = useState<DurationKey | "all">("all");
   const [search,   setSearch]   = useState("");
   const [sort,     setSort]     = useState("featured");
 
+  // ── Filter + sort — all comparisons use original DB keys, never translated labels ──
   const filtered = plans
     .filter((p) => {
       const matchGoal     = goal     === "all" || p.goal  === goal;
-      const matchLevel    = level    === "all" || p.level === level;
+      const matchLevel    = level    === "all" || p.level.toLowerCase() === level.toLowerCase();
       const matchDuration = duration === "all" || p.durations.some((d) => d.key === duration);
       const q = search.toLowerCase();
       const matchSearch   = !q
         || p.title.toLowerCase().includes(q)
         || p.description.toLowerCase().includes(q)
-        || p.tags.some((t) => t.toLowerCase().includes(q));
+        || p.tags.some((tag) => tag.toLowerCase().includes(q));
       return matchGoal && matchLevel && matchDuration && matchSearch;
     })
     .sort((a, b) => {
@@ -53,29 +49,58 @@ export default function PlansGrid({ plans }: { plans: Plan[] }) {
 
   const hasFilters = goal !== "all" || level !== "all" || duration !== "all" || search !== "";
 
+  // ── Label helpers — map key → translated display label ──
+  const goalLabel = (v: PlanGoal | "all") => ({
+    "all":          t("filter.allGoals"),
+    "weight-loss":  t("filter.weightLoss"),
+    "muscle-gain":  t("filter.muscleGain"),
+    "nutrition":    t("filter.nutrition"),
+    "lifestyle":    t("filter.lifestyle"),
+  }[v]);
+
+  const levelLabel = (v: PlanLevel | "all") => ({
+    "all":    t("filter.allLevels"),
+    "Normal": t("filter.normal"),
+    "Pro":    t("filter.pro"),
+    "VIP":    t("filter.vip"),
+  }[v]);
+
+  const durLabel = (v: DurationKey | "all") => ({
+    "all":       t("filter.allDurations"),
+    "1-week":    t("filter.1week"),
+    "1-month":   t("filter.1month"),
+    "3-months":  t("filter.3months"),
+    "6-months":  t("filter.6months"),
+  }[v]);
+
+  const sortLabel = (v: string) => ({
+    "featured":   t("filter.featured"),
+    "price-asc":  t("filter.priceAsc"),
+    "price-desc": t("filter.priceDesc"),
+  }[v]);
+
   return (
     <div className="max-w-6xl mx-auto px-8 py-12">
-      {/* Filter bar */}
+      {/* Filters */}
       <div className="space-y-4 mb-10">
+
         {/* Search + Sort */}
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
             <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/25" />
-            <input type="text" placeholder="Search plans…" value={search}
+            <input type="text" placeholder={t("filter.searchPlans")} value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-[#161616] border border-white/10 text-white
-                placeholder-white/25 text-sm pl-10 pr-4 py-3 rounded-xl
-                focus:outline-none focus:border-white/30 transition-colors" />
+              className="w-full bg-[#161616] border border-white/10 text-white placeholder-white/25 text-sm pl-10 pr-4 py-3 rounded-xl focus:outline-none focus:border-white/30 transition-colors" />
           </div>
           <div className="flex gap-1 flex-shrink-0">
-            {SORTS.map((s) => (
-              <button key={s.value} onClick={() => setSort(s.value)}
+            {SORT_VALUES.map((s) => (
+              <button key={s} onClick={() => setSort(s)}
                 className={`px-4 py-3 rounded-xl text-[11px] font-semibold tracking-wider uppercase border transition-all ${
-                  sort === s.value
+                  sort === s
                     ? "bg-white text-black border-white"
                     : "bg-transparent text-white/40 border-white/12 hover:border-white/30 hover:text-white"
                 }`}>
-                {s.label}
+                {sortLabel(s)}
               </button>
             ))}
           </div>
@@ -83,12 +108,12 @@ export default function PlansGrid({ plans }: { plans: Plan[] }) {
 
         {/* Goal */}
         <div>
-          <p className="text-[9px] font-semibold tracking-[0.22em] uppercase text-white/25 mb-2">Goal</p>
+          <p className="text-[9px] font-semibold tracking-[0.22em] uppercase text-white/25 mb-2">{t("filter.goal")}</p>
           <div className="flex flex-wrap gap-2">
-            {GOAL_FILTERS.map((g) => (
-              <button key={g.value} onClick={() => setGoal(g.value)}
-                className={`toggle-chip ${goal === g.value ? "active" : ""}`}>
-                {g.label}
+            {GOAL_VALUES.map((v) => (
+              <button key={v} onClick={() => setGoal(v)}
+                className={`toggle-chip ${goal === v ? "active" : ""}`}>
+                {goalLabel(v)}
               </button>
             ))}
           </div>
@@ -96,12 +121,12 @@ export default function PlansGrid({ plans }: { plans: Plan[] }) {
 
         {/* Level */}
         <div>
-          <p className="text-[9px] font-semibold tracking-[0.22em] uppercase text-white/25 mb-2">Level</p>
+          <p className="text-[9px] font-semibold tracking-[0.22em] uppercase text-white/25 mb-2">{t("filter.level")}</p>
           <div className="flex flex-wrap gap-2">
-            {LEVEL_FILTERS.map((l) => (
-              <button key={l.key} onClick={() => setLevel(l.key)}
-                className={`toggle-chip ${level === l.key ? "active" : ""}`}>
-                {l.label}
+            {LEVEL_VALUES.map((v) => (
+              <button key={v} onClick={() => setLevel(v)}
+                className={`toggle-chip ${level === v ? "active" : ""}`}>
+                {levelLabel(v)}
               </button>
             ))}
           </div>
@@ -109,12 +134,12 @@ export default function PlansGrid({ plans }: { plans: Plan[] }) {
 
         {/* Duration */}
         <div>
-          <p className="text-[9px] font-semibold tracking-[0.22em] uppercase text-white/25 mb-2">Duration</p>
+          <p className="text-[9px] font-semibold tracking-[0.22em] uppercase text-white/25 mb-2">{t("filter.duration")}</p>
           <div className="flex flex-wrap gap-2">
-            {DURATION_FILTERS.map((d) => (
-              <button key={d.key} onClick={() => setDuration(d.key)}
-                className={`toggle-chip ${duration === d.key ? "active" : ""}`}>
-                {d.label}
+            {DURATION_VALUES.map((v) => (
+              <button key={v} onClick={() => setDuration(v)}
+                className={`toggle-chip ${duration === v ? "active" : ""}`}>
+                {durLabel(v)}
               </button>
             ))}
           </div>
@@ -124,12 +149,12 @@ export default function PlansGrid({ plans }: { plans: Plan[] }) {
       {/* Count + clear */}
       <div className="flex items-center justify-between mb-8">
         <p className="text-[11px] tracking-widest uppercase text-white/30">
-          {filtered.length} plan{filtered.length !== 1 ? "s" : ""}
+          {filtered.length} {filtered.length !== 1 ? t("nav.plans").toLowerCase() : t("nav.plans").toLowerCase().replace(/s$/, "")}
         </p>
         {hasFilters && (
           <button onClick={clearAll}
             className="text-[11px] tracking-widest uppercase text-white/30 hover:text-white transition-colors underline">
-            Clear filters
+            ✕
           </button>
         )}
       </div>
@@ -151,11 +176,11 @@ export default function PlansGrid({ plans }: { plans: Plan[] }) {
         ) : (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-28">
             <p style={{ fontFamily: "var(--font-serif)" }} className="text-white/30 text-xl italic mb-3">
-              No plans match your filters.
+              {lang === "am" ? "ምንም ዕቅዶች አልተገኙም።" : "No plans match your filters."}
             </p>
             <button onClick={clearAll}
               className="text-[11px] tracking-widest uppercase text-white/35 hover:text-white transition-colors underline">
-              Clear filters
+              ✕
             </button>
           </motion.div>
         )}

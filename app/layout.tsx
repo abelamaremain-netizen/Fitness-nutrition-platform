@@ -4,8 +4,9 @@ import { Playfair_Display } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import { LangProvider } from "@/context/LangContext";
 
-const geist = Geist({ variable: "--font-sans", subsets: ["latin"] });
+const geist    = Geist({ variable: "--font-sans", subsets: ["latin"] });
 const playfair = Playfair_Display({ variable: "--font-serif", subsets: ["latin"], weight: ["400","700","900"] });
 
 export const metadata: Metadata = {
@@ -18,9 +19,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`${geist.variable} ${playfair.variable}`}>
       <body style={{ background: "#0d0d0d", color: "#f0f0f0" }}
         className="min-h-screen flex flex-col antialiased">
-        <Navbar />
-        <main className="flex-1">{children}</main>
-        <Footer />
+        <LangProvider>
+          <Navbar />
+          <main className="flex-1">{children}</main>
+          <Footer />
+        </LangProvider>
       </body>
     </html>
   );
