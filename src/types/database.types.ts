@@ -491,7 +491,7 @@ export type Database = {
       plan_level: "normal" | "pro" | "vip";
       plan_duration_key: "1-week" | "1-month" | "3-months" | "6-months";
       payment_method: "telebirr" | "cbe" | "chapa" | "card";
-      order_status: "pending" | "completed" | "failed";
+      order_status: "pending" | "completed" | "failed" | "pending_verification";
     };
     CompositeTypes: { [key: string]: never };
   };
