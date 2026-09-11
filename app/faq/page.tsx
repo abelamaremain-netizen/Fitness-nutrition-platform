@@ -3,24 +3,20 @@ import { ArrowRight, MessageCircle } from "lucide-react";
 import AnimatedSection from "@/components/ui/AnimatedSection";
 import FaqAccordion from "./FaqAccordion";
 import { getFaqs } from "@/src/lib/services/content-public";
-import { FAQS } from "@/lib/data";
 
-export const revalidate = 0; // always fetch fresh from DB
+export const revalidate = 0;
 
 export default async function FaqPage() {
   const dbFaqs = await getFaqs().catch(() => []);
-
-  // Fallback to hardcoded if DB is empty
-  const faqs = dbFaqs.length > 0
-    ? dbFaqs.map((f) => ({ id: f.id, q: f.question, a: f.answer }))
-    : FAQS.map((f, i) => ({ id: String(i), q: f.q, a: f.a }));
+  const faqs = dbFaqs.map((f) => ({ id: f.id, q: f.question, a: f.answer }));
 
   return (
     <div className="min-h-screen">
       <div className="pt-36 pb-16 text-center px-8">
         <AnimatedSection>
           <p className="text-[10px] font-semibold tracking-[0.28em] uppercase text-white/35 mb-4">Help</p>
-          <h1 style={{ fontFamily: "var(--font-serif)" }} className="text-4xl md:text-5xl font-bold text-white mb-4">
+          <h1 style={{ fontFamily: "var(--font-serif)" }}
+            className="text-4xl md:text-5xl font-bold text-white mb-4">
             Frequently Asked <em>Questions</em>
           </h1>
           <p className="text-white/40 text-sm leading-relaxed max-w-md mx-auto">
@@ -30,7 +26,13 @@ export default async function FaqPage() {
       </div>
 
       <div className="max-w-3xl mx-auto px-8 pb-24">
-        <FaqAccordion faqs={faqs} />
+        {faqs.length === 0 ? (
+          <p className="text-white/30 text-center text-sm py-12">
+            No FAQs yet — check back soon or contact us directly.
+          </p>
+        ) : (
+          <FaqAccordion faqs={faqs} />
+        )}
 
         <AnimatedSection className="mt-16">
           <div className="card p-10 text-center">

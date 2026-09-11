@@ -4,9 +4,8 @@ import Link from "next/link";
 import { ArrowLeft, Clock } from "lucide-react";
 import AnimatedSection from "@/components/ui/AnimatedSection";
 import { getBlogPost, getPublishedBlogPosts } from "@/src/lib/services/content-public";
-import { BLOG_POSTS } from "@/lib/data";
 
-export const revalidate = 60;
+export const revalidate = 0;
 
 export default async function BlogPostPage({
   params,
@@ -15,28 +14,23 @@ export default async function BlogPostPage({
 }) {
   const { id } = await params;
 
-  // Try DB first, fallback to hardcoded
-  const dbPost = await getBlogPost(id).catch(() => null);
-  const post = dbPost ?? BLOG_POSTS.find((p) => p.id === id);
-
+  const post = await getBlogPost(id).catch(() => null);
   if (!post) notFound();
 
-  // Related posts — same category
-  const allPosts = await getPublishedBlogPosts().catch(() => BLOG_POSTS);
+  const allPosts = await getPublishedBlogPosts().catch(() => []);
   const related  = allPosts
-    .filter((p) => p.id !== id && (("category" in p ? p.category : (p as typeof BLOG_POSTS[0]).category) === ("category" in post ? post.category : (post as typeof BLOG_POSTS[0]).category)))
+    .filter((p) => p.id !== id && p.category === post.category)
     .slice(0, 3);
 
-  // Handle both DB shape and hardcoded shape
+  // All fields come from DB now
   const title    = post.title;
-  const excerpt  = post.excerpt;
-  const body     = "body" in post ? post.body : post.excerpt;
-  const category = "category" in post ? post.category : "";
-  const author   = "author" in post ? post.author : "Naodi & Samri";
-  const imageUrl = "image_url" in post ? post.image_url : ("image" in post ? (post as { image: string }).image : null);
-  const date     = "created_at" in post
+  const body     = post.body || post.excerpt;
+  const category = post.category;
+  const author   = post.author;
+  const imageUrl = post.image_url;
+  const date     = post.created_at
     ? new Date(post.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })
-    : ("date" in post ? (post as { date: string }).date : "");
+    : "";
 
   return (
     <div className="min-h-screen">
@@ -90,7 +84,7 @@ export default async function BlogPostPage({
         {/* Body */}
         <AnimatedSection>
           <div className="prose-custom text-white/60 text-sm leading-8 space-y-5 whitespace-pre-line">
-            {body || excerpt}
+            {body}
           </div>
         </AnimatedSection>
 
@@ -103,8 +97,8 @@ export default async function BlogPostPage({
             </h2>
             <div className="grid md:grid-cols-3 gap-6">
               {related.map((r) => {
-                const rImg   = "image_url" in r ? r.image_url : ("image" in r ? (r as { image: string }).image : null);
-                const rCat   = "category" in r ? r.category : "";
+                const rImg   = r.image_url;
+                const rCat   = r.category;
                 const rTitle = r.title;
                 return (
                   <Link key={r.id} href={`/blog/${r.id}`}>

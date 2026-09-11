@@ -3,29 +3,12 @@ import { Star, Quote } from "lucide-react";
 import AnimatedSection from "@/components/ui/AnimatedSection";
 import StatCounter from "@/components/ui/StatCounter";
 import { getPublishedTestimonials } from "@/src/lib/services/content-public";
-import { STATS, IMAGES, TESTIMONIALS } from "@/lib/data";
+import { STATS, IMAGES } from "@/lib/data";
 
-export const revalidate = 0; // always fetch fresh from DB
+export const revalidate = 0;
 
 export default async function TestimonialsPage() {
-  const dbTestimonials = await getPublishedTestimonials().catch(() => []);
-
-  // Fallback to hardcoded if DB empty
-  const testimonials = dbTestimonials.length > 0
-    ? dbTestimonials
-    : TESTIMONIALS.map((t) => ({
-        id: String(t.id),
-        name: t.name,
-        role: t.role,
-        text: t.text,
-        plan_name: t.plan,
-        image_url: t.image,
-        rating: t.rating,
-        published: true,
-        sort_order: t.id,
-        created_at: "",
-      }));
-
+  const testimonials = await getPublishedTestimonials().catch(() => []);
   const [featured, ...rest] = testimonials;
 
   return (

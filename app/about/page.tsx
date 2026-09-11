@@ -16,13 +16,7 @@ const VALUES = [
 ];
 
 export default async function AboutPage() {
-  const team = await getTeamMembers().catch(() => []);
-
-  // Fallback to hardcoded owners if DB is empty
-  const teamMembers = team.length > 0 ? team : [
-    { id: "1", name: "Naodi", role: "Co-Founder & Fitness Coach", bio: "Certified fitness coach specialising in body recomposition, strength training, and women's wellness. Naodi built her own transformation and now helps others do the same.", image_url: IMAGES.naodi2, sort_order: 1, created_at: "" },
-    { id: "2", name: "Samri", role: "Co-Founder & Nutrition Expert", bio: "Nutrition specialist and certified personal trainer focused on sustainable diet plans, hormonal health, and helping women achieve lasting results through science-backed guidance.", image_url: IMAGES.samri2, sort_order: 2, created_at: "" },
-  ];
+  const teamMembers = await getTeamMembers().catch(() => []);
 
   return (
     <div className="min-h-screen">

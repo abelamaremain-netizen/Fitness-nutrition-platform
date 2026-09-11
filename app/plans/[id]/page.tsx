@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { getPlanBySlug, getPlanDurations } from "@/src/lib/services/plans";
-import { getPublishedTestimonials } from "@/src/lib/services/content";
+import { getPublishedTestimonials } from "@/src/lib/services/content-public";
 import { mapPlan } from "@/lib/mappers";
 import PlanDetailClient from "./PlanDetailClient";
 

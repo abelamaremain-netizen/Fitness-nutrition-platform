@@ -19,15 +19,7 @@ const FEATURES = [
 ];
 
 export default async function HowItWorksPage() {
-  const dbSteps = await getHowItWorksSteps().catch(() => []);
-
-  // Fallback steps if DB is empty
-  const steps = dbSteps.length > 0 ? dbSteps : [
-    { id: "1", step_number: 1, title: "Calculate Your BMI",   description: "Enter your details — age, weight, height, gender, and goals. Our calculator gives you your BMI and daily calorie target.", image_url: IMAGES.hero4, sort_order: 1, created_at: "" },
-    { id: "2", step_number: 2, title: "Get Recommendations",  description: "Based on your profile, we surface the plans that best match your body, goals, and fitness level.", image_url: IMAGES.hero1, sort_order: 2, created_at: "" },
-    { id: "3", step_number: 3, title: "Choose Your Duration", description: "Each plan offers multiple duration options. Pick the timeframe that fits your goals and budget.", image_url: IMAGES.hero2, sort_order: 3, created_at: "" },
-    { id: "4", step_number: 4, title: "Purchase & Access",    description: "Complete payment securely. Your plan is instantly available — download the PDF and access video content.", image_url: IMAGES.hero5, sort_order: 4, created_at: "" },
-  ];
+  const steps = await getHowItWorksSteps().catch(() => []);
 
   return (
     <div className="min-h-screen">

@@ -1,5 +1,5 @@
 "use client";
-import { useState, use, Suspense } from "react";
+import { useState, use, Suspense, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -11,7 +11,7 @@ import {
   Phone, Building2, MessageCircle, Mail,
   Clock, Shield, ExternalLink,
 } from "lucide-react";
-import { PLANS, type DurationOption } from "@/lib/data";
+import type { Plan, DurationOption } from "@/lib/data";
 import { createBrowserClient } from "@/src/lib/supabase/client";
 
 // ─── PAYMENT DETAILS ──────────────────────────────────────────────────────────
@@ -47,8 +47,48 @@ function CheckoutContent({ id }: { id: string }) {
   const searchParams = useSearchParams();
   const durationKey  = searchParams.get("duration") ?? "";
 
-  const plan = PLANS.find((p) => p.id === id);
-  if (!plan) notFound();
+  const [plan,       setPlan]      = useState<Plan | null>(null);
+  const [planLoading,setPlanLoading] = useState(true);
+
+  // Fetch plan from DB on mount
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const { getPlanByIdBrowser, getPlanDurationsBrowser } = await import("@/src/lib/services/plans-browser");
+        const { mapPlan } = await import("@/lib/mappers");
+        const [dbPlan, dbDurations] = await Promise.all([
+          getPlanByIdBrowser(id),
+          getPlanDurationsBrowser(id).catch(() => []),
+        ]);
+        if (dbPlan) setPlan(mapPlan(dbPlan, dbDurations));
+      } catch {
+        // plan stays null
+      } finally {
+        setPlanLoading(false);
+      }
+    };
+    load();
+  }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (planLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-white/20 border-t-white/60 rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!plan) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-center px-8">
+        <div>
+          <p style={{ fontFamily: "var(--font-serif)" }}
+            className="text-white text-2xl font-bold mb-3">Plan not found</p>
+          <Link href="/plans" className="btn btn-outline py-3 px-8">Browse Plans</Link>
+        </div>
+      </div>
+    );
+  }
 
   const duration: DurationOption =
     plan.durations.find((d) => d.key === durationKey) ?? plan.durations[0];
