@@ -1,24 +1,28 @@
 import Image from "next/image";
-import { motion } from "framer-motion";
 import PlansGrid from "@/components/ui/PlansGrid";
-import { getPublishedPlans } from "@/src/lib/services/plans";
-import { mapPlan } from "@/lib/mappers";
 import { IMAGES } from "@/lib/data";
+import type { Plan } from "@/lib/data";
 
-export const revalidate = 0; // always fetch fresh from DB // revalidate every 60 seconds
+export const revalidate = 0;
+
+async function fetchPlans(): Promise<Plan[]> {
+  try {
+    const { getPublishedPlans, getPlanDurations } = await import("@/src/lib/services/plans");
+    const { mapPlan } = await import("@/lib/mappers");
+    const dbPlans = await getPublishedPlans();
+    if (!dbPlans.length) return [];
+    const durations = await Promise.all(
+      dbPlans.map((p) => getPlanDurations(p.id).catch(() => []))
+    );
+    return dbPlans.map((p, i) => mapPlan(p, durations[i]));
+  } catch (e) {
+    console.error("[plans] DB fetch failed:", e);
+    return [];
+  }
+}
 
 export default async function PlansPage() {
-  // Fetch all published plans with their durations in one query
-  const dbPlans = await getPublishedPlans().catch(() => []);
-
-  // Fetch durations for all plans in parallel
-  const { getPlanDurations } = await import("@/src/lib/services/plans");
-  const durationsResults = await Promise.all(
-    dbPlans.map((p) => getPlanDurations(p.id).catch(() => []))
-  );
-
-  // Map to component types
-  const plans = dbPlans.map((p, i) => mapPlan(p, durationsResults[i]));
+  const plans = await fetchPlans();
 
   return (
     <div className="min-h-screen">
@@ -38,7 +42,7 @@ export default async function PlansPage() {
         </div>
       </div>
 
-      {/* Client grid with filters — receives server-fetched plans as props */}
+      {/* Client grid — receives server-fetched plans */}
       <PlansGrid plans={plans} />
     </div>
   );
