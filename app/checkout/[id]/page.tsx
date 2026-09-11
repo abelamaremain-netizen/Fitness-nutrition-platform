@@ -57,12 +57,38 @@ function CheckoutContent({ id }: { id: string }) {
   const [method,     setMethod]    = useState<"telebirr" | "cbe">("telebirr");
   const [name,       setName]      = useState("");
   const [txLink,     setTxLink]    = useState("");
+  const [txError,    setTxError]   = useState("");  // real-time URL check
   const [agreed,     setAgreed]    = useState(false);
   const [loading,    setLoading]   = useState(false);
   const [error,      setError]     = useState("");
 
   const canContinue = agreed;
-  const canSubmit   = txLink.trim().startsWith("http") && name.trim();
+  const canSubmit   = txLink.trim().startsWith("http") && name.trim() && !txError;
+
+  // ── Live uniqueness check ─────────────────────────────────────
+  const checkTxLink = async (url: string) => {
+    setTxError("");
+    if (!url.trim().startsWith("http")) return;
+    const supabase = createBrowserClient();
+    const { data } = await supabase
+      .from("orders")
+      .select("id")
+      .eq("tx_ref", url.trim())
+      .maybeSingle();
+    if (data) {
+      setTxError("This transaction link has already been used for a previous order.");
+    }
+  };
+
+  const handleTxLinkChange = (url: string) => {
+    setTxLink(url);
+    setTxError("");
+    // Debounce — only check after user stops typing
+    clearTimeout((window as Window & { _txTimer?: ReturnType<typeof setTimeout> })._txTimer);
+    (window as Window & { _txTimer?: ReturnType<typeof setTimeout> })._txTimer = setTimeout(() => {
+      if (url.trim().startsWith("http")) checkTxLink(url);
+    }, 800);
+  };
 
   const handleSubmitOrder = async () => {
     if (!canSubmit) return;
@@ -71,6 +97,26 @@ function CheckoutContent({ id }: { id: string }) {
 
     try {
       const supabase = createBrowserClient();
+
+      // ── Check uniqueness BEFORE inserting ──────────────────────
+      // Prevents the same transaction link being used more than once
+      const { data: existing } = await supabase
+        .from("orders")
+        .select("id")
+        .eq("tx_ref", txLink.trim())
+        .maybeSingle();
+
+      if (existing) {
+        setError(
+          "This transaction link has already been used for another order. " +
+          "Each payment must have a unique transaction link. " +
+          "If you believe this is a mistake, please contact us."
+        );
+        setLoading(false);
+        return;
+      }
+
+      // ── Insert order ────────────────────────────────────────────
       const { error: dbError } = await supabase.from("orders").insert({
         customer_name:   name.trim(),
         customer_email:  "",
@@ -84,6 +130,16 @@ function CheckoutContent({ id }: { id: string }) {
         status:          "pending_verification",
         tx_ref:          txLink.trim(),
       });
+
+      // Handle race condition — duplicate caught at DB level
+      if (dbError?.code === "23505") {
+        setError(
+          "This transaction link has already been used. " +
+          "Please contact us if you need help."
+        );
+        setLoading(false);
+        return;
+      }
 
       if (dbError) throw dbError;
       setStep("submitted");
@@ -293,10 +349,17 @@ function CheckoutContent({ id }: { id: string }) {
                 <div>
                   <label className="field-label">Transaction Link</label>
                   <input type="url" placeholder="https://..." value={txLink}
-                    onChange={(e) => setTxLink(e.target.value)} className="pill-input mt-1" />
-                  <p className="text-white/22 text-[11px] mt-2 pl-1">
-                    Paste the link you received after payment. Our team will verify it and activate your plan within 24 hours.
-                  </p>
+                    onChange={(e) => handleTxLinkChange(e.target.value)}
+                    className={`pill-input mt-1 ${txError ? "border-red-500/50" : ""}`} />
+                  {txError ? (
+                    <p className="text-red-400/80 text-[11px] mt-2 pl-1 leading-relaxed">
+                      ⚠ {txError}
+                    </p>
+                  ) : (
+                    <p className="text-white/22 text-[11px] mt-2 pl-1">
+                      Paste the link you received after payment. Our team will verify it and activate your plan within 24 hours.
+                    </p>
+                  )}
                 </div>
               </div>
 
