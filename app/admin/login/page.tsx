@@ -31,7 +31,13 @@ export default function AdminLoginPage() {
       if (authError) throw authError;
       if (!data.session) throw new Error("No session returned");
 
-      // 2. Verify the user is in the admins table
+      // 2. Set the session so subsequent queries use it
+      await supabase.auth.setSession({
+        access_token: data.session.access_token,
+        refresh_token: data.session.refresh_token,
+      });
+
+      // 3. Verify the user is in the admins table
       const { data: adminRow, error: adminError } = await supabase
         .from("admins")
         .select("id")
