@@ -5,7 +5,7 @@ import FaqAccordion from "./FaqAccordion";
 import { getFaqs } from "@/src/lib/services/content-public";
 import { FAQS } from "@/lib/data";
 
-export const revalidate = 60;
+export const revalidate = 0; // always fetch fresh from DB
 
 export default async function FaqPage() {
   const dbFaqs = await getFaqs().catch(() => []);

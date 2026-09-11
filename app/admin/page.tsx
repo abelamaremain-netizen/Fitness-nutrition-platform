@@ -5,11 +5,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { TrendingUp, ShoppingBag, Users, Package, ArrowRight, ArrowUpRight } from "lucide-react";
 import { createBrowserClient } from "@/src/lib/supabase/client";
-import {
-  REVENUE_DATA,
-  THIS_MONTH_REVENUE,
-  type AdminPlan,
-} from "@/lib/admin-data";
+import { REVENUE_DATA, type AdminPlan } from "@/lib/admin-data";
 
 interface DBOrder {
   id: string;

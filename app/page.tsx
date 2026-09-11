@@ -3,7 +3,7 @@ import { getPublishedTestimonials } from "@/src/lib/services/content-public";
 import { mapPlan } from "@/lib/mappers";
 import HomeClient from "./HomeClient";
 
-export const revalidate = 60;
+export const revalidate = 0; // always fetch fresh from DB
 
 export default async function HomePage() {
   // Fetch featured plans + their durations

@@ -5,7 +5,7 @@ import { getPublishedPlans } from "@/src/lib/services/plans";
 import { mapPlan } from "@/lib/mappers";
 import { IMAGES } from "@/lib/data";
 
-export const revalidate = 60; // revalidate every 60 seconds
+export const revalidate = 0; // always fetch fresh from DB // revalidate every 60 seconds
 
 export default async function PlansPage() {
   // Fetch all published plans with their durations in one query

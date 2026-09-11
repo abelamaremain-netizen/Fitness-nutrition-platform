@@ -5,7 +5,7 @@ import StatCounter from "@/components/ui/StatCounter";
 import { getPublishedTestimonials } from "@/src/lib/services/content-public";
 import { STATS, IMAGES, TESTIMONIALS } from "@/lib/data";
 
-export const revalidate = 60;
+export const revalidate = 0; // always fetch fresh from DB
 
 export default async function TestimonialsPage() {
   const dbTestimonials = await getPublishedTestimonials().catch(() => []);

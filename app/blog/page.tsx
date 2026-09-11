@@ -6,7 +6,7 @@ import BlogFilters from "./BlogFilters";
 import { getPublishedBlogPosts } from "@/src/lib/services/content-public";
 import { IMAGES } from "@/lib/data";
 
-export const revalidate = 60;
+export const revalidate = 0; // always fetch fresh from DB
 
 export default async function BlogPage() {
   const posts = await getPublishedBlogPosts().catch(() => []);

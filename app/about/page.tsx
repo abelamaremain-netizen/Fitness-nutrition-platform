@@ -6,7 +6,7 @@ import StatCounter from "@/components/ui/StatCounter";
 import { getTeamMembers } from "@/src/lib/services/content-public";
 import { IMAGES, STATS } from "@/lib/data";
 
-export const revalidate = 60;
+export const revalidate = 0; // always fetch fresh from DB
 
 const VALUES = [
   { icon: Target, title: "Science First",      description: "Every plan is grounded in exercise science and nutritional research — not trends." },

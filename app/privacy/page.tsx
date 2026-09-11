@@ -2,7 +2,7 @@ import Link from "next/link";
 import AnimatedSection from "@/components/ui/AnimatedSection";
 import { getSiteContent } from "@/src/lib/services/content-public";
 
-export const revalidate = 60;
+export const revalidate = 0; // always fetch fresh from DB
 
 export const metadata = {
   title: "Privacy Policy — Naodi & Samri Fitness",
