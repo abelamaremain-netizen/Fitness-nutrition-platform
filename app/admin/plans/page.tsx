@@ -12,6 +12,7 @@ interface DBPlan {
   description: string;
   goal: string;
   level: string;
+  plan_type: "fitness" | "meal" | "both";
   published: boolean;
   created_at: string;
 }
@@ -45,6 +46,7 @@ function PlanFormModal({
     long_description: "",
     goal:             plan?.goal        ?? "lifestyle",
     level:            (plan?.level      ?? "Normal") as "Normal" | "Pro" | "VIP",
+    plan_type:        (plan?.plan_type  ?? "fitness") as "fitness" | "meal" | "both",
     published:        plan?.published   ?? true,
     featured:         false,
     bestseller:       false,
@@ -97,6 +99,7 @@ function PlanFormModal({
         includes:         (data.includes ?? []).join("\n"),
         featured:         data.featured   ?? false,
         bestseller:       data.bestseller ?? false,
+        plan_type:        (data.plan_type ?? "fitness") as "fitness" | "meal" | "both",
         suitable_for:     data.suitable_for     ?? ["female", "male"],
         min_bmi:          String(data.min_bmi   ?? 0),
         max_bmi:          String(data.max_bmi   ?? 60),
@@ -126,6 +129,7 @@ function PlanFormModal({
         long_description: form.long_description.trim(),
         goal:             goalKey as "weight-loss" | "muscle-gain" | "nutrition" | "lifestyle",
         level:            form.level.toLowerCase() as "normal" | "pro" | "vip",
+        plan_type:        form.plan_type,
         published:        form.published,
         featured:         form.featured,
         bestseller:       form.bestseller,
@@ -221,7 +225,7 @@ function PlanFormModal({
               placeholder="Detailed description..." className={`${inp} resize-none`} />
           </div>
 
-          {/* Goal + Level — REQUIRED, shown prominently at top */}
+          {/* Goal + Level */}
           <div className="grid grid-cols-2 gap-4 p-4 rounded-xl border border-white/[0.12] bg-white/[0.02]">
             <div>
               <label className="field-label">Goal <span className="text-red-400">*</span></label>
@@ -243,6 +247,32 @@ function PlanFormModal({
                 <option>Pro</option>
                 <option>VIP</option>
               </select>
+            </div>
+          </div>
+
+          {/* Plan Type — CRITICAL: determines which page this plan shows on */}
+          <div className="p-4 rounded-xl border border-white/[0.15] bg-white/[0.02]">
+            <label className="field-label mb-1">Plan Category <span className="text-red-400">*</span></label>
+            <p className="text-white/25 text-[11px] mb-3">
+              Fitness Plans appear on the Fitness Plan page · Meal Plans appear on the Meal Plan page · Both appear on both
+            </p>
+            <div className="grid grid-cols-3 gap-2">
+              {([
+                { v: "fitness", label: "🏋️ Fitness Plan",  sub: "Workouts & exercise" },
+                { v: "meal",    label: "🥗 Meal Plan",      sub: "Nutrition & calories" },
+                { v: "both",    label: "⚡ Both",           sub: "Fitness + Meal" },
+              ] as const).map((opt) => (
+                <button key={opt.v} type="button"
+                  onClick={() => setForm({ ...form, plan_type: opt.v })}
+                  className={`py-3 px-3 rounded-xl text-left border transition-all ${
+                    form.plan_type === opt.v
+                      ? "bg-white/10 border-white/50 text-white"
+                      : "bg-transparent border-white/10 text-white/40 hover:border-white/30 hover:text-white/70"
+                  }`}>
+                  <p className="text-sm font-semibold">{opt.label}</p>
+                  <p className="text-[10px] text-white/35 mt-0.5">{opt.sub}</p>
+                </button>
+              ))}
             </div>
           </div>
 
@@ -483,7 +513,7 @@ export default function AdminPlansPage() {
     const supabase = createBrowserClient();
     setLoading(true);
     const { data } = await supabase
-      .from("plans").select("id, title, description, goal, level, published, created_at")
+      .from("plans").select("id, title, description, goal, level, plan_type, published, created_at")
       .order("created_at", { ascending: false });
     setPlans((data as DBPlan[]) ?? []);
     setLoading(false);
@@ -539,7 +569,7 @@ export default function AdminPlansPage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-white/[0.07]">
-                    {["Plan", "Level", "Goal", "Status", "Created", "Actions"].map((h) => (
+                    {["Plan", "Type", "Level", "Goal", "Status", "Created", "Actions"].map((h) => (
                       <th key={h} className="px-5 py-3.5 text-left text-[10px] font-semibold tracking-[0.18em] uppercase text-white/25">{h}</th>
                     ))}
                   </tr>
@@ -550,6 +580,15 @@ export default function AdminPlansPage() {
                       <td className="px-5 py-4">
                         <p className="text-sm text-white font-medium">{plan.title}</p>
                         <p className="text-[11px] text-white/25 mt-0.5 max-w-[220px] truncate">{plan.description}</p>
+                      </td>
+                      <td className="px-5 py-4">
+                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-widest uppercase ${
+                          plan.plan_type === "meal" ? "bg-green-500/15 text-green-400" :
+                          plan.plan_type === "both" ? "bg-blue-500/15 text-blue-400"  :
+                          "bg-white/8 text-white/55"
+                        }`}>
+                          {plan.plan_type === "meal" ? "🥗 Meal" : plan.plan_type === "both" ? "⚡ Both" : "🏋️ Fitness"}
+                        </span>
                       </td>
                       <td className="px-5 py-4">
                         <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-widest uppercase ${levelStyle[plan.level] ?? "bg-white/8 text-white/55"}`}>

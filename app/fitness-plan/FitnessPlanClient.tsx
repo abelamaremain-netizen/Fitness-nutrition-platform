@@ -14,8 +14,8 @@ export default function FitnessPlanClient({ plans }: Props) {
 
   const handleSubmit = (p: UserProfile) => {
     setProfile(p);
-    // Run recommendation engine against live plans from DB
-    setResults(recommendPlans(p, plans));
+    // Only show fitness or both-type plans
+    setResults(recommendPlans(p, plans, "fitness"));
     setTimeout(() => document.getElementById("results")?.scrollIntoView({ behavior: "smooth" }), 100);
   };
 

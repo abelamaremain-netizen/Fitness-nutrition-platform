@@ -43,6 +43,7 @@ export function mapPlan(dbPlan: DBPlan, dbDurations: DBDuration[] = []): Plan {
     goal:            dbPlan.goal        as Plan["goal"],
     goalLabel:       GOAL_LABELS[dbPlan.goal] ?? dbPlan.goal,
     level,
+    planType:        ((dbPlan as { plan_type?: string }).plan_type ?? "fitness") as Plan["planType"],
     durations:       dbDurations.map(mapDuration),
     featured:        dbPlan.featured,
     bestseller:      dbPlan.bestseller,

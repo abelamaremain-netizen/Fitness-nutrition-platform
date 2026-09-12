@@ -47,6 +47,7 @@ export type Database = {
           long_description: string;
           goal: Database["public"]["Enums"]["plan_goal"];
           level: Database["public"]["Enums"]["plan_level"];
+          plan_type: "fitness" | "meal" | "both";
           image_url: string | null;
           video_url: string | null;
           pdf_url: string | null;
@@ -70,6 +71,7 @@ export type Database = {
           long_description?: string;
           goal?: Database["public"]["Enums"]["plan_goal"];
           level?: Database["public"]["Enums"]["plan_level"];
+          plan_type?: "fitness" | "meal" | "both";
           image_url?: string | null;
           video_url?: string | null;
           pdf_url?: string | null;
@@ -93,6 +95,7 @@ export type Database = {
           long_description?: string;
           goal?: Database["public"]["Enums"]["plan_goal"];
           level?: Database["public"]["Enums"]["plan_level"];
+          plan_type?: "fitness" | "meal" | "both";
           image_url?: string | null;
           video_url?: string | null;
           pdf_url?: string | null;

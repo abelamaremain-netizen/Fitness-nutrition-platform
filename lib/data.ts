@@ -42,6 +42,7 @@ export const STATS = [
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 export type PlanLevel    = "Normal" | "Pro" | "VIP";
 export type PlanGoal     = "weight-loss" | "muscle-gain" | "nutrition" | "lifestyle";
+export type PlanType     = "fitness" | "meal" | "both";
 export type DurationKey  = "1-week" | "1-month" | "3-months" | "6-months";
 
 export interface DurationOption {
@@ -59,6 +60,7 @@ export interface Plan {
   goal:        PlanGoal;
   goalLabel:   string;
   level:       PlanLevel;   // single label set by admin
+  planType:    PlanType;    // "fitness" | "meal" | "both"
   durations:   DurationOption[];  // admin picks which durations apply
   featured:    boolean;
   bestseller:  boolean;
@@ -85,6 +87,7 @@ export const PLANS: Plan[] = [
     goal: "weight-loss",
     goalLabel: "Weight Loss",
     level: "Pro",
+    planType: "fitness",
     durations: [
       { key: "1-week",   label: "1 Week",   price: 149 },
       { key: "1-month",  label: "1 Month",  price: 449 },
@@ -117,6 +120,7 @@ export const PLANS: Plan[] = [
     goal: "muscle-gain",
     goalLabel: "Muscle Gain",
     level: "VIP",
+    planType: "fitness",
     durations: [
       { key: "1-month",  label: "1 Month",  price: 549 },
       { key: "3-months", label: "3 Months", price: 1299 },
@@ -148,6 +152,7 @@ export const PLANS: Plan[] = [
     goal: "nutrition",
     goalLabel: "Nutrition",
     level: "Normal",
+    planType: "meal",
     durations: [
       { key: "1-week",   label: "1 Week",   price: 99 },
       { key: "1-month",  label: "1 Month",  price: 299 },
@@ -179,6 +184,7 @@ export const PLANS: Plan[] = [
     goal: "weight-loss",
     goalLabel: "Weight Loss",
     level: "VIP",
+    planType: "fitness",
     durations: [
       { key: "1-month",  label: "1 Month",  price: 599 },
       { key: "3-months", label: "3 Months", price: 1499 },
@@ -210,6 +216,7 @@ export const PLANS: Plan[] = [
     goal: "lifestyle",
     goalLabel: "Lifestyle",
     level: "Pro",
+    planType: "both",
     durations: [
       { key: "1-month",  label: "1 Month",  price: 479 },
       { key: "3-months", label: "3 Months", price: 1099 },
@@ -241,6 +248,7 @@ export const PLANS: Plan[] = [
     goal: "lifestyle",
     goalLabel: "Lifestyle",
     level: "Normal",
+    planType: "fitness",
     durations: [
       { key: "1-week",   label: "1 Week",   price: 119 },
       { key: "1-month",  label: "1 Month",  price: 349 },
@@ -523,9 +531,13 @@ export function getCalorieTarget(tdee: number, goal: UserProfile["goal"]): numbe
   return tdee;
 }
 
-export function recommendPlans(profile: UserProfile, plansToSearch: Plan[] = PLANS): Plan[] {
+export function recommendPlans(profile: UserProfile, plansToSearch: Plan[] = PLANS, planType?: "fitness" | "meal"): Plan[] {
   const bmi = calculateBMI(profile.weight, profile.height);
-  const scored = plansToSearch.map((plan) => {
+  // Filter by plan type first if specified
+  const candidates = planType
+    ? plansToSearch.filter((p) => p.planType === planType || p.planType === "both")
+    : plansToSearch;
+  const scored = candidates.map((plan) => {
     let score = 0;
     if (plan.goal === profile.goal)                           score += 40;
     if (bmi >= plan.minBmi && bmi <= plan.maxBmi)            score += 20;
