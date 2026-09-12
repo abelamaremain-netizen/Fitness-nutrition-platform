@@ -476,6 +476,28 @@ export type Database = {
         };
         Relationships: [];
       };
+
+      banned_customers: {
+        Row: {
+          id: string;
+          email: string;
+          reason: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          email: string;
+          reason?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          email?: string;
+          reason?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
     };
 
     Views: { [key: string]: never };

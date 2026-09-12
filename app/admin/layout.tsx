@@ -1,13 +1,14 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard, Package, ShoppingBag, Users,
-  FileText, Menu, X, LogOut, Bell, ChevronRight,
-  Home,
+  FileText, Menu, X, Bell, ChevronRight,
+  Home, LogOut,
 } from "lucide-react";
+import { createBrowserClient } from "@/src/lib/supabase/client";
 
 const NAV = [
   { href: "/admin",           label: "Dashboard",  icon: LayoutDashboard },
@@ -20,6 +21,25 @@ const NAV = [
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const router   = useRouter();
+
+  // Client-side auth guard — backup to middleware
+  // Middleware is the real lock; this prevents a flash of admin UI if cookies expire mid-session
+  useEffect(() => {
+    if (pathname === "/admin/login") return;
+    const supabase = createBrowserClient();
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) {
+        router.replace("/admin/login");
+      }
+    });
+  }, [pathname, router]);
+
+  const handleLogout = async () => {
+    const supabase = createBrowserClient();
+    await supabase.auth.signOut();
+    router.replace("/admin/login");
+  };
 
   // Don't render admin chrome on the login page
   if (pathname === "/admin/login") {
@@ -82,13 +102,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <NavLinks />
         </nav>
 
-        {/* Back to site */}
-        <div className="px-3 py-4 border-t border-white/[0.07]">
+        {/* Bottom: back to site + logout */}
+        <div className="px-3 py-4 border-t border-white/[0.07] space-y-0.5">
           <Link href="/"
             className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-white/35 hover:text-white hover:bg-white/[0.06] transition-all">
             <Home size={15} strokeWidth={1.8} />
             Back to Site
           </Link>
+          <button onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-white/35 hover:text-red-400 hover:bg-red-500/[0.08] transition-all">
+            <LogOut size={15} strokeWidth={1.8} />
+            Log Out
+          </button>
         </div>
       </aside>
 
@@ -164,13 +189,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <NavLinks />
               </nav>
 
-              {/* Back to site */}
-              <div className="px-3 py-4 border-t border-white/[0.07]">
+              {/* Bottom: back to site + logout */}
+              <div className="px-3 py-4 border-t border-white/[0.07] space-y-0.5">
                 <Link href="/" onClick={() => setOpen(false)}
                   className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-white/35 hover:text-white hover:bg-white/[0.06] transition-all">
                   <Home size={15} strokeWidth={1.8} />
                   Back to Site
                 </Link>
+                <button onClick={handleLogout}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-white/35 hover:text-red-400 hover:bg-red-500/[0.08] transition-all">
+                  <LogOut size={15} strokeWidth={1.8} />
+                  Log Out
+                </button>
               </div>
             </motion.aside>
           </>

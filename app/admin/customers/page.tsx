@@ -27,7 +27,6 @@ interface DBOrder {
   payment_method: string;
   created_at: string;
 }
-
 function CustomerModal({ customer, onClose }: { customer: CustomerSummary; onClose: () => void }) {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -101,16 +100,40 @@ export default function AdminCustomersPage() {
   const [loading,  setLoading]  = useState(true);
   const [search,   setSearch]   = useState("");
   const [selected, setSelected] = useState<CustomerSummary | null>(null);
+  // banned is loaded from DB — persists across refreshes
   const [banned,   setBanned]   = useState<Set<string>>(new Set());
+  const [banning,  setBanning]  = useState<string | null>(null); // email being toggled
 
   useEffect(() => {
     const supabase = createBrowserClient();
-    supabase.from("orders").select("*").order("created_at", { ascending: false })
-      .then(({ data }) => {
-        setOrders((data as DBOrder[]) ?? []);
-        setLoading(false);
-      });
+    // Load orders and banned list in parallel
+    Promise.all([
+      supabase.from("orders").select("*").order("created_at", { ascending: false }),
+      supabase.from("banned_customers").select("email"),
+    ]).then(([ordersRes, bannedRes]) => {
+      setOrders((ordersRes.data as DBOrder[]) ?? []);
+      const bannedEmails = new Set<string>(
+        ((bannedRes.data ?? []) as { email: string }[]).map((r) => r.email)
+      );
+      setBanned(bannedEmails);
+      setLoading(false);
+    });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const toggleBan = async (email: string) => {
+    setBanning(email);
+    const supabase = createBrowserClient();
+    const isBanned = banned.has(email);
+
+    if (isBanned) {
+      await supabase.from("banned_customers").delete().eq("email", email);
+      setBanned((prev) => { const n = new Set(prev); n.delete(email); return n; });
+    } else {
+      await supabase.from("banned_customers").upsert({ email }, { onConflict: "email" });
+      setBanned((prev) => new Set(prev).add(email));
+    }
+    setBanning(null);
+  };
 
   // Group orders by email → customer summaries
   const customers: CustomerSummary[] = useMemo(() => {
@@ -231,16 +254,16 @@ export default function AdminCustomersPage() {
                               <Eye size={13} />
                             </button>
                             <button
-                              onClick={() => setBanned((prev) => {
-                                const n = new Set(prev);
-                                n.has(c.email) ? n.delete(c.email) : n.add(c.email);
-                                return n;
-                              })}
-                              title={isBanned ? "Unban" : "Ban"}
-                              className={`p-1.5 rounded-lg transition-all ${
+                              onClick={() => toggleBan(c.email)}
+                              disabled={banning === c.email}
+                              title={isBanned ? "Unban customer" : "Ban customer"}
+                              className={`p-1.5 rounded-lg transition-all disabled:opacity-40 ${
                                 isBanned ? "text-yellow-400 hover:bg-yellow-500/10" : "text-white/25 hover:text-red-400 hover:bg-red-500/10"
                               }`}>
-                              {isBanned ? <Shield size={13} /> : <ShieldOff size={13} />}
+                              {banning === c.email
+                                ? <span className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin inline-block" />
+                                : isBanned ? <Shield size={13} /> : <ShieldOff size={13} />
+                              }
                             </button>
                           </div>
                         </td>

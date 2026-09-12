@@ -1,13 +1,14 @@
 "use client";
 export const dynamic = "force-dynamic";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { Eye, EyeOff, ArrowRight, Lock } from "lucide-react";
 import { createBrowserClient } from "@/src/lib/supabase/client";
 
 export default function AdminLoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email,    setEmail]    = useState("");
   const [password, setPassword] = useState("");
   const [showPw,   setShowPw]   = useState(false);
@@ -50,8 +51,9 @@ export default function AdminLoginPage() {
         throw new Error("Access denied. This account is not authorised as admin.");
       }
 
-      // 3. Redirect to admin dashboard
-      router.push("/admin");
+      // 3. Redirect — go back to the page they tried to access, or dashboard
+      const redirect = searchParams.get("redirect") ?? "/admin";
+      router.push(redirect);
       router.refresh();
 
     } catch (err: unknown) {
