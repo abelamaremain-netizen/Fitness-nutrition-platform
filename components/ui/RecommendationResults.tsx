@@ -20,9 +20,12 @@ const levelStyle: Record<string, string> = {
 function PlanRow({ plan, rank }: { plan: Plan; rank: number }) {
   const router   = useRouter();
   const { t }    = useLang();
-  const [selected, setSelected] = useState<DurationOption>(plan.durations[0]);
+  const [selected, setSelected] = useState<DurationOption | null>(
+    plan.durations.length > 0 ? plan.durations[0] : null
+  );
 
   const handleGetPlan = () => {
+    if (!selected) return;
     router.push(`/checkout/${plan.id}?duration=${selected.key}`);
   };
 
@@ -93,7 +96,7 @@ function PlanRow({ plan, rank }: { plan: Plan; rank: number }) {
                 {plan.durations.map((d) => (
                   <button key={d.key} onClick={() => setSelected(d)}
                     className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold border transition-all ${
-                      selected.key === d.key
+                      selected?.key === d.key
                         ? "bg-white text-black border-white"
                         : "bg-transparent text-white/45 border-white/15 hover:border-white/35 hover:text-white"
                     }`}>
@@ -108,9 +111,9 @@ function PlanRow({ plan, rank }: { plan: Plan; rank: number }) {
           {/* Price + Actions */}
           <div className="flex flex-col sm:flex-row sm:items-end gap-4">
             <div className="flex items-baseline gap-1.5 flex-1">
-              <span className="text-2xl font-black text-white">{selected.price.toLocaleString()}</span>
+              <span className="text-2xl font-black text-white">{selected ? selected.price.toLocaleString() : "—"}</span>
               <span className="text-white/35 text-sm">ETB</span>
-              <span className="text-white/22 text-xs">/ {selected.label}</span>
+              <span className="text-white/22 text-xs">/ {selected?.label ?? ""}</span>
             </div>
 
             <div className="flex gap-2 flex-shrink-0">
@@ -119,7 +122,8 @@ function PlanRow({ plan, rank }: { plan: Plan; rank: number }) {
                 <ExternalLink size={11} /> {t("plan.details")}
               </Link>
               <button onClick={handleGetPlan}
-                className="btn btn-white text-[10px] py-2.5 px-5">
+                disabled={!selected}
+                className="btn btn-white text-[10px] py-2.5 px-5 disabled:opacity-40">
                 <ArrowRight size={11} /> {t("results.getPlan")}
               </button>
             </div>

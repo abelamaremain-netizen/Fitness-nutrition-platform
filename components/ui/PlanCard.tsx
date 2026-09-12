@@ -17,9 +17,12 @@ const levelStyle: Record<string, string> = {
 export default function PlanCard({ plan }: { plan: Plan }) {
   const router = useRouter();
   const { t }  = useLang();
-  const [selected, setSelected] = useState<DurationOption>(plan.durations[0]);
+  const [selected, setSelected] = useState<DurationOption | null>(
+    plan.durations.length > 0 ? plan.durations[0] : null
+  );
 
   const handleGetPlan = () => {
+    if (!selected) return;
     router.push(`/checkout/${plan.id}?duration=${selected.key}`);
   };
 
@@ -77,33 +80,38 @@ export default function PlanCard({ plan }: { plan: Plan }) {
         </div>
 
         {/* Duration selector */}
-        <div>
-          <p className="text-[10px] font-semibold tracking-[0.18em] uppercase text-white/30 mb-2">
-            {t("filter.duration")}
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {plan.durations.map((d) => (
-              <button key={d.key} onClick={() => setSelected(d)}
-                className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold border transition-all ${
-                  selected.key === d.key
-                    ? "bg-white text-black border-white"
-                    : "bg-transparent text-white/50 border-white/15 hover:border-white/40 hover:text-white"
-                }`}>
-                {/* Duration labels come from DB — shown as-is */}
-                {d.label}
-              </button>
-            ))}
+        {plan.durations.length > 0 ? (
+          <div>
+            <p className="text-[10px] font-semibold tracking-[0.18em] uppercase text-white/30 mb-2">
+              {t("filter.duration")}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {plan.durations.map((d) => (
+                <button key={d.key} onClick={() => setSelected(d)}
+                  className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold border transition-all ${
+                    selected?.key === d.key
+                      ? "bg-white text-black border-white"
+                      : "bg-transparent text-white/50 border-white/15 hover:border-white/40 hover:text-white"
+                  }`}>
+                  {d.label}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        ) : (
+          <p className="text-white/30 text-xs">No pricing set yet.</p>
+        )}
 
         {/* Price */}
-        <div className="flex items-baseline gap-1.5">
-          <span className="text-2xl font-black text-white">
-            {selected.price.toLocaleString()}
-          </span>
-          <span className="text-white/40 text-sm">ETB</span>
-          <span className="text-white/25 text-xs ml-1">/ {selected.label}</span>
-        </div>
+        {selected && (
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-2xl font-black text-white">
+              {selected.price.toLocaleString()}
+            </span>
+            <span className="text-white/40 text-sm">ETB</span>
+            <span className="text-white/25 text-xs ml-1">/ {selected.label}</span>
+          </div>
+        )}
 
         {/* Actions */}
         <div className="flex gap-2.5 mt-auto">
@@ -112,7 +120,8 @@ export default function PlanCard({ plan }: { plan: Plan }) {
             <Play size={11} /> {t("plan.details")}
           </Link>
           <button onClick={handleGetPlan}
-            className="btn btn-white flex-1 py-2.5 text-[10px]">
+            disabled={!selected}
+            className="btn btn-white flex-1 py-2.5 text-[10px] disabled:opacity-40">
             <ArrowRight size={11} /> {t("plan.getPlan")}
           </button>
         </div>
