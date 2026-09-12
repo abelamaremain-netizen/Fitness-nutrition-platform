@@ -26,9 +26,12 @@ interface Props {
 
 export default function PlanDetailClient({ plan, relatedPlans, testimonials }: Props) {
   const router = useRouter();
-  const [selected, setSelected] = useState<DurationOption>(plan.durations[0]);
+  const [selected, setSelected] = useState<DurationOption | null>(
+    plan.durations.length > 0 ? plan.durations[0] : null
+  );
 
   const handleGetPlan = () => {
+    if (!selected) return;
     router.push(`/checkout/${plan.id}?duration=${selected.key}`);
   };
 
@@ -125,7 +128,8 @@ export default function PlanDetailClient({ plan, relatedPlans, testimonials }: P
                   <p className="text-white/40 text-sm mb-5">
                     Purchase this plan to unlock the full video content.
                   </p>
-                  <button onClick={handleGetPlan} className="btn btn-white py-2.5 px-7 text-[10px]">
+                  <button onClick={handleGetPlan} disabled={!selected}
+                    className="btn btn-white py-2.5 px-7 text-[10px] disabled:opacity-40">
                     Unlock Now
                   </button>
                 </div>
@@ -185,12 +189,12 @@ export default function PlanDetailClient({ plan, relatedPlans, testimonials }: P
                     {plan.durations.map((d) => (
                       <button key={d.key} onClick={() => setSelected(d)}
                         className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border text-sm transition-all ${
-                          selected.key === d.key
+                          selected?.key === d.key
                             ? "bg-white text-black border-white font-semibold"
                             : "bg-transparent text-white/55 border-white/15 hover:border-white/35 hover:text-white"
                         }`}>
                         <div className="flex items-center gap-2">
-                          <Clock size={13} className={selected.key === d.key ? "text-black" : "text-white/30"} />
+                          <Clock size={13} className={selected?.key === d.key ? "text-black" : "text-white/30"} />
                           <span>{d.label}</span>
                         </div>
                         <span className="font-bold">{d.price.toLocaleString()} ETB</span>
@@ -205,16 +209,19 @@ export default function PlanDetailClient({ plan, relatedPlans, testimonials }: P
                     <span className="text-white/40 text-sm">Total</span>
                     <div className="flex items-baseline gap-1">
                       <span className="text-3xl font-black text-white">
-                        {selected.price.toLocaleString()}
+                        {selected ? selected.price.toLocaleString() : "—"}
                       </span>
                       <span className="text-white/40 text-sm">ETB</span>
                     </div>
                   </div>
-                  <p className="text-white/25 text-xs text-right">for {selected.label}</p>
+                  <p className="text-white/25 text-xs text-right">
+                    {selected ? `for ${selected.label}` : "Select a duration"}
+                  </p>
                 </div>
 
                 {/* CTA */}
-                <button onClick={handleGetPlan} className="btn btn-white w-full py-4 text-[11px]">
+                <button onClick={handleGetPlan} disabled={!selected}
+                  className="btn btn-white w-full py-4 text-[11px] disabled:opacity-40">
                   <ArrowRight size={14} /> Get This Plan
                 </button>
 

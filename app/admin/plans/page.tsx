@@ -202,10 +202,11 @@ function PlanFormModal({
               placeholder="Detailed description..." className={`${inp} resize-none`} />
           </div>
 
-          {/* Goal + Level */}
-          <div className="grid grid-cols-2 gap-4">
+          {/* Goal + Level — REQUIRED, shown prominently at top */}
+          <div className="grid grid-cols-2 gap-4 p-4 rounded-xl border border-white/[0.12] bg-white/[0.02]">
             <div>
-              <label className="field-label">Goal</label>
+              <label className="field-label">Goal <span className="text-red-400">*</span></label>
+              <p className="text-white/25 text-[10px] mb-2">Used for filtering on the shop page</p>
               <select value={form.goal} onChange={(e) => setForm({ ...form, goal: e.target.value })} className={inp}>
                 <option value="weight-loss">Weight Loss</option>
                 <option value="muscle-gain">Muscle Gain</option>
@@ -214,7 +215,8 @@ function PlanFormModal({
               </select>
             </div>
             <div>
-              <label className="field-label">Level</label>
+              <label className="field-label">Level <span className="text-red-400">*</span></label>
+              <p className="text-white/25 text-[10px] mb-2">Normal = basic, Pro = detailed, VIP = premium</p>
               <select value={form.level}
                 onChange={(e) => setForm({ ...form, level: e.target.value as "Normal"|"Pro"|"VIP" })}
                 className={inp}>
