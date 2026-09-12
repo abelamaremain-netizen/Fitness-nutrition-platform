@@ -46,10 +46,17 @@ function PlanFormModal({
     goal:             plan?.goal        ?? "lifestyle",
     level:            (plan?.level      ?? "Normal") as "Normal" | "Pro" | "VIP",
     published:        plan?.published   ?? true,
+    featured:         false,
+    bestseller:       false,
     video_url:        "",
     video_thumb:      "",
     tags:             "",
     includes:         "",
+    // Recommendation engine fields
+    suitable_for:     ["female", "male"] as string[],
+    min_bmi:          "0",
+    max_bmi:          "60",
+    activity_levels:  ["sedentary", "light", "moderate", "active"] as string[],
   });
 
   const [durations, setDurations] = useState<Record<DurationKey, { enabled: boolean; price: string }>>(
@@ -88,6 +95,12 @@ function PlanFormModal({
         video_thumb:      data.video_thumb      ?? "",
         tags:             (data.tags   ?? []).join(", "),
         includes:         (data.includes ?? []).join("\n"),
+        featured:         data.featured   ?? false,
+        bestseller:       data.bestseller ?? false,
+        suitable_for:     data.suitable_for     ?? ["female", "male"],
+        min_bmi:          String(data.min_bmi   ?? 0),
+        max_bmi:          String(data.max_bmi   ?? 60),
+        activity_levels:  data.activity_levels  ?? ["sedentary", "light", "moderate", "active"],
       }));
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -114,10 +127,16 @@ function PlanFormModal({
         goal:             goalKey as "weight-loss" | "muscle-gain" | "nutrition" | "lifestyle",
         level:            form.level.toLowerCase() as "normal" | "pro" | "vip",
         published:        form.published,
+        featured:         form.featured,
+        bestseller:       form.bestseller,
         video_url:        form.video_url.trim() || null,
         video_thumb:      form.video_thumb.trim() || null,
         tags:             form.tags.split(",").map((t) => t.trim()).filter(Boolean),
         includes:         form.includes.split("\n").map((t) => t.trim()).filter(Boolean),
+        suitable_for:     form.suitable_for,
+        min_bmi:          parseFloat(form.min_bmi) || 0,
+        max_bmi:          parseFloat(form.max_bmi) || 60,
+        activity_levels:  form.activity_levels,
         updated_at:       new Date().toISOString(),
       };
 
@@ -242,6 +261,128 @@ function PlanFormModal({
               onChange={(e) => setForm({ ...form, includes: e.target.value })}
               placeholder={"Detailed PDF workout guide\nVideo demonstrations\n..."}
               className={`${inp} resize-none`} />
+          </div>
+
+          {/* ── RECOMMENDATION ENGINE FIELDS ── */}
+          <div className="p-4 rounded-xl border border-white/[0.12] bg-white/[0.02] space-y-4">
+            <div>
+              <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-white/50 mb-1">
+                Recommendation Engine
+              </p>
+              <p className="text-white/25 text-[11px]">
+                These fields power the personalised plan matching on the Fitness Plan and Meal Plan pages.
+                Fill them in accurately so customers get matched to the right plan.
+              </p>
+            </div>
+
+            {/* Suitable for */}
+            <div>
+              <label className="field-label">Suitable For</label>
+              <div className="flex gap-3 mt-1">
+                {(["female", "male"] as const).map((g) => (
+                  <button key={g} type="button"
+                    onClick={() => setForm((prev) => {
+                      const already = prev.suitable_for.includes(g);
+                      return {
+                        ...prev,
+                        suitable_for: already
+                          ? prev.suitable_for.filter((v) => v !== g)
+                          : [...prev.suitable_for, g],
+                      };
+                    })}
+                    className={`flex-1 py-2.5 rounded-xl text-sm font-medium border transition-all capitalize ${
+                      form.suitable_for.includes(g)
+                        ? "bg-white text-black border-white"
+                        : "bg-transparent text-white/40 border-white/15 hover:border-white/35"
+                    }`}>
+                    {g === "female" ? "👩 Female" : "👨 Male"}
+                  </button>
+                ))}
+              </div>
+              <p className="text-white/22 text-[11px] mt-1.5">Select all genders this plan is suitable for.</p>
+            </div>
+
+            {/* BMI Range */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="field-label">Min BMI</label>
+                <input type="number" value={form.min_bmi}
+                  onChange={(e) => setForm({ ...form, min_bmi: e.target.value })}
+                  placeholder="e.g. 18" className={inp} />
+                <p className="text-white/22 text-[11px] mt-1">Lowest BMI this plan suits</p>
+              </div>
+              <div>
+                <label className="field-label">Max BMI</label>
+                <input type="number" value={form.max_bmi}
+                  onChange={(e) => setForm({ ...form, max_bmi: e.target.value })}
+                  placeholder="e.g. 35" className={inp} />
+                <p className="text-white/22 text-[11px] mt-1">Highest BMI this plan suits</p>
+              </div>
+            </div>
+            <p className="text-white/25 text-[11px] -mt-2">
+              BMI guide: Underweight &lt;18.5 | Normal 18.5–24.9 | Overweight 25–29.9 | Obese ≥30
+            </p>
+
+            {/* Activity Levels */}
+            <div>
+              <label className="field-label">Suitable Activity Levels</label>
+              <div className="flex flex-wrap gap-2 mt-1">
+                {[
+                  { v: "sedentary", l: "Sedentary", s: "Little/no exercise" },
+                  { v: "light",     l: "Light",     s: "1–3 days/week" },
+                  { v: "moderate",  l: "Moderate",  s: "3–5 days/week" },
+                  { v: "active",    l: "Very Active",s: "6–7 days/week" },
+                ].map((a) => (
+                  <button key={a.v} type="button"
+                    onClick={() => setForm((prev) => {
+                      const has = prev.activity_levels.includes(a.v);
+                      return {
+                        ...prev,
+                        activity_levels: has
+                          ? prev.activity_levels.filter((v) => v !== a.v)
+                          : [...prev.activity_levels, a.v],
+                      };
+                    })}
+                    className={`px-3 py-2 rounded-xl text-left border transition-all ${
+                      form.activity_levels.includes(a.v)
+                        ? "bg-white/10 border-white/40 text-white"
+                        : "bg-transparent border-white/10 text-white/40 hover:border-white/25"
+                    }`}>
+                    <p className="text-[11px] font-semibold">{a.l}</p>
+                    <p className="text-[10px] text-white/30">{a.s}</p>
+                  </button>
+                ))}
+              </div>
+              <p className="text-white/22 text-[11px] mt-1.5">Who is this plan designed for?</p>
+            </div>
+
+            {/* Featured + Bestseller */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex items-center justify-between p-3 rounded-xl border border-white/[0.09]">
+                <div>
+                  <p className="text-sm text-white font-medium">Featured</p>
+                  <p className="text-[10px] text-white/30">Shown on home page</p>
+                </div>
+                <button type="button"
+                  onClick={() => setForm({ ...form, featured: !form.featured })}
+                  className={`w-9 h-5 rounded-full transition-all flex items-center px-0.5 ${form.featured ? "bg-white" : "bg-white/15"}`}>
+                  <motion.div animate={{ x: form.featured ? 16 : 0 }}
+                    className={`w-4 h-4 rounded-full ${form.featured ? "bg-black" : "bg-white/40"}`} />
+                </button>
+              </div>
+              <div className="flex items-center justify-between p-3 rounded-xl border border-white/[0.09]">
+                <div>
+                  <p className="text-sm text-white font-medium">Bestseller</p>
+                  <p className="text-[10px] text-white/30">Shows bestseller badge</p>
+                </div>
+                <button type="button"
+                  onClick={() => setForm({ ...form, bestseller: !form.bestseller })}
+                  className={`w-9 h-5 rounded-full transition-all flex items-center px-0.5 ${form.bestseller ? "bg-white" : "bg-white/15"}`}>
+                  <motion.div animate={{ x: form.bestseller ? 16 : 0 }}
+                    className={`w-4 h-4 rounded-full ${form.bestseller ? "bg-black" : "bg-white/40"}`} />
+                </button>
+              </div>
+            </div>
           </div>
 
           {/* Durations */}
