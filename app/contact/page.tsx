@@ -4,7 +4,7 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle2, MessageCircle, Mail, Phone, MapPin } from "lucide-react";
 import { useLang } from "@/context/LangContext";
-import { submitContactMessage } from "@/src/lib/services/content-public";
+import { submitContactMessage } from "@/src/lib/services/contact-browser";
 import { IMAGES } from "@/lib/data";
 
 export default function ContactPage() {

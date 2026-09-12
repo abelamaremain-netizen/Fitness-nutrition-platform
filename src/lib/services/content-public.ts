@@ -1,16 +1,17 @@
 /**
  * content-public.ts
- * Browser-safe public content queries ONLY.
- * No server-side imports — safe to use in client components.
+ * Server-side public content queries — used from Server Components / page.tsx files.
+ * Uses createServerClient (cookie-aware) instead of createBrowserClient.
  */
-import { createBrowserClient } from "@/src/lib/supabase/client";
+import { createServerClient } from "@/src/lib/supabase/server";
 import type {
   BlogPost, Faq, HowItWorksStep,
   TeamMember, Testimonial,
 } from "@/src/types/database.types";
 
+// Server-side queries (called from RSC page.tsx files)
 export async function getFaqs(): Promise<Faq[]> {
-  const supabase = createBrowserClient();
+  const supabase = await createServerClient();
   const { data, error } = await supabase
     .from("faqs").select("*").order("sort_order", { ascending: true });
   if (error) throw error;
@@ -18,7 +19,7 @@ export async function getFaqs(): Promise<Faq[]> {
 }
 
 export async function getPublishedTestimonials(): Promise<Testimonial[]> {
-  const supabase = createBrowserClient();
+  const supabase = await createServerClient();
   const { data, error } = await supabase
     .from("testimonials").select("*")
     .eq("published", true).order("sort_order", { ascending: true });
@@ -27,7 +28,7 @@ export async function getPublishedTestimonials(): Promise<Testimonial[]> {
 }
 
 export async function getPublishedBlogPosts(): Promise<BlogPost[]> {
-  const supabase = createBrowserClient();
+  const supabase = await createServerClient();
   const { data, error } = await supabase
     .from("blog_posts").select("*")
     .eq("published", true).order("created_at", { ascending: false });
@@ -36,7 +37,7 @@ export async function getPublishedBlogPosts(): Promise<BlogPost[]> {
 }
 
 export async function getBlogPost(id: string): Promise<BlogPost | null> {
-  const supabase = createBrowserClient();
+  const supabase = await createServerClient();
   const { data, error } = await supabase
     .from("blog_posts").select("*")
     .eq("id", id).eq("published", true).maybeSingle();
@@ -45,7 +46,7 @@ export async function getBlogPost(id: string): Promise<BlogPost | null> {
 }
 
 export async function getTeamMembers(): Promise<TeamMember[]> {
-  const supabase = createBrowserClient();
+  const supabase = await createServerClient();
   const { data, error } = await supabase
     .from("team_members").select("*").order("sort_order", { ascending: true });
   if (error) throw error;
@@ -53,7 +54,7 @@ export async function getTeamMembers(): Promise<TeamMember[]> {
 }
 
 export async function getHowItWorksSteps(): Promise<HowItWorksStep[]> {
-  const supabase = createBrowserClient();
+  const supabase = await createServerClient();
   const { data, error } = await supabase
     .from("how_it_works_steps").select("*").order("sort_order", { ascending: true });
   if (error) throw error;
@@ -61,7 +62,7 @@ export async function getHowItWorksSteps(): Promise<HowItWorksStep[]> {
 }
 
 export async function getSiteContent(): Promise<Record<string, string>> {
-  const supabase = createBrowserClient();
+  const supabase = await createServerClient();
   const { data, error } = await supabase.from("site_content").select("key, value");
   if (error) throw error;
   const map: Record<string, string> = {};
@@ -69,10 +70,6 @@ export async function getSiteContent(): Promise<Record<string, string>> {
   return map;
 }
 
-export async function submitContactMessage(input: {
-  name: string; email: string; subject: string; message: string;
-}): Promise<void> {
-  const supabase = createBrowserClient();
-  const { error } = await supabase.from("contact_messages").insert(input);
-  if (error) throw error;
-}
+// Browser-safe (used from client components like ContactForm)
+// submitContactMessage has been moved to contact-browser.ts
+// to avoid client components importing server-only next/headers

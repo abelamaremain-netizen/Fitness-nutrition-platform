@@ -38,9 +38,15 @@ function PlanRow({ plan, rank }: { plan: Plan; rank: number }) {
 
         {/* Thumbnail */}
         <div className="relative sm:w-52 h-44 sm:h-auto flex-shrink-0 overflow-hidden rounded-tl-2xl rounded-tr-2xl sm:rounded-tr-none sm:rounded-bl-2xl">
-          <Image src={plan.videoThumb} alt={plan.title} fill
-            className="object-cover transition-transform duration-500 group-hover:scale-105"
-            sizes="208px" />
+          {plan.videoThumb ? (
+            <Image src={plan.videoThumb} alt={plan.title} fill
+              className="object-cover transition-transform duration-500 group-hover:scale-105"
+              sizes="208px" />
+          ) : (
+            <Image src={plan.image} alt={plan.title} fill
+              className="object-cover transition-transform duration-500 group-hover:scale-105"
+              sizes="208px" />
+          )}
           <div className="absolute inset-0 bg-black/45 group-hover:bg-black/25 transition-colors" />
 
           {/* Play */}
@@ -175,9 +181,30 @@ export default function RecommendationResults({ plans, profile, onReset }: Props
 
       {/* Plan rows */}
       <div className="flex flex-col gap-5">
-        {plans.map((plan, i) => (
-          <PlanRow key={plan.id} plan={plan} rank={i} />
-        ))}
+        {plans.length > 0 ? (
+          plans.map((plan, i) => (
+            <PlanRow key={plan.id} plan={plan} rank={i} />
+          ))
+        ) : (
+          <div className="text-center py-16">
+            <p style={{ fontFamily: "var(--font-serif)" }}
+              className="text-white/40 text-xl italic mb-3">
+              No plans matched your profile.
+            </p>
+            <p className="text-white/25 text-sm mb-6">
+              Try adjusting your goals or activity level, or browse all plans.
+            </p>
+            <div className="flex gap-3 justify-center">
+              <button onClick={onReset}
+                className="btn btn-outline py-3 px-6 text-[11px]">
+                ← Update Profile
+              </button>
+              <a href="/plans" className="btn btn-white py-3 px-6 text-[11px]">
+                Browse All Plans
+              </a>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

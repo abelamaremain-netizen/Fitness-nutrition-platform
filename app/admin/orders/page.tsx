@@ -43,28 +43,51 @@ function OrderModal({ order, onClose, onStatusChange }: {
   onStatusChange: (id: string, status: OrderStatus) => void;
 }) {
   const [updating, setUpdating] = useState(false);
+  const [updateError, setUpdateError] = useState("");
 
   const changeStatus = async (status: OrderStatus) => {
-    const supabase = createBrowserClient();
     setUpdating(true);
-    await supabase.from("orders").update({ status }).eq("id", order.id);
-    onStatusChange(order.id, status);
+    setUpdateError("");
+    const supabase = createBrowserClient();
+    const { error } = await supabase.from("orders").update({ status }).eq("id", order.id);
+    if (error) {
+      setUpdateError("Failed to update status. Please try again.");
+    } else {
+      onStatusChange(order.id, status);
+    }
     setUpdating(false);
   };
 
   const grantAccess = async () => {
-    const supabase = createBrowserClient();
     setUpdating(true);
+    setUpdateError("");
+    const supabase = createBrowserClient();
+
     // Mark order completed
-    await supabase.from("orders").update({ status: "completed" }).eq("id", order.id);
-    // Create order_access row so customer can access content
-    await supabase.from("order_access").upsert({
+    const { error: orderErr } = await supabase
+      .from("orders").update({ status: "completed" }).eq("id", order.id);
+    if (orderErr) {
+      setUpdateError("Failed to update order status. Please try again.");
+      setUpdating(false);
+      return;
+    }
+
+    // Create order_access row — store order_id as the access key
+    // customer_name is the only identifier since there are no accounts
+    const { error: accessErr } = await supabase.from("order_access").upsert({
       order_id:    order.id,
       plan_id:     order.plan_id,
-      email:       order.customer_email || order.customer_name,
+      email:       order.customer_name || order.id, // use order ID as fallback identifier
       unlocked:    true,
       unlocked_at: new Date().toISOString(),
     }, { onConflict: "order_id" });
+
+    if (accessErr) {
+      setUpdateError("Order marked complete but access record failed. Check DB manually.");
+      setUpdating(false);
+      return;
+    }
+
     onStatusChange(order.id, "completed");
     setUpdating(false);
   };
@@ -166,6 +189,9 @@ function OrderModal({ order, onClose, onStatusChange }: {
           <button onClick={onClose} className="btn btn-outline w-full py-3 text-[11px]">
             Close
           </button>
+          {updateError && (
+            <p className="text-red-400/80 text-xs text-center pt-1">{updateError}</p>
+          )}
         </div>
       </motion.div>
     </motion.div>
@@ -184,6 +210,7 @@ function StatPill({ label, value }: { label: string; value: string | number }) {
 export default function AdminOrdersPage() {
   const [orders,   setOrders]   = useState<DBOrder[]>([]);
   const [loading,  setLoading]  = useState(true);
+  const [loadErr,  setLoadErr]  = useState("");
   const [search,   setSearch]   = useState("");
   const [status,   setStatus]   = useState("all");
   const [method,   setMethod]   = useState("all");
@@ -193,9 +220,14 @@ export default function AdminOrdersPage() {
   const loadOrders = async () => {
     const supabase = createBrowserClient();
     setLoading(true);
-    const { data } = await supabase
+    setLoadErr("");
+    const { data, error } = await supabase
       .from("orders").select("*").order("created_at", { ascending: false });
-    setOrders((data as DBOrder[]) ?? []);
+    if (error) {
+      setLoadErr("Failed to load orders. Please refresh.");
+    } else {
+      setOrders((data as DBOrder[]) ?? []);
+    }
     setLoading(false);
   };
 
@@ -224,9 +256,12 @@ export default function AdminOrdersPage() {
       );
   }, [orders, search, status, method, sortDir]);
 
-  const totalRevenue  = orders.filter((o) => o.status === "completed").reduce((s, o) => s + o.amount, 0);
+  // Fix #9: guard amount null → NaN revenue
+  const totalRevenue   = orders
+    .filter((o) => o.status === "completed")
+    .reduce((s, o) => s + (Number(o.amount) || 0), 0);
   const completedCount = orders.filter((o) => o.status === "completed").length;
-  const pendingCount   = orders.filter((o) => o.status === "pending").length;
+  const pendingCount   = orders.filter((o) => o.status === "pending_verification" || o.status === "pending").length;
 
   const exportCSV = () => {
     const header = "ID,Customer,Email,Duration,Amount,Method,Status,Date";
@@ -306,6 +341,11 @@ export default function AdminOrdersPage() {
             {loading ? (
               <div className="flex items-center justify-center py-16">
                 <div className="w-6 h-6 border-2 border-white/20 border-t-white/60 rounded-full animate-spin" />
+              </div>
+            ) : loadErr ? (
+              <div className="text-center py-16">
+                <p className="text-red-400/70 text-sm mb-3">{loadErr}</p>
+                <button onClick={loadOrders} className="btn btn-outline py-2 px-5 text-[11px]">Retry</button>
               </div>
             ) : filtered.length === 0 ? (
               <p className="text-white/25 text-sm text-center py-16">No orders found.</p>

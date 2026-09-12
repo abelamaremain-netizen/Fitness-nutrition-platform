@@ -1,5 +1,4 @@
 import { createServerClient } from "@/src/lib/supabase/server";
-import { createBrowserClient } from "@/src/lib/supabase/client";
 import type {
   Plan,
   PlanDuration,
@@ -9,11 +8,11 @@ import type {
 } from "@/src/types/database.types";
 
 // ---------------------------------------------------------------------------
-// Public (browser) queries — read published plans only
+// Public server-side queries — used from Server Components / page.tsx files
 // ---------------------------------------------------------------------------
 
 export async function getPublishedPlans(): Promise<Plan[]> {
-  const supabase = createBrowserClient();
+  const supabase = await createServerClient();
   const { data, error } = await supabase
     .from("plans")
     .select("*")
@@ -25,7 +24,7 @@ export async function getPublishedPlans(): Promise<Plan[]> {
 }
 
 export async function getFeaturedPlans(): Promise<Plan[]> {
-  const supabase = createBrowserClient();
+  const supabase = await createServerClient();
   const { data, error } = await supabase
     .from("plans")
     .select("*")
@@ -38,7 +37,7 @@ export async function getFeaturedPlans(): Promise<Plan[]> {
 }
 
 export async function getBestsellerPlans(): Promise<Plan[]> {
-  const supabase = createBrowserClient();
+  const supabase = await createServerClient();
   const { data, error } = await supabase
     .from("plans")
     .select("*")
@@ -51,7 +50,7 @@ export async function getBestsellerPlans(): Promise<Plan[]> {
 }
 
 export async function getPlanBySlug(id: string): Promise<Plan | null> {
-  const supabase = createBrowserClient();
+  const supabase = await createServerClient();
   const { data, error } = await supabase
     .from("plans")
     .select("*")
@@ -63,10 +62,8 @@ export async function getPlanBySlug(id: string): Promise<Plan | null> {
   return data;
 }
 
-export async function getPlanDurations(
-  planId: string,
-): Promise<PlanDuration[]> {
-  const supabase = createBrowserClient();
+export async function getPlanDurations(planId: string): Promise<PlanDuration[]> {
+  const supabase = await createServerClient();
   const { data, error } = await supabase
     .from("plan_durations")
     .select("*")
