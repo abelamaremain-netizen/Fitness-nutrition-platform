@@ -2,23 +2,12 @@
 export const dynamic = "force-dynamic";
 import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, X, Eye, Shield, ShieldOff } from "lucide-react";
+import { Search, X, Eye } from "lucide-react";
 import { createBrowserClient } from "@/src/lib/supabase/client";
-
-interface CustomerSummary {
-  email: string;
-  name: string;
-  phone: string;
-  totalSpent: number;
-  orderCount: number;
-  lastOrder: string;
-  orders: DBOrder[];
-}
 
 interface DBOrder {
   id: string;
   customer_name: string;
-  customer_email: string;
   customer_phone: string;
   plan_id: string;
   duration_label: string;
@@ -27,7 +16,16 @@ interface DBOrder {
   payment_method: string;
   created_at: string;
 }
-function CustomerModal({ customer, onClose }: { customer: CustomerSummary; onClose: () => void }) {
+
+interface BuyerSummary {
+  name: string;
+  totalSpent: number;
+  orderCount: number;
+  lastOrder: string;
+  orders: DBOrder[];
+}
+
+function BuyerModal({ buyer, onClose }: { buyer: BuyerSummary; onClose: () => void }) {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
@@ -38,21 +36,22 @@ function CustomerModal({ customer, onClose }: { customer: CustomerSummary; onClo
         <div className="flex items-center justify-between px-6 py-5 border-b border-white/[0.07]">
           <div>
             <h2 className="text-lg font-bold text-white" style={{ fontFamily: "var(--font-serif)" }}>
-              {customer.name || customer.email}
+              {buyer.name}
             </h2>
-            <p className="text-[11px] text-white/30 mt-0.5">{customer.email}</p>
+            <p className="text-[11px] text-white/30 mt-0.5">{buyer.orderCount} order{buyer.orderCount !== 1 ? "s" : ""}</p>
           </div>
           <button onClick={onClose} className="text-white/30 hover:text-white transition-colors">
             <X size={18} />
           </button>
         </div>
+
         <div className="p-6 space-y-6">
           {/* Summary */}
           <div className="grid grid-cols-3 gap-3">
             {[
-              { l: "Orders",        v: customer.orderCount },
-              { l: "Total Spent",   v: `${customer.totalSpent.toLocaleString()} ETB` },
-              { l: "Last Order",    v: new Date(customer.lastOrder).toLocaleDateString("en-GB") },
+              { l: "Orders",      v: buyer.orderCount },
+              { l: "Total Spent", v: `${buyer.totalSpent.toLocaleString()} ETB` },
+              { l: "Last Order",  v: new Date(buyer.lastOrder).toLocaleDateString("en-GB") },
             ].map((s) => (
               <div key={s.l} className="card p-3 text-center">
                 <p className="text-sm font-bold text-white">{s.v}</p>
@@ -63,30 +62,36 @@ function CustomerModal({ customer, onClose }: { customer: CustomerSummary; onClo
 
           {/* Order history */}
           <div>
-            <p className="text-[10px] font-semibold tracking-[0.22em] uppercase text-white/30 mb-4">Order History</p>
+            <p className="text-[10px] font-semibold tracking-[0.22em] uppercase text-white/30 mb-4">
+              Order History
+            </p>
             <div className="space-y-2">
-              {customer.orders.map((o) => (
+              {buyer.orders.map((o) => (
                 <div key={o.id} className="card p-4 flex items-center justify-between gap-4">
                   <div className="min-w-0">
                     <p className="text-xs text-white/60 font-medium truncate">{o.plan_id}</p>
-                    <p className="text-[11px] text-white/30 mt-0.5">{o.duration_label} · {o.payment_method}</p>
+                    <p className="text-[11px] text-white/30 mt-0.5">
+                      {o.duration_label} · {o.payment_method}
+                    </p>
                   </div>
                   <div className="text-right flex-shrink-0">
                     <p className="text-sm font-semibold text-white/80">{o.amount.toLocaleString()} ETB</p>
                     <p className="text-[10px] text-white/25">{new Date(o.created_at).toLocaleDateString("en-GB")}</p>
                   </div>
                   <span className={`text-[10px] font-bold tracking-widest uppercase px-2 py-0.5 rounded-full flex-shrink-0 ${
-                    o.status === "completed" ? "bg-white/10 text-white/60" :
-                    o.status === "pending"   ? "bg-yellow-500/15 text-yellow-400" :
-                                               "bg-red-500/15 text-red-400"
+                    o.status === "completed"            ? "bg-white/10 text-white/60" :
+                    o.status === "pending_verification" ? "bg-blue-500/15 text-blue-400" :
+                    o.status === "pending"              ? "bg-yellow-500/15 text-yellow-400" :
+                                                          "bg-red-500/15 text-red-400"
                   }`}>
-                    {o.status}
+                    {o.status.replace("_", " ")}
                   </span>
                 </div>
               ))}
             </div>
           </div>
         </div>
+
         <div className="px-6 pb-6">
           <button onClick={onClose} className="btn btn-white w-full py-3">Close</button>
         </div>
@@ -99,57 +104,34 @@ export default function AdminCustomersPage() {
   const [orders,   setOrders]   = useState<DBOrder[]>([]);
   const [loading,  setLoading]  = useState(true);
   const [search,   setSearch]   = useState("");
-  const [selected, setSelected] = useState<CustomerSummary | null>(null);
-  // banned is loaded from DB — persists across refreshes
-  const [banned,   setBanned]   = useState<Set<string>>(new Set());
-  const [banning,  setBanning]  = useState<string | null>(null); // email being toggled
+  const [selected, setSelected] = useState<BuyerSummary | null>(null);
 
   useEffect(() => {
     const supabase = createBrowserClient();
-    // Load orders and banned list in parallel
-    Promise.all([
-      supabase.from("orders").select("*").order("created_at", { ascending: false }),
-      supabase.from("banned_customers").select("email"),
-    ]).then(([ordersRes, bannedRes]) => {
-      setOrders((ordersRes.data as DBOrder[]) ?? []);
-      const bannedEmails = new Set<string>(
-        ((bannedRes.data ?? []) as { email: string }[]).map((r) => r.email)
-      );
-      setBanned(bannedEmails);
-      setLoading(false);
-    });
+    supabase
+      .from("orders")
+      .select("id, customer_name, customer_phone, plan_id, duration_label, amount, status, payment_method, created_at")
+      .order("created_at", { ascending: false })
+      .then(({ data }) => {
+        setOrders((data as DBOrder[]) ?? []);
+        setLoading(false);
+      });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const toggleBan = async (email: string) => {
-    setBanning(email);
-    const supabase = createBrowserClient();
-    const isBanned = banned.has(email);
-
-    if (isBanned) {
-      await supabase.from("banned_customers").delete().eq("email", email);
-      setBanned((prev) => { const n = new Set(prev); n.delete(email); return n; });
-    } else {
-      await supabase.from("banned_customers").upsert({ email }, { onConflict: "email" });
-      setBanned((prev) => new Set(prev).add(email));
-    }
-    setBanning(null);
-  };
-
-  // Group orders by email → customer summaries
-  const customers: CustomerSummary[] = useMemo(() => {
-    const map = new Map<string, CustomerSummary>();
+  // Group orders by name — since there are no accounts, name is the only identifier
+  const buyers: BuyerSummary[] = useMemo(() => {
+    const map = new Map<string, BuyerSummary>();
     for (const o of orders) {
-      const existing = map.get(o.customer_email);
+      const key = (o.customer_name || "Unknown").trim();
+      const existing = map.get(key);
       if (existing) {
         existing.orderCount++;
         existing.totalSpent += o.status === "completed" ? o.amount : 0;
         if (o.created_at > existing.lastOrder) existing.lastOrder = o.created_at;
         existing.orders.push(o);
       } else {
-        map.set(o.customer_email, {
-          email:      o.customer_email,
-          name:       o.customer_name || "",
-          phone:      o.customer_phone || "",
+        map.set(key, {
+          name:       key,
           totalSpent: o.status === "completed" ? o.amount : 0,
           orderCount: 1,
           lastOrder:  o.created_at,
@@ -161,39 +143,42 @@ export default function AdminCustomersPage() {
   }, [orders]);
 
   const filtered = useMemo(() =>
-    customers.filter((c) => {
+    buyers.filter((b) => {
       const q = search.toLowerCase();
-      return !q || c.email.toLowerCase().includes(q) || c.name.toLowerCase().includes(q);
+      return !q || b.name.toLowerCase().includes(q);
     }),
-  [customers, search]);
+  [buyers, search]);
 
   return (
     <>
       <div className="space-y-6 max-w-6xl">
         <div>
           <p className="text-[10px] font-semibold tracking-[0.24em] uppercase text-white/35 mb-1">Management</p>
-          <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "var(--font-serif)" }}>Customers</h1>
+          <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "var(--font-serif)" }}>Buyers</h1>
+          <p className="text-white/30 text-sm mt-2">
+            Grouped by name. Since customers don&apos;t create accounts, each name is treated as a unique buyer.
+          </p>
         </div>
 
         {/* Stats */}
         <div className="grid grid-cols-3 gap-4 max-w-md">
           {[
-            { l: "Total",    v: customers.length },
-            { l: "Paying",   v: customers.filter((c) => c.totalSpent > 0).length },
-            { l: "No Orders",v: customers.filter((c) => c.orderCount === 0).length },
+            { l: "Total Buyers",  v: buyers.length },
+            { l: "Paying",        v: buyers.filter((b) => b.totalSpent > 0).length },
+            { l: "Total Revenue", v: `${buyers.reduce((s, b) => s + b.totalSpent, 0).toLocaleString()} ETB` },
           ].map((s) => (
             <div key={s.l} className="card p-4 text-center">
-              <p className="text-2xl font-black text-white" style={{ fontFamily: "var(--font-serif)" }}>{s.v}</p>
+              <p className="text-xl font-black text-white" style={{ fontFamily: "var(--font-serif)" }}>{s.v}</p>
               <p className="text-[10px] tracking-widest uppercase text-white/30 mt-0.5">{s.l}</p>
             </div>
           ))}
         </div>
 
         {/* Search */}
-        <div className="flex flex-wrap gap-3">
-          <div className="relative flex-1 min-w-[200px]">
+        <div className="flex gap-3">
+          <div className="relative flex-1 max-w-sm">
             <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/25" />
-            <input type="text" placeholder="Search by name or email…" value={search}
+            <input type="text" placeholder="Search by name…" value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="bg-[#141414] border border-white/[0.09] text-white placeholder-white/20 pl-9 pr-4 py-2.5 rounded-xl text-sm focus:outline-none focus:border-white/25 transition-colors w-full" />
           </div>
@@ -206,7 +191,7 @@ export default function AdminCustomersPage() {
         </div>
 
         <p className="text-[11px] tracking-widest uppercase text-white/25">
-          {filtered.length} customer{filtered.length !== 1 ? "s" : ""}
+          {filtered.length} buyer{filtered.length !== 1 ? "s" : ""}
         </p>
 
         {/* Table */}
@@ -218,58 +203,38 @@ export default function AdminCustomersPage() {
               </div>
             ) : filtered.length === 0 ? (
               <p className="text-white/25 text-sm text-center py-16">
-                {customers.length === 0 ? "No customers yet." : "No customers match your search."}
+                {buyers.length === 0 ? "No orders submitted yet." : "No buyers match your search."}
               </p>
             ) : (
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-white/[0.07]">
-                    {["Customer", "Orders", "Total Spent", "Last Order", "Actions"].map((h) => (
+                    {["Name", "Orders", "Total Spent", "Last Order", ""].map((h) => (
                       <th key={h} className="px-5 py-3.5 text-left text-[10px] font-semibold tracking-[0.18em] uppercase text-white/25">{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((c) => {
-                    const isBanned = banned.has(c.email);
-                    return (
-                      <tr key={c.email}
-                        className={`border-b border-white/[0.04] transition-colors ${isBanned ? "opacity-40" : "hover:bg-white/[0.02]"}`}>
-                        <td className="px-5 py-3.5">
-                          <p className="text-sm text-white/80 font-medium">{c.name || "—"}</p>
-                          <p className="text-[11px] text-white/25">{c.email}</p>
-                          {c.phone && <p className="text-[11px] text-white/20">{c.phone}</p>}
-                        </td>
-                        <td className="px-5 py-3.5 text-sm text-white/50">{c.orderCount}</td>
-                        <td className="px-5 py-3.5 text-sm font-semibold text-white/70">
-                          {c.totalSpent.toLocaleString()} ETB
-                        </td>
-                        <td className="px-5 py-3.5 text-[11px] text-white/30">
-                          {new Date(c.lastOrder).toLocaleDateString("en-GB")}
-                        </td>
-                        <td className="px-5 py-3.5">
-                          <div className="flex items-center gap-1.5">
-                            <button onClick={() => setSelected(c)}
-                              className="p-1.5 rounded-lg text-white/25 hover:text-white hover:bg-white/[0.06] transition-all">
-                              <Eye size={13} />
-                            </button>
-                            <button
-                              onClick={() => toggleBan(c.email)}
-                              disabled={banning === c.email}
-                              title={isBanned ? "Unban customer" : "Ban customer"}
-                              className={`p-1.5 rounded-lg transition-all disabled:opacity-40 ${
-                                isBanned ? "text-yellow-400 hover:bg-yellow-500/10" : "text-white/25 hover:text-red-400 hover:bg-red-500/10"
-                              }`}>
-                              {banning === c.email
-                                ? <span className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin inline-block" />
-                                : isBanned ? <Shield size={13} /> : <ShieldOff size={13} />
-                              }
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
+                  {filtered.map((b) => (
+                    <tr key={b.name} className="border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors">
+                      <td className="px-5 py-3.5">
+                        <p className="text-sm text-white/80 font-medium">{b.name}</p>
+                      </td>
+                      <td className="px-5 py-3.5 text-sm text-white/50">{b.orderCount}</td>
+                      <td className="px-5 py-3.5 text-sm font-semibold text-white/70">
+                        {b.totalSpent.toLocaleString()} ETB
+                      </td>
+                      <td className="px-5 py-3.5 text-[11px] text-white/30">
+                        {new Date(b.lastOrder).toLocaleDateString("en-GB")}
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <button onClick={() => setSelected(b)}
+                          className="p-1.5 rounded-lg text-white/25 hover:text-white hover:bg-white/[0.06] transition-all">
+                          <Eye size={13} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             )}
@@ -278,7 +243,7 @@ export default function AdminCustomersPage() {
       </div>
 
       <AnimatePresence>
-        {selected && <CustomerModal customer={selected} onClose={() => setSelected(null)} />}
+        {selected && <BuyerModal buyer={selected} onClose={() => setSelected(null)} />}
       </AnimatePresence>
     </>
   );

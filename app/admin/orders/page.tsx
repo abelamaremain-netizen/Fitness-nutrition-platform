@@ -210,9 +210,9 @@ export default function AdminOrdersPage() {
       .filter((o) => {
         const q = search.toLowerCase();
         const matchSearch = !q ||
-          o.customer_email.toLowerCase().includes(q) ||
           (o.customer_name || "").toLowerCase().includes(q) ||
-          o.id.toLowerCase().includes(q);
+          o.id.toLowerCase().includes(q) ||
+          (o.plan_id || "").toLowerCase().includes(q);
         const matchStatus = status === "all" || o.status === status;
         const matchMethod = method === "all" || o.payment_method === method;
         return matchSearch && matchStatus && matchMethod;
@@ -323,7 +323,6 @@ export default function AdminOrdersPage() {
                     <tr key={order.id} className="border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors">
                       <td className="px-5 py-3.5">
                         <p className="text-sm text-white/80 font-medium">{order.customer_name || "—"}</p>
-                        <p className="text-[11px] text-white/25">{order.customer_email}</p>
                       </td>
                       <td className="px-5 py-3.5 text-sm text-white/45">{order.duration_label}</td>
                       <td className="px-5 py-3.5 text-sm text-white/40 capitalize">{order.payment_method}</td>
