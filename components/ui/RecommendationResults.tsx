@@ -43,7 +43,7 @@ function PlanRow({ plan, rank }: { plan: Plan; rank: number }) {
               className="object-cover transition-transform duration-500 group-hover:scale-105"
               sizes="208px" />
           ) : (
-            <Image src={plan.image} alt={plan.title} fill
+            <Image src={plan.image || "/images/female-default.jpg"} alt={plan.title} fill
               className="object-cover transition-transform duration-500 group-hover:scale-105"
               sizes="208px" />
           )}

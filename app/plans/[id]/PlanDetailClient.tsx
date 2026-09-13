@@ -42,7 +42,7 @@ export default function PlanDetailClient({ plan, relatedPlans, testimonials }: P
 
       {/* Hero */}
       <div className="relative h-72 md:h-[420px]">
-        <Image src={plan.image} alt={plan.title} fill priority
+        <Image src={plan.image || "/images/female-default.jpg"} alt={plan.title} fill priority
           className="object-cover" sizes="100vw" />
         <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/40 to-[#0d0d0d]" />
         <div className="absolute inset-0 bg-black/30" />
@@ -269,7 +269,7 @@ export default function PlanDetailClient({ plan, relatedPlans, testimonials }: P
                   <motion.div whileHover={{ y: -4 }}
                     className="card overflow-hidden group hover:border-white/20 transition-colors">
                     <div className="relative h-44 overflow-hidden rounded-t-2xl">
-                      <Image src={r.image} alt={r.title} fill
+                      <Image src={r.image || "/images/female-default.jpg"} alt={r.title} fill
                         className="object-cover transition-transform duration-600 group-hover:scale-105"
                         sizes="400px" />
                       <div className="absolute inset-0 bg-black/30" />

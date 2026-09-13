@@ -34,7 +34,7 @@ export default function PlanCard({ plan }: { plan: Plan }) {
     >
       {/* Image */}
       <div className="relative h-52 overflow-hidden rounded-t-2xl flex-shrink-0">
-        <Image src={plan.image} alt={plan.title} fill
+        <Image src={plan.image || "/images/female-default.jpg"} alt={plan.title} fill
           className="object-cover transition-transform duration-700 group-hover:scale-105"
           sizes="(max-width: 768px) 100vw, 33vw" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />

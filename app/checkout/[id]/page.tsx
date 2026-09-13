@@ -3,7 +3,6 @@ import { useState, use, Suspense, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { notFound } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft, CheckCircle2, ArrowRight,
@@ -13,15 +12,6 @@ import {
 } from "lucide-react";
 import type { Plan, DurationOption } from "@/lib/data";
 import { createBrowserClient } from "@/src/lib/supabase/client";
-
-// ─── PAYMENT DETAILS ──────────────────────────────────────────────────────────
-// Admin updates these in site_content — hardcoded here as fallback
-const TELEBIRR_PHONE = "0912345678";
-const TELEBIRR_NAME  = "Naodi & Samri Fitness";
-const CBE_ACCOUNT    = "1000123456789";
-const CBE_NAME       = "Naodi & Samri Fitness";
-const WHATSAPP_NUM   = "251912345678";
-const SUPPORT_EMAIL  = "hello@naodiansamri.com";
 
 type Step = "review" | "payment" | "submitted";
 
@@ -47,10 +37,29 @@ function CheckoutContent({ id }: { id: string }) {
   const searchParams = useSearchParams();
   const durationKey  = searchParams.get("duration") ?? "";
 
-  const [plan,       setPlan]      = useState<Plan | null>(null);
-  const [planLoading,setPlanLoading] = useState(true);
+  // ── ALL hooks must come before any conditional return ──
+  const [plan,        setPlan]       = useState<Plan | null>(null);
+  const [planLoading, setPlanLoading] = useState(true);
+  const [step,        setStep]       = useState<Step>("review");
+  const [method,      setMethod]     = useState<"telebirr" | "cbe">("telebirr");
+  const [name,        setName]       = useState("");
+  const [txLink,      setTxLink]     = useState("");
+  const [txError,     setTxError]    = useState("");
+  const [agreed,      setAgreed]     = useState(false);
+  const [loading,     setLoading]    = useState(false);
+  const [error,       setError]      = useState("");
 
-  // Fetch plan from DB on mount
+  // Payment credentials from site_content (fetched from DB, not hardcoded)
+  const [paymentInfo, setPaymentInfo] = useState({
+    telebirrPhone: "—",
+    telebirrName:  "Naodi & Samri Fitness",
+    cbeAccount:    "—",
+    cbeName:       "Naodi & Samri Fitness",
+    whatsapp:      "",
+    supportEmail:  "",
+  });
+
+  // Fetch plan from DB
   useEffect(() => {
     const load = async () => {
       try {
@@ -62,7 +71,7 @@ function CheckoutContent({ id }: { id: string }) {
         ]);
         if (dbPlan) setPlan(mapPlan(dbPlan, dbDurations));
       } catch {
-        // plan stays null
+        // plan stays null → renders "Plan not found"
       } finally {
         setPlanLoading(false);
       }
@@ -70,6 +79,27 @@ function CheckoutContent({ id }: { id: string }) {
     load();
   }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Fetch payment credentials from site_content
+  useEffect(() => {
+    const supabase = createBrowserClient();
+    supabase.from("site_content").select("key, value")
+      .in("key", ["telebirr_phone", "telebirr_name", "cbe_account", "cbe_name", "whatsapp_number", "support_email"])
+      .then(({ data }) => {
+        if (!data) return;
+        const map: Record<string, string> = {};
+        for (const row of data) map[row.key] = row.value;
+        setPaymentInfo({
+          telebirrPhone: map["telebirr_phone"]  ?? "—",
+          telebirrName:  map["telebirr_name"]   ?? "Naodi & Samri Fitness",
+          cbeAccount:    map["cbe_account"]     ?? "—",
+          cbeName:       map["cbe_name"]        ?? "Naodi & Samri Fitness",
+          whatsapp:      map["whatsapp_number"] ?? "",
+          supportEmail:  map["support_email"]   ?? "",
+        });
+      });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Loading / not found states (after all hooks) ──
   if (planLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -90,17 +120,24 @@ function CheckoutContent({ id }: { id: string }) {
     );
   }
 
+  // ── Guard: plan has no durations ──
+  if (plan.durations.length === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-center px-8">
+        <div>
+          <p style={{ fontFamily: "var(--font-serif)" }}
+            className="text-white text-2xl font-bold mb-3">No pricing available yet</p>
+          <p className="text-white/40 text-sm mb-6">
+            This plan doesn&apos;t have any duration or pricing set up. Please check back soon.
+          </p>
+          <Link href="/plans" className="btn btn-outline py-3 px-8">Browse Plans</Link>
+        </div>
+      </div>
+    );
+  }
+
   const duration: DurationOption =
     plan.durations.find((d) => d.key === durationKey) ?? plan.durations[0];
-
-  const [step,       setStep]      = useState<Step>("review");
-  const [method,     setMethod]    = useState<"telebirr" | "cbe">("telebirr");
-  const [name,       setName]      = useState("");
-  const [txLink,     setTxLink]    = useState("");
-  const [txError,    setTxError]   = useState("");  // real-time URL check
-  const [agreed,     setAgreed]    = useState(false);
-  const [loading,    setLoading]   = useState(false);
-  const [error,      setError]     = useState("");
 
   const canContinue = agreed;
   const canSubmit   = txLink.trim().startsWith("http") && name.trim() && !txError;
@@ -123,7 +160,6 @@ function CheckoutContent({ id }: { id: string }) {
   const handleTxLinkChange = (url: string) => {
     setTxLink(url);
     setTxError("");
-    // Debounce — only check after user stops typing
     clearTimeout((window as Window & { _txTimer?: ReturnType<typeof setTimeout> })._txTimer);
     (window as Window & { _txTimer?: ReturnType<typeof setTimeout> })._txTimer = setTimeout(() => {
       if (url.trim().startsWith("http")) checkTxLink(url);
@@ -138,8 +174,7 @@ function CheckoutContent({ id }: { id: string }) {
     try {
       const supabase = createBrowserClient();
 
-      // ── Check uniqueness BEFORE inserting ──────────────────────
-      // Prevents the same transaction link being used more than once
+      // Check uniqueness BEFORE inserting
       const { data: existing } = await supabase
         .from("orders")
         .select("id")
@@ -156,27 +191,22 @@ function CheckoutContent({ id }: { id: string }) {
         return;
       }
 
-      // ── Insert order ────────────────────────────────────────────
       const { error: dbError } = await supabase.from("orders").insert({
-        customer_name:   name.trim(),
-        customer_email:  "",
-        customer_phone:  "",
-        plan_id:         plan.id,
-        duration_key:    duration.key,
-        duration_label:  duration.label,
-        amount:          duration.price,
-        currency:        "ETB",
-        payment_method:  method,
-        status:          "pending_verification",
-        tx_ref:          txLink.trim(),
+        customer_name:  name.trim(),
+        customer_email: "",
+        customer_phone: "",
+        plan_id:        plan.id,
+        duration_key:   duration.key,
+        duration_label: duration.label,
+        amount:         duration.price,
+        currency:       "ETB",
+        payment_method: method,
+        status:         "pending_verification",
+        tx_ref:         txLink.trim(),
       });
 
-      // Handle race condition — duplicate caught at DB level
       if (dbError?.code === "23505") {
-        setError(
-          "This transaction link has already been used. " +
-          "Please contact us if you need help."
-        );
+        setError("This transaction link has already been used. Please contact us if you need help.");
         setLoading(false);
         return;
       }
@@ -194,7 +224,6 @@ function CheckoutContent({ id }: { id: string }) {
     <div className="min-h-screen pt-24 pb-20">
       <div className="max-w-3xl mx-auto px-8">
 
-        {/* Back link */}
         {step !== "submitted" && (
           <Link href={`/plans/${plan.id}`}
             className="inline-flex items-center gap-2 text-white/40 hover:text-white text-[11px] tracking-widest uppercase transition-colors mb-10">
@@ -204,15 +233,13 @@ function CheckoutContent({ id }: { id: string }) {
 
         <AnimatePresence mode="wait">
 
-          {/* ── STEP 1: REVIEW ───────────────────────────────── */}
+          {/* ── STEP 1: REVIEW ─────────────────────────────────────────────── */}
           {step === "review" && (
             <motion.div key="review"
               initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -12 }}>
 
-              <p className="text-[10px] font-semibold tracking-[0.28em] uppercase text-white/35 mb-3">
-                Checkout
-              </p>
+              <p className="text-[10px] font-semibold tracking-[0.28em] uppercase text-white/35 mb-3">Checkout</p>
               <h1 style={{ fontFamily: "var(--font-serif)" }}
                 className="text-3xl font-bold text-white mb-10">
                 Review Your <em>Order</em>
@@ -221,7 +248,7 @@ function CheckoutContent({ id }: { id: string }) {
               {/* Plan summary */}
               <div className="card p-5 flex gap-4 mb-5">
                 <div className="relative w-20 h-20 rounded-xl overflow-hidden flex-shrink-0">
-                  <Image src={plan.image} alt={plan.title} fill className="object-cover" sizes="80px" />
+                  <Image src={plan.image || "/images/female-default.jpg"} alt={plan.title} fill className="object-cover" sizes="80px" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-[9px] font-semibold tracking-widest uppercase text-white/35 mb-1">
@@ -264,15 +291,13 @@ function CheckoutContent({ id }: { id: string }) {
             </motion.div>
           )}
 
-          {/* ── STEP 2: PAYMENT INSTRUCTIONS ─────────────────── */}
+          {/* ── STEP 2: PAYMENT ────────────────────────────────────────────── */}
           {step === "payment" && (
             <motion.div key="payment"
               initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -12 }}>
 
-              <p className="text-[10px] font-semibold tracking-[0.28em] uppercase text-white/35 mb-3">
-                Payment
-              </p>
+              <p className="text-[10px] font-semibold tracking-[0.28em] uppercase text-white/35 mb-3">Payment</p>
               <h1 style={{ fontFamily: "var(--font-serif)" }}
                 className="text-3xl font-bold text-white mb-2">
                 Make Your <em>Payment</em>
@@ -299,7 +324,7 @@ function CheckoutContent({ id }: { id: string }) {
                 ))}
               </div>
 
-              {/* Payment details */}
+              {/* Payment details — loaded from DB via site_content */}
               <div className="card p-6 mb-6">
                 <p className="text-[10px] font-semibold tracking-[0.22em] uppercase text-white/35 mb-5">
                   {method === "telebirr" ? "Telebirr" : "CBE"} Account Details
@@ -311,16 +336,16 @@ function CheckoutContent({ id }: { id: string }) {
                       <div className="flex items-center justify-between p-3 bg-white/[0.03] rounded-xl border border-white/[0.07]">
                         <div>
                           <p className="text-[10px] text-white/30 font-semibold tracking-widest uppercase mb-0.5">Phone Number</p>
-                          <p className="text-white font-bold text-lg tracking-wider">{TELEBIRR_PHONE}</p>
+                          <p className="text-white font-bold text-lg tracking-wider">{paymentInfo.telebirrPhone}</p>
                         </div>
-                        <CopyButton value={TELEBIRR_PHONE} />
+                        <CopyButton value={paymentInfo.telebirrPhone} />
                       </div>
                       <div className="flex items-center justify-between p-3 bg-white/[0.03] rounded-xl border border-white/[0.07]">
                         <div>
                           <p className="text-[10px] text-white/30 font-semibold tracking-widest uppercase mb-0.5">Account Name</p>
-                          <p className="text-white/80 text-sm">{TELEBIRR_NAME}</p>
+                          <p className="text-white/80 text-sm">{paymentInfo.telebirrName}</p>
                         </div>
-                        <CopyButton value={TELEBIRR_NAME} />
+                        <CopyButton value={paymentInfo.telebirrName} />
                       </div>
                     </>
                   ) : (
@@ -328,16 +353,16 @@ function CheckoutContent({ id }: { id: string }) {
                       <div className="flex items-center justify-between p-3 bg-white/[0.03] rounded-xl border border-white/[0.07]">
                         <div>
                           <p className="text-[10px] text-white/30 font-semibold tracking-widest uppercase mb-0.5">Account Number</p>
-                          <p className="text-white font-bold text-lg tracking-wider">{CBE_ACCOUNT}</p>
+                          <p className="text-white font-bold text-lg tracking-wider">{paymentInfo.cbeAccount}</p>
                         </div>
-                        <CopyButton value={CBE_ACCOUNT} />
+                        <CopyButton value={paymentInfo.cbeAccount} />
                       </div>
                       <div className="flex items-center justify-between p-3 bg-white/[0.03] rounded-xl border border-white/[0.07]">
                         <div>
                           <p className="text-[10px] text-white/30 font-semibold tracking-widest uppercase mb-0.5">Account Name</p>
-                          <p className="text-white/80 text-sm">{CBE_NAME}</p>
+                          <p className="text-white/80 text-sm">{paymentInfo.cbeName}</p>
                         </div>
-                        <CopyButton value={CBE_NAME} />
+                        <CopyButton value={paymentInfo.cbeName} />
                       </div>
                     </>
                   )}
@@ -379,7 +404,7 @@ function CheckoutContent({ id }: { id: string }) {
                 </div>
               </div>
 
-              {/* Transaction link + name input */}
+              {/* Name + tx link */}
               <div className="card p-5 mb-6 space-y-4">
                 <div>
                   <label className="field-label">Your Full Name</label>
@@ -392,9 +417,7 @@ function CheckoutContent({ id }: { id: string }) {
                     onChange={(e) => handleTxLinkChange(e.target.value)}
                     className={`pill-input mt-1 ${txError ? "border-red-500/50" : ""}`} />
                   {txError ? (
-                    <p className="text-red-400/80 text-[11px] mt-2 pl-1 leading-relaxed">
-                      ⚠ {txError}
-                    </p>
+                    <p className="text-red-400/80 text-[11px] mt-2 pl-1 leading-relaxed">⚠ {txError}</p>
                   ) : (
                     <p className="text-white/22 text-[11px] mt-2 pl-1">
                       Paste the link you received after payment. Our team will verify it and activate your plan within 24 hours.
@@ -403,13 +426,10 @@ function CheckoutContent({ id }: { id: string }) {
                 </div>
               </div>
 
-              {error && (
-                <p className="text-red-400/80 text-sm text-center mb-4">{error}</p>
-              )}
+              {error && <p className="text-red-400/80 text-sm text-center mb-4">{error}</p>}
 
               <div className="flex gap-3 mb-8">
-                <button onClick={() => setStep("review")}
-                  className="btn btn-outline py-3.5 px-6 text-[10px]">
+                <button onClick={() => setStep("review")} className="btn btn-outline py-3.5 px-6 text-[10px]">
                   ← Back
                 </button>
                 <button onClick={handleSubmitOrder} disabled={!canSubmit || loading}
@@ -421,31 +441,33 @@ function CheckoutContent({ id }: { id: string }) {
                 </button>
               </div>
 
-              {/* Support contact */}
+              {/* Support */}
               <div className="card p-5">
-                <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-white/35 mb-4">
-                  Need Help?
-                </p>
+                <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-white/35 mb-4">Need Help?</p>
                 <div className="space-y-3">
-                  <a href={`https://wa.me/${WHATSAPP_NUM}`} target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-3 text-sm text-white/50 hover:text-white transition-colors">
-                    <MessageCircle size={15} strokeWidth={1.5} className="flex-shrink-0" />
-                    Chat with us on WhatsApp
-                  </a>
-                  <a href={`mailto:${SUPPORT_EMAIL}`}
-                    className="flex items-center gap-3 text-sm text-white/50 hover:text-white transition-colors">
-                    <Mail size={15} strokeWidth={1.5} className="flex-shrink-0" />
-                    {SUPPORT_EMAIL}
-                  </a>
+                  {paymentInfo.whatsapp && (
+                    <a href={`https://wa.me/${paymentInfo.whatsapp}`} target="_blank" rel="noopener noreferrer"
+                      className="flex items-center gap-3 text-sm text-white/50 hover:text-white transition-colors">
+                      <MessageCircle size={15} strokeWidth={1.5} className="flex-shrink-0" />
+                      Chat with us on WhatsApp
+                    </a>
+                  )}
+                  {paymentInfo.supportEmail && (
+                    <a href={`mailto:${paymentInfo.supportEmail}`}
+                      className="flex items-center gap-3 text-sm text-white/50 hover:text-white transition-colors">
+                      <Mail size={15} strokeWidth={1.5} className="flex-shrink-0" />
+                      {paymentInfo.supportEmail}
+                    </a>
+                  )}
                 </div>
                 <p className="text-white/22 text-[11px] mt-4 leading-relaxed">
-                  If you&apos;re having trouble with the payment or the transaction link, contact us directly and we&apos;ll sort it out for you.
+                  Having trouble? Contact us directly and we&apos;ll sort it out.
                 </p>
               </div>
             </motion.div>
           )}
 
-          {/* ── STEP 3: SUBMITTED ─────────────────────────────── */}
+          {/* ── STEP 3: SUBMITTED ──────────────────────────────────────────── */}
           {step === "submitted" && (
             <motion.div key="submitted"
               initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }}
@@ -458,14 +480,10 @@ function CheckoutContent({ id }: { id: string }) {
                 <CheckCircle2 size={36} className="text-white" strokeWidth={1.5} />
               </motion.div>
 
-              <p className="text-[10px] font-semibold tracking-[0.28em] uppercase text-white/35 mb-3">
-                Order Received
-              </p>
-              <h1 style={{ fontFamily: "var(--font-serif)" }}
-                className="text-4xl font-bold text-white mb-4">
+              <p className="text-[10px] font-semibold tracking-[0.28em] uppercase text-white/35 mb-3">Order Received</p>
+              <h1 style={{ fontFamily: "var(--font-serif)" }} className="text-4xl font-bold text-white mb-4">
                 Order <em>Submitted!</em>
               </h1>
-
               <p className="text-white/50 text-sm leading-relaxed mb-3 max-w-sm mx-auto">
                 We&apos;ve received your order for <span className="text-white font-semibold">{plan.title}</span> ({duration.label}).
               </p>
@@ -473,16 +491,13 @@ function CheckoutContent({ id }: { id: string }) {
                 Our team will verify your transaction link and activate your plan. This usually takes a few hours during business hours.
               </p>
 
-              {/* What happens next */}
               <div className="card p-6 text-left mb-8">
-                <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-white/35 mb-5">
-                  What happens next
-                </p>
+                <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-white/35 mb-5">What happens next</p>
                 <div className="space-y-4">
                   {[
-                    { icon: Clock,    text: "Our team reviews your transaction link (usually within a few hours)" },
-                    { icon: Shield,   text: "Once verified, your plan is activated" },
-                    { icon: Download, text: "PDF guide and video content become accessible" },
+                    { icon: Clock,         text: "Our team reviews your transaction link (usually within a few hours)" },
+                    { icon: Shield,        text: "Once verified, your plan is activated" },
+                    { icon: Download,      text: "PDF guide and video content become accessible" },
                     { icon: MessageCircle, text: "Contact us on WhatsApp if you have any questions" },
                   ].map(({ icon: Icon, text }, i) => (
                     <div key={i} className="flex items-start gap-3">
@@ -493,30 +508,27 @@ function CheckoutContent({ id }: { id: string }) {
                 </div>
               </div>
 
-              {/* Support */}
               <div className="card p-5 text-left mb-8">
-                <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-white/35 mb-4">
-                  Questions?
-                </p>
+                <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-white/35 mb-4">Questions?</p>
                 <div className="space-y-3">
-                  <a href={`https://wa.me/${WHATSAPP_NUM}`} target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-3 text-sm text-white/50 hover:text-white transition-colors">
-                    <MessageCircle size={15} strokeWidth={1.5} /> Chat on WhatsApp
-                  </a>
-                  <a href={`mailto:${SUPPORT_EMAIL}`}
-                    className="flex items-center gap-3 text-sm text-white/50 hover:text-white transition-colors">
-                    <Mail size={15} strokeWidth={1.5} /> {SUPPORT_EMAIL}
-                  </a>
+                  {paymentInfo.whatsapp && (
+                    <a href={`https://wa.me/${paymentInfo.whatsapp}`} target="_blank" rel="noopener noreferrer"
+                      className="flex items-center gap-3 text-sm text-white/50 hover:text-white transition-colors">
+                      <MessageCircle size={15} strokeWidth={1.5} /> Chat on WhatsApp
+                    </a>
+                  )}
+                  {paymentInfo.supportEmail && (
+                    <a href={`mailto:${paymentInfo.supportEmail}`}
+                      className="flex items-center gap-3 text-sm text-white/50 hover:text-white transition-colors">
+                      <Mail size={15} strokeWidth={1.5} /> {paymentInfo.supportEmail}
+                    </a>
+                  )}
                 </div>
               </div>
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link href="/plans" className="btn btn-white py-3.5 px-8">
-                  Browse More Plans
-                </Link>
-                <Link href="/" className="btn btn-outline py-3.5 px-8">
-                  Back to Home
-                </Link>
+                <Link href="/plans" className="btn btn-white py-3.5 px-8">Browse More Plans</Link>
+                <Link href="/" className="btn btn-outline py-3.5 px-8">Back to Home</Link>
               </div>
             </motion.div>
           )}
