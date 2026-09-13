@@ -1,12 +1,12 @@
 // ─── IMAGE PATHS ────────────────────────────────────────────────────────────
 export const IMAGES = {
   // Original stock images (kept for plans/blog/misc use)
-  hero1: "/images/female images (2).jpg",
-  hero2: "/images/female images1 (2).jpg",
+  hero1: "/images/female-default.jpg",
+  hero2: "/images/female-default-2.jpg",
   hero3: "/images/gettyimages-1860710155-612x612.jpg",
-  hero4: "/images/images2 (2).jpg",
+  hero4: "/images/default-3.jpg",
   hero5: "/images/Strength-Training-for-Women-Square.webp",
-  hero6: "/images/Red Notice (2021).avi_snapshot_00.37.43.586.jpg",
+  hero6: "/images/hero-women-toning.jpg",
 
   // Owner photos — Naodi & Samri
   naodi1: "/images/owners/naodi-1.JPG",

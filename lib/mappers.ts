@@ -39,7 +39,7 @@ export function mapPlan(dbPlan: DBPlan, dbDurations: DBDuration[] = []): Plan {
     title:           dbPlan.title,
     description:     dbPlan.description,
     longDescription: dbPlan.long_description,
-    image:           dbPlan.image_url   ?? "/images/female images (2).jpg",
+    image:           dbPlan.image_url   ?? "/images/female-default.jpg",
     goal:            dbPlan.goal        as Plan["goal"],
     goalLabel:       GOAL_LABELS[dbPlan.goal] ?? dbPlan.goal,
     level,
