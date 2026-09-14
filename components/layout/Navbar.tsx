@@ -78,7 +78,7 @@ export default function Navbar() {
               {lang === "en" ? "አማ" : "EN"}
             </button>
 
-            <Link href="/plans" className="hidden md:block btn btn-white text-[10px] py-2.5 px-6">
+            <Link href="/plans" className="hidden lg:block btn btn-white text-[10px] py-2.5 px-6">
               {t("nav.browsePlans")}
             </Link>
 
@@ -96,12 +96,12 @@ export default function Navbar() {
           <>
             <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm lg:hidden"
+              className="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm"
               onClick={() => setOpen(false)} />
             <motion.div
               initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 28, stiffness: 260 }}
-              className="fixed top-0 right-0 bottom-0 z-50 w-full sm:w-80 bg-[#0f0f0f] border-l border-white/[0.08] flex flex-col lg:hidden">
+              className="fixed top-0 right-0 bottom-0 z-50 w-full sm:w-80 bg-[#0f0f0f] border-l border-white/[0.08] flex flex-col">
 
               {/* Drawer header */}
               <div className="flex items-center justify-between px-6 h-[72px] border-b border-white/[0.08] flex-shrink-0">
