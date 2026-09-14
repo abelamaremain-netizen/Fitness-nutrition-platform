@@ -72,15 +72,16 @@ function OrderModal({ order, onClose, onStatusChange }: {
       return;
     }
 
-    // Create order_access row — store order_id as the access key
-    // customer_name is the only identifier since there are no accounts
-    const { error: accessErr } = await supabase.from("order_access").upsert({
+    // Create order_access row — delete existing first (if any), then insert fresh
+    // Can't use upsert onConflict without a unique constraint on order_id in the DB
+    await supabase.from("order_access").delete().eq("order_id", order.id);
+    const { error: accessErr } = await supabase.from("order_access").insert({
       order_id:    order.id,
       plan_id:     order.plan_id,
-      email:       order.customer_name || order.id, // use order ID as fallback identifier
+      email:       order.customer_name || order.id,
       unlocked:    true,
       unlocked_at: new Date().toISOString(),
-    }, { onConflict: "order_id" });
+    });
 
     if (accessErr) {
       setUpdateError("Order marked complete but access record failed. Check DB manually.");
