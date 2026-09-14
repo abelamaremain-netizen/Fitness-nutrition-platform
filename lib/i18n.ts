@@ -23,6 +23,7 @@ const translations = {
     "nav.about":       "About",
     "nav.contact":     "Contact",
     "nav.browsePlans": "Browse Plans",
+    "nav.myOrder":     "My Order",
 
     // ── FOOTER ───────────────────────────────────────────────────
     "footer.plans":          "Plans",
@@ -206,6 +207,7 @@ const translations = {
     "nav.about":       "ስለ እኛ",
     "nav.contact":     "አግኙን",
     "nav.browsePlans": "ዕቅዶችን ይመልከቱ",
+    "nav.myOrder":     "ትዕዛዜ",
 
     // ── FOOTER ───────────────────────────────────────────────────
     "footer.plans":          "ዕቅዶች",

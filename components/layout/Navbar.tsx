@@ -18,6 +18,7 @@ const NAV_ITEMS: { href: string; key: TranslationKey }[] = [
   { href: "/blog",          key: "nav.blog" },
   { href: "/about",         key: "nav.about" },
   { href: "/contact",       key: "nav.contact" },
+  { href: "/my-order",      key: "nav.myOrder" },
 ];
 
 export default function Navbar() {

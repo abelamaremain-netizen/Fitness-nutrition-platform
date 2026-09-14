@@ -222,6 +222,8 @@ export type Database = {
           email: string;
           unlocked: boolean;
           unlocked_at: string | null;
+          expires_at: string | null;
+          retrieved_at: string | null;
           created_at: string;
         };
         Insert: {
@@ -231,6 +233,8 @@ export type Database = {
           email: string;
           unlocked?: boolean;
           unlocked_at?: string | null;
+          expires_at?: string | null;
+          retrieved_at?: string | null;
           created_at?: string;
         };
         Update: {
@@ -240,6 +244,8 @@ export type Database = {
           email?: string;
           unlocked?: boolean;
           unlocked_at?: string | null;
+          expires_at?: string | null;
+          retrieved_at?: string | null;
           created_at?: string;
         };
         Relationships: [

@@ -487,9 +487,14 @@ function CheckoutContent({ id }: { id: string }) {
               <p className="text-white/50 text-sm leading-relaxed mb-3 max-w-sm mx-auto">
                 We&apos;ve received your order for <span className="text-white font-semibold">{plan.title}</span> ({duration.label}).
               </p>
-              <p className="text-white/35 text-sm leading-relaxed mb-10 max-w-sm mx-auto">
+              <p className="text-white/35 text-sm leading-relaxed mb-4 max-w-sm mx-auto">
                 Our team will verify your transaction link and activate your plan. This usually takes a few hours during business hours.
               </p>
+              <div className="bg-yellow-500/8 border border-yellow-500/20 rounded-xl px-5 py-3.5 mb-10 max-w-sm mx-auto">
+                <p className="text-yellow-400/90 text-xs leading-relaxed">
+                  ⚠ Save your transaction link. You will need it to retrieve your plan from the <strong>My Order</strong> page after verification.
+                </p>
+              </div>
 
               <div className="card p-6 text-left mb-8">
                 <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-white/35 mb-5">What happens next</p>
@@ -527,7 +532,8 @@ function CheckoutContent({ id }: { id: string }) {
               </div>
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link href="/plans" className="btn btn-white py-3.5 px-8">Browse More Plans</Link>
+                <Link href="/my-order" className="btn btn-white py-3.5 px-8">Check Order Status</Link>
+                <Link href="/plans" className="btn btn-outline py-3.5 px-8">Browse More Plans</Link>
                 <Link href="/" className="btn btn-outline py-3.5 px-8">Back to Home</Link>
               </div>
             </motion.div>
