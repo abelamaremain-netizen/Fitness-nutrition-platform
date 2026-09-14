@@ -3,10 +3,10 @@ import Link from "next/link";
 import { ArrowRight, Award, Users, Target, Heart } from "lucide-react";
 import AnimatedSection from "@/components/ui/AnimatedSection";
 import StatCounter from "@/components/ui/StatCounter";
-import { getTeamMembers } from "@/src/lib/services/content-public";
+import { getTeamMembers, getSiteContent } from "@/src/lib/services/content-public";
 import { IMAGES, STATS } from "@/lib/data";
 
-export const revalidate = 0; // always fetch fresh from DB
+export const revalidate = 0;
 
 const VALUES = [
   { icon: Target, title: "Science First",      description: "Every plan is grounded in exercise science and nutritional research — not trends." },
@@ -16,7 +16,13 @@ const VALUES = [
 ];
 
 export default async function AboutPage() {
-  const teamMembers = await getTeamMembers().catch(() => []);
+  const [teamMembers, content] = await Promise.all([
+    getTeamMembers().catch(() => []),
+    getSiteContent().catch(() => ({} as Record<string, string>)),
+  ]);
+
+  const missionStatement = content.mission_statement ||
+    "Making expert fitness accessible to everyone.";
 
   return (
     <div className="min-h-screen">
@@ -38,7 +44,7 @@ export default async function AboutPage() {
           <AnimatedSection direction="left">
             <p className="text-[10px] font-semibold tracking-[0.28em] uppercase text-white/35 mb-5">Our Mission</p>
             <h2 className="text-4xl font-bold text-white mb-7 leading-tight" style={{ fontFamily: "var(--font-serif)" }}>
-              Making expert fitness<br /><em>accessible to everyone.</em>
+              {missionStatement}
             </h2>
             <p className="text-white/45 text-sm leading-8 mb-5">
               Naodi &amp; Samri built this platform from a simple frustration: quality fitness and nutrition
@@ -93,6 +99,10 @@ export default async function AboutPage() {
           {teamMembers.map((member, i) => {
             const isEven = i % 2 === 0;
             const imgSrc = member.image_url ?? (member.name === "Naodi" ? IMAGES.naodi2 : IMAGES.samri2);
+            // Use site_content bio if admin set it, otherwise fall back to team_members.bio
+            const bioKey = member.name.toLowerCase().includes("naodi") ? "naodi_bio"
+              : member.name.toLowerCase().includes("samri") ? "samri_bio" : null;
+            const bio = (bioKey && content[bioKey]) ? content[bioKey] : member.bio;
             return (
               <AnimatedSection key={member.id} className={`mb-16 ${i > 0 ? "mt-0" : ""}`}>
                 <div className={`grid md:grid-cols-2 gap-0 card overflow-hidden`}>
@@ -106,7 +116,7 @@ export default async function AboutPage() {
                     <h3 className="text-4xl font-bold text-white mb-5" style={{ fontFamily: "var(--font-serif)" }}>
                       {member.name}
                     </h3>
-                    <p className="text-white/50 text-sm leading-8">{member.bio}</p>
+                    <p className="text-white/50 text-sm leading-8">{bio}</p>
                   </div>
                 </div>
               </AnimatedSection>

@@ -13,9 +13,17 @@ import type { Testimonial } from "@/src/types/database.types";
 interface Props {
   featured:     Plan[];
   testimonials: Testimonial[];
+  content:      Record<string, string>;
 }
 
-export default function HomeClient({ featured, testimonials }: Props) {
+export default function HomeClient({ featured, testimonials, content }: Props) {
+  const heroHeadline    = content.hero_headline    || "Transform Your Body.";
+  const heroSubheadline = content.hero_subheadline || "Own Your Results.";
+  const heroBody        = content.hero_body        || "Expert-crafted fitness and nutrition plans by Naodi & Samri, tailored to your goals.";
+  const heroCta1        = content.hero_cta_primary  || "Calculate My BMI";
+  const heroCta2        = content.hero_cta_secondary || "Browse Plans";
+  const naodiBio        = content.naodi_bio || "Certified fitness coach specialising in body recomposition, strength training, and women's wellness.";
+  const samriBio        = content.samri_bio || "Nutrition specialist and certified personal trainer focused on sustainable diet plans and hormonal health.";
   return (
     <div>
       {/* ── HERO ─────────────────────────────────────────────── */}
@@ -32,22 +40,20 @@ export default function HomeClient({ featured, testimonials }: Props) {
           <motion.h1 initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
             style={{ fontFamily: "var(--font-serif)" }}
             className="text-5xl md:text-7xl font-bold text-white leading-[1.06] mb-7">
-            Transform Your Body.<br />
-            <em className="text-white/70">Own Your Results.</em>
+            {heroHeadline}<br />
+            <em className="text-white/70">{heroSubheadline}</em>
           </motion.h1>
           <motion.p initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
             className="text-white/55 text-base md:text-lg leading-relaxed mb-10 max-w-xl mx-auto">
-            Expert-crafted fitness and nutrition plans by{" "}
-            <span className="text-white font-semibold">Naodi &amp; Samri</span>,
-            tailored to your goals. Calculate your BMI, get personalised recommendations, and start today.
+            {heroBody}
           </motion.p>
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
             className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/bmi" className="btn btn-white py-4 px-10">
-              Calculate My BMI <ArrowRight size={15} />
+              {heroCta1} <ArrowRight size={15} />
             </Link>
             <Link href="/plans" className="btn btn-outline py-4 px-10">
-              Browse Plans
+              {heroCta2}
             </Link>
           </motion.div>
         </div>
@@ -91,7 +97,7 @@ export default function HomeClient({ featured, testimonials }: Props) {
                     <p className="text-[10px] font-semibold tracking-[0.22em] uppercase text-white/45 mb-1">Co-Founder</p>
                     <h3 className="text-white text-3xl font-bold mb-2" style={{ fontFamily: "var(--font-serif)" }}>Naodi</h3>
                     <p className="text-white/60 text-sm leading-relaxed">
-                      Certified fitness coach specialising in body recomposition, strength training, and women&apos;s wellness.
+                      {naodiBio}
                     </p>
                   </div>
                 </div>
@@ -108,7 +114,7 @@ export default function HomeClient({ featured, testimonials }: Props) {
                     <p className="text-[10px] font-semibold tracking-[0.22em] uppercase text-white/45 mb-1">Co-Founder</p>
                     <h3 className="text-white text-3xl font-bold mb-2" style={{ fontFamily: "var(--font-serif)" }}>Samri</h3>
                     <p className="text-white/60 text-sm leading-relaxed">
-                      Nutrition specialist and certified personal trainer focused on sustainable diet plans and hormonal health.
+                      {samriBio}
                     </p>
                   </div>
                 </div>
