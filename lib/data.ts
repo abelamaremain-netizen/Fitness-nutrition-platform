@@ -32,12 +32,38 @@ export const NAV_LINKS = [
 ];
 
 // ─── STATS ───────────────────────────────────────────────────────────────────
-export const STATS = [
-  { value: 1200, suffix: "+",  label: "Plans Sold" },
-  { value: 98,   suffix: "%",  label: "Satisfaction Rate" },
-  { value: 50,   suffix: "+",  label: "Expert Plans" },
-  { value: 3,    suffix: "K+", label: "Happy Clients" },
+// Default stats — shown if admin hasn't set values in site_content yet
+export const DEFAULT_STATS = [
+  { value: 0,  suffix: "+",  label: "Plans Sold",       key: "stat_plans_sold" },
+  { value: 0,  suffix: "%",  label: "Satisfaction Rate", key: "stat_satisfaction" },
+  { value: 0,  suffix: "+",  label: "Expert Plans",      key: "stat_expert_plans" },
+  { value: 0,  suffix: "+",  label: "Happy Clients",     key: "stat_happy_clients" },
 ];
+
+export function parseStats(content: Record<string, string>) {
+  return [
+    {
+      value:  parseInt(content.stat_plans_sold_value   ?? "0", 10),
+      suffix: content.stat_plans_sold_suffix            ?? "+",
+      label:  content.stat_plans_sold_label             ?? "Plans Sold",
+    },
+    {
+      value:  parseInt(content.stat_satisfaction_value ?? "0", 10),
+      suffix: content.stat_satisfaction_suffix          ?? "%",
+      label:  content.stat_satisfaction_label           ?? "Satisfaction Rate",
+    },
+    {
+      value:  parseInt(content.stat_expert_plans_value ?? "0", 10),
+      suffix: content.stat_expert_plans_suffix          ?? "+",
+      label:  content.stat_expert_plans_label           ?? "Expert Plans",
+    },
+    {
+      value:  parseInt(content.stat_happy_clients_value ?? "0", 10),
+      suffix: content.stat_happy_clients_suffix          ?? "+",
+      label:  content.stat_happy_clients_label           ?? "Happy Clients",
+    },
+  ];
+}
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 export type PlanLevel    = "Normal" | "Pro" | "VIP";
@@ -76,204 +102,6 @@ export interface Plan {
   activityLevel: string[];
 }
 
-// ─── PLANS ───────────────────────────────────────────────────────────────────
-export const PLANS: Plan[] = [
-  {
-    id: "fat-burn-express",
-    title: "Fat Burn Express",
-    description: "A high-intensity fat-burning program combining cardio intervals and strength circuits. Designed for quick, lasting results.",
-    longDescription: "Fat Burn Express is a science-backed program that combines HIIT cardio with targeted strength circuits to maximise caloric burn. Designed for people who want visible results fast without spending hours in the gym. The program includes progressive overload built in from week one, and a companion nutrition guide that keeps you fuelled without sabotaging your deficit.",
-    image: IMAGES.hero1,
-    goal: "weight-loss",
-    goalLabel: "Weight Loss",
-    level: "Pro",
-    planType: "fitness",
-    durations: [
-      { key: "1-week",   label: "1 Week",   price: 149 },
-      { key: "1-month",  label: "1 Month",  price: 449 },
-      { key: "3-months", label: "3 Months", price: 999 },
-      { key: "6-months", label: "6 Months", price: 1699 },
-    ],
-    featured: true,
-    bestseller: true,
-    videoThumb: "https://img.youtube.com/vi/ml6cT4AZdqI/hqdefault.jpg",
-    videoUrl: "https://www.youtube.com/watch?v=ml6cT4AZdqI",
-    pdfUrl: "/pdfs/fat-burn-express.pdf",
-    tags: ["Cardio", "HIIT", "Fat Loss"],
-    includes: [
-      "Detailed PDF workout guide",
-      "Progressive 4-phase structure",
-      "Companion nutrition guide",
-      "Video demonstrations",
-      "Warm-up & cool-down routines",
-    ],
-    suitableFor: ["female", "male"],
-    minBmi: 25, maxBmi: 40,
-    activityLevel: ["sedentary", "light"],
-  },
-  {
-    id: "lean-muscle-builder",
-    title: "Lean Muscle Builder",
-    description: "Progressive strength training with optimised protein intake strategies. Build lean muscle without excess bulk.",
-    longDescription: "Lean Muscle Builder is a periodised strength program built around compound lifts and strategic hypertrophy phases. The plan adapts weekly so your muscles never plateau. Includes a full macronutrient breakdown and meal timing guide to maximise protein synthesis and recovery.",
-    image: IMAGES.hero2,
-    goal: "muscle-gain",
-    goalLabel: "Muscle Gain",
-    level: "VIP",
-    planType: "fitness",
-    durations: [
-      { key: "1-month",  label: "1 Month",  price: 549 },
-      { key: "3-months", label: "3 Months", price: 1299 },
-      { key: "6-months", label: "6 Months", price: 2199 },
-    ],
-    featured: true,
-    bestseller: false,
-    videoThumb: "https://img.youtube.com/vi/R6gZoAzAhCg/hqdefault.jpg",
-    videoUrl: "https://www.youtube.com/watch?v=R6gZoAzAhCg",
-    pdfUrl: "/pdfs/lean-muscle-builder.pdf",
-    tags: ["Strength", "Progressive", "Muscle"],
-    includes: [
-      "Full periodised workout plan PDF",
-      "Macronutrient & meal timing guide",
-      "Exercise video library",
-      "Rest & recovery protocols",
-      "Supplement recommendations",
-    ],
-    suitableFor: ["female", "male"],
-    minBmi: 18, maxBmi: 27,
-    activityLevel: ["moderate", "active"],
-  },
-  {
-    id: "clean-nutrition-reset",
-    title: "Clean Nutrition Reset",
-    description: "A whole-foods nutrition overhaul. Meal plans, grocery lists, and prep guides for a complete dietary transformation.",
-    longDescription: "Clean Nutrition Reset is a structured dietary programme that removes processed foods and rebuilds your eating habits around whole, nutrient-dense foods. Includes week-by-week meal plans tailored to Ethiopian and international cuisines, complete grocery lists, and simple meal prep guides that fit a busy schedule.",
-    image: IMAGES.hero3,
-    goal: "nutrition",
-    goalLabel: "Nutrition",
-    level: "Normal",
-    planType: "meal",
-    durations: [
-      { key: "1-week",   label: "1 Week",   price: 99 },
-      { key: "1-month",  label: "1 Month",  price: 299 },
-      { key: "3-months", label: "3 Months", price: 699 },
-    ],
-    featured: false,
-    bestseller: true,
-    videoThumb: "https://img.youtube.com/vi/sTANio_2E0Q/hqdefault.jpg",
-    videoUrl: "https://www.youtube.com/watch?v=sTANio_2E0Q",
-    pdfUrl: "/pdfs/clean-nutrition-reset.pdf",
-    tags: ["Nutrition", "Meal Prep", "Clean Eating"],
-    includes: [
-      "Week-by-week meal plan PDF",
-      "Full grocery list per week",
-      "Meal prep video guides",
-      "Ethiopian & international recipes",
-      "Calorie & macro breakdown",
-    ],
-    suitableFor: ["female", "male"],
-    minBmi: 18, maxBmi: 35,
-    activityLevel: ["sedentary", "light", "moderate"],
-  },
-  {
-    id: "power-shred",
-    title: "Power Shred",
-    description: "Advanced cutting program for those who want to retain muscle while aggressively reducing body fat percentage.",
-    longDescription: "Power Shred is an advanced programme designed for people who already have a training foundation and want to cut body fat while preserving hard-earned muscle. Combines a caloric deficit diet with strength-preserving training and strategic refeed days. Not for beginners.",
-    image: IMAGES.hero4,
-    goal: "weight-loss",
-    goalLabel: "Weight Loss",
-    level: "VIP",
-    planType: "fitness",
-    durations: [
-      { key: "1-month",  label: "1 Month",  price: 599 },
-      { key: "3-months", label: "3 Months", price: 1499 },
-      { key: "6-months", label: "6 Months", price: 2499 },
-    ],
-    featured: false,
-    bestseller: false,
-    videoThumb: "https://img.youtube.com/vi/UBMk30rjy0o/hqdefault.jpg",
-    videoUrl: "https://www.youtube.com/watch?v=UBMk30rjy0o",
-    pdfUrl: "/pdfs/power-shred.pdf",
-    tags: ["Cutting", "Advanced", "Shred"],
-    includes: [
-      "Advanced cutting protocol PDF",
-      "Refeed day scheduling guide",
-      "Muscle retention training plan",
-      "Cardio programming guide",
-      "Progress tracking templates",
-    ],
-    suitableFor: ["female", "male"],
-    minBmi: 22, maxBmi: 35,
-    activityLevel: ["moderate", "active"],
-  },
-  {
-    id: "body-recomposition",
-    title: "Body Recomposition",
-    description: "Simultaneously build muscle and lose fat with precision macros and periodised training.",
-    longDescription: "Body Recomposition is the most technically demanding goal in fitness — losing fat and gaining muscle at the same time. This programme uses precision macro cycling, strategic training phases, and frequent assessment checkpoints. Best suited for intermediate trainees.",
-    image: IMAGES.hero5,
-    goal: "lifestyle",
-    goalLabel: "Lifestyle",
-    level: "Pro",
-    planType: "both",
-    durations: [
-      { key: "1-month",  label: "1 Month",  price: 479 },
-      { key: "3-months", label: "3 Months", price: 1099 },
-      { key: "6-months", label: "6 Months", price: 1899 },
-    ],
-    featured: true,
-    bestseller: false,
-    videoThumb: "https://img.youtube.com/vi/vcBig73ojpE/hqdefault.jpg",
-    videoUrl: "https://www.youtube.com/watch?v=vcBig73ojpE",
-    pdfUrl: "/pdfs/body-recomposition.pdf",
-    tags: ["Recomp", "Balanced", "Lifestyle"],
-    includes: [
-      "Macro cycling protocol PDF",
-      "Phase-based training plan",
-      "Assessment checkpoint guides",
-      "Video workout library",
-      "Sleep & recovery guide",
-    ],
-    suitableFor: ["female", "male"],
-    minBmi: 20, maxBmi: 30,
-    activityLevel: ["light", "moderate", "active"],
-  },
-  {
-    id: "womens-toning",
-    title: "Women's Toning Program",
-    description: "Sculpt and tone with resistance training, flexibility work, and a balanced nutrition guide.",
-    longDescription: "The Women's Toning Program is specifically designed around female physiology. Focuses on resistance training for sculpting, flexibility and mobility work, and a balanced nutrition approach that accounts for hormonal cycles. No bulking, no extremes — just sustainable, visible results.",
-    image: IMAGES.hero6,
-    goal: "lifestyle",
-    goalLabel: "Lifestyle",
-    level: "Normal",
-    planType: "fitness",
-    durations: [
-      { key: "1-week",   label: "1 Week",   price: 119 },
-      { key: "1-month",  label: "1 Month",  price: 349 },
-      { key: "3-months", label: "3 Months", price: 799 },
-      { key: "6-months", label: "6 Months", price: 1399 },
-    ],
-    featured: true,
-    bestseller: true,
-    videoThumb: "https://img.youtube.com/vi/Mvo2snJGhtM/hqdefault.jpg",
-    videoUrl: "https://www.youtube.com/watch?v=Mvo2snJGhtM",
-    pdfUrl: "/pdfs/womens-toning.pdf",
-    tags: ["Women", "Toning", "Sculpt"],
-    includes: [
-      "Full toning workout plan PDF",
-      "Flexibility & mobility guide",
-      "Female nutrition framework",
-      "Hormonal cycle training notes",
-      "Home & gym workout options",
-    ],
-    suitableFor: ["female"],
-    minBmi: 18, maxBmi: 32,
-    activityLevel: ["sedentary", "light", "moderate"],
-  },
-];
-
 // ─── DURATION FILTER OPTIONS ─────────────────────────────────────────────────
 export const DURATION_FILTERS: { key: DurationKey | "all"; label: string }[] = [
   { key: "all",       label: "All Durations" },
@@ -288,206 +116,6 @@ export const LEVEL_FILTERS: { key: PlanLevel | "all"; label: string }[] = [
   { key: "Normal", label: "Normal" },
   { key: "Pro",    label: "Pro" },
   { key: "VIP",    label: "VIP" },
-];
-
-// ─── TESTIMONIALS ────────────────────────────────────────────────────────────
-export const TESTIMONIALS = [
-  {
-    id: 1,
-    name: "Selam Tadesse",
-    role: "Lost 12kg in 3 months",
-    image: IMAGES.hero1,
-    rating: 5,
-    text: "Naodi & Samri's Fat Burn Express plan completely changed my life. The structured program with video guides made it so easy to follow. I never felt lost.",
-    plan: "Fat Burn Express",
-  },
-  {
-    id: 2,
-    name: "Meron Alemu",
-    role: "Gained lean muscle",
-    image: IMAGES.hero2,
-    rating: 5,
-    text: "I was skeptical at first, but the Lean Muscle Builder plan delivered real results. The PDF guides are incredibly detailed and the video links are gold.",
-    plan: "Lean Muscle Builder",
-  },
-  {
-    id: 3,
-    name: "Hana Bekele",
-    role: "Complete nutrition overhaul",
-    image: IMAGES.hero3,
-    rating: 5,
-    text: "The Clean Nutrition Reset taught me how to actually eat. The meal prep guides saved me so much time and the results showed within two weeks.",
-    plan: "Clean Nutrition Reset",
-  },
-  {
-    id: 4,
-    name: "Tigist Girma",
-    role: "Body recomposition success",
-    image: IMAGES.hero5,
-    rating: 5,
-    text: "I've tried so many programs. Naodi & Samri is different — the plans are science-backed, well-structured, and actually work for Ethiopian body types and food culture.",
-    plan: "Body Recomposition",
-  },
-  {
-    id: 5,
-    name: "Liya Haile",
-    role: "Toning & confidence boost",
-    image: IMAGES.hero6,
-    rating: 5,
-    text: "The Women's Toning Program gave me more than a better body — it gave me confidence. Worth every birr.",
-    plan: "Women's Toning Program",
-  },
-  {
-    id: 6,
-    name: "Azeb Worku",
-    role: "Power Shred results",
-    image: IMAGES.hero4,
-    rating: 4,
-    text: "Incredibly detailed program. I appreciated that the plan respected my dietary restrictions and still helped me shred 8kg in 6 weeks.",
-    plan: "Power Shred",
-  },
-];
-
-// ─── BLOG POSTS ──────────────────────────────────────────────────────────────
-export const BLOG_POSTS = [
-  {
-    id: "understanding-macros",
-    title: "Understanding Macronutrients: The Foundation of Any Diet",
-    excerpt: "Proteins, carbs, and fats — understanding how each affects your body is the first step to crafting a diet that actually works for your goals.",
-    image: IMAGES.hero3,
-    category: "Nutrition",
-    date: "August 20, 2026",
-    readTime: "5 min read",
-    author: "Naodi & Samri",
-  },
-  {
-    id: "hiit-vs-steady-state",
-    title: "HIIT vs Steady-State Cardio: What's Right for You?",
-    excerpt: "Both have their place in a well-rounded fitness program. Here's how to know which one aligns with your current goals and fitness level.",
-    image: IMAGES.hero1,
-    category: "Training",
-    date: "August 14, 2026",
-    readTime: "4 min read",
-    author: "Naodi & Samri",
-  },
-  {
-    id: "bmi-guide",
-    title: "BMI Explained: What It Means and What It Doesn't",
-    excerpt: "BMI is a useful screening tool, but it's not the full picture. Here's how to interpret your BMI in context.",
-    image: IMAGES.hero4,
-    category: "Health",
-    date: "August 8, 2026",
-    readTime: "6 min read",
-    author: "Naodi & Samri",
-  },
-  {
-    id: "ethiopian-diet-fitness",
-    title: "Ethiopian Foods That Fuel Your Fitness Goals",
-    excerpt: "Injera, lentils, tibs — traditional Ethiopian cuisine is packed with nutrients. Here's how to leverage local foods in your fitness journey.",
-    image: IMAGES.hero2,
-    category: "Nutrition",
-    date: "July 30, 2026",
-    readTime: "7 min read",
-    author: "Naodi & Samri",
-  },
-  {
-    id: "sleep-and-recovery",
-    title: "Why Sleep Is Your Most Powerful Recovery Tool",
-    excerpt: "You can't out-train poor sleep. Here's the science behind sleep and muscle recovery, and practical tips to optimise yours.",
-    image: IMAGES.hero5,
-    category: "Recovery",
-    date: "July 22, 2026",
-    readTime: "5 min read",
-    author: "Naodi & Samri",
-  },
-  {
-    id: "women-weight-training",
-    title: "Why Women Should Lift Heavy: Busting the Myths",
-    excerpt: "Heavy lifting won't make you bulky — it will make you strong, lean, and confident. Here's the evidence-backed truth.",
-    image: IMAGES.hero6,
-    category: "Training",
-    date: "July 15, 2026",
-    readTime: "6 min read",
-    author: "Naodi & Samri",
-  },
-];
-
-// ─── FAQ ─────────────────────────────────────────────────────────────────────
-export const FAQS = [
-  {
-    q: "How do I access my plan after purchase?",
-    a: "After completing your purchase, the plan is immediately available in your dashboard. You can download the PDF and access all video links from there.",
-  },
-  {
-    q: "What payment methods are accepted?",
-    a: "We accept Telebirr, CBE Birr, major Ethiopian banks via Chapa, and international cards via Stripe.",
-  },
-  {
-    q: "What is the difference between Normal, Pro, and VIP plans?",
-    a: "These are quality/detail levels set by our experts when creating each plan. Normal plans cover the essentials. Pro plans include more detailed breakdowns, extra video content, and advanced guidance. VIP plans are the most comprehensive with personalised notes and bonus content.",
-  },
-  {
-    q: "What does the duration mean?",
-    a: "Duration is how long the plan covers. A 1-month plan gives you a full month of structured workouts or meals. A 3-month plan provides a longer progressive programme. Longer durations offer better value per week.",
-  },
-  {
-    q: "Can I get a refund?",
-    a: "Due to the digital nature of our plans, we do not offer refunds after the PDF has been downloaded. Please review the plan details and free preview before purchasing.",
-  },
-  {
-    q: "Are the plans available in Amharic?",
-    a: "Yes, most plans have Amharic versions. You can toggle between English and Amharic from the language selector in the navigation.",
-  },
-  {
-    q: "Do I need gym equipment?",
-    a: "It depends on the plan. Each plan detail page clearly states the equipment needed. Some plans have home-workout alternatives.",
-  },
-  {
-    q: "Why do I need to create an account to purchase?",
-    a: "An account is required so we can securely deliver your purchased content, keep your order history, and ensure only you can access what you've paid for.",
-  },
-];
-
-// ─── HOW IT WORKS ─────────────────────────────────────────────────────────────
-export const HOW_IT_WORKS = [
-  {
-    step: "01",
-    title: "Calculate Your BMI",
-    description: "Enter your details — age, weight, height, gender, and goals. Our calculator gives you your BMI and daily calorie target.",
-  },
-  {
-    step: "02",
-    title: "Get Recommendations",
-    description: "Based on your profile, we surface the plans that best match your body, goals, and fitness level.",
-  },
-  {
-    step: "03",
-    title: "Choose Your Duration",
-    description: "Each plan offers multiple duration options. Pick the timeframe that fits your goals and budget.",
-  },
-  {
-    step: "04",
-    title: "Purchase & Access",
-    description: "Create an account, complete payment securely, and instantly unlock your PDF guide and video content.",
-  },
-];
-
-// ─── TEAM ─────────────────────────────────────────────────────────────────────
-export const TEAM = [
-  {
-    name: "Naodi",
-    role: "Co-Founder & Fitness Coach",
-    bio: "Certified fitness coach specialising in body recomposition, strength training, and women's wellness. Naodi built her own transformation and now helps others do the same.",
-    image: IMAGES.naodi2,
-    images: [IMAGES.naodi1, IMAGES.naodi2, IMAGES.naodi3],
-  },
-  {
-    name: "Samri",
-    role: "Co-Founder & Nutrition Expert",
-    bio: "Nutrition specialist and certified personal trainer focused on sustainable diet plans, hormonal health, and helping women achieve lasting results through science-backed guidance.",
-    image: IMAGES.samri2,
-    images: [IMAGES.samri1, IMAGES.samri2, IMAGES.samri3],
-  },
 ];
 
 // ─── RECOMMENDATION ENGINE ────────────────────────────────────────────────────
@@ -531,7 +159,7 @@ export function getCalorieTarget(tdee: number, goal: UserProfile["goal"]): numbe
   return tdee;
 }
 
-export function recommendPlans(profile: UserProfile, plansToSearch: Plan[] = PLANS, planType?: "fitness" | "meal"): Plan[] {
+export function recommendPlans(profile: UserProfile, plansToSearch: Plan[] = [], planType?: "fitness" | "meal"): Plan[] {
   const bmi = calculateBMI(profile.weight, profile.height);
   // Filter by plan type first if specified
   const candidates = planType

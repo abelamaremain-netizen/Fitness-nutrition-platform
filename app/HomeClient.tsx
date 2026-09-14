@@ -6,17 +6,20 @@ import { ArrowRight, ChevronDown, Star } from "lucide-react";
 import AnimatedSection from "@/components/ui/AnimatedSection";
 import StatCounter from "@/components/ui/StatCounter";
 import PlanCard from "@/components/ui/PlanCard";
-import { STATS, HOW_IT_WORKS, IMAGES } from "@/lib/data";
+import { IMAGES } from "@/lib/data";
+import { parseStats } from "@/lib/data";
 import type { Plan } from "@/lib/data";
 import type { Testimonial } from "@/src/types/database.types";
+import type { HowItWorksStep } from "@/src/types/database.types";
 
 interface Props {
   featured:     Plan[];
   testimonials: Testimonial[];
   content:      Record<string, string>;
+  howItWorks:   HowItWorksStep[];
 }
 
-export default function HomeClient({ featured, testimonials, content }: Props) {
+export default function HomeClient({ featured, testimonials, content, howItWorks }: Props) {
   const heroHeadline    = content.hero_headline    || "Transform Your Body.";
   const heroSubheadline = content.hero_subheadline || "Own Your Results.";
   const heroBody        = content.hero_body        || "Expert-crafted fitness and nutrition plans by Naodi & Samri, tailored to your goals.";
@@ -24,6 +27,7 @@ export default function HomeClient({ featured, testimonials, content }: Props) {
   const heroCta2        = content.hero_cta_secondary || "Browse Plans";
   const naodiBio        = content.naodi_bio || "Certified fitness coach specialising in body recomposition, strength training, and women's wellness.";
   const samriBio        = content.samri_bio || "Nutrition specialist and certified personal trainer focused on sustainable diet plans and hormonal health.";
+  const stats           = parseStats(content);
   return (
     <div>
       {/* ── HERO ─────────────────────────────────────────────── */}
@@ -67,7 +71,7 @@ export default function HomeClient({ featured, testimonials, content }: Props) {
       <section style={{ background: "#111", borderTop: "1px solid rgba(255,255,255,0.07)", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
         <div className="max-w-5xl mx-auto px-8">
           <div className="grid grid-cols-2 md:grid-cols-4">
-            {STATS.map((s) => <StatCounter key={s.label} {...s} />)}
+            {stats.map((s) => <StatCounter key={s.label} {...s} />)}
           </div>
         </div>
       </section>
@@ -142,16 +146,18 @@ export default function HomeClient({ featured, testimonials, content }: Props) {
             </p>
           </AnimatedSection>
           <div className="grid md:grid-cols-4 gap-6">
-            {HOW_IT_WORKS.map((step, i) => (
-              <AnimatedSection key={step.step} delay={i * 0.1}>
+            {howItWorks.length > 0 ? howItWorks.map((step, i) => (
+              <AnimatedSection key={step.id} delay={i * 0.1}>
                 <div className="card p-8 h-full hover:border-white/20 transition-colors">
-                  <p className="text-6xl font-black leading-none mb-5" style={{ color: "rgba(255,255,255,0.06)" }}>{step.step}</p>
-                  <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-white/30 mb-3">{step.step}</p>
+                  <p className="text-6xl font-black leading-none mb-5" style={{ color: "rgba(255,255,255,0.06)" }}>0{step.step_number}</p>
+                  <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-white/30 mb-3">Step 0{step.step_number}</p>
                   <h3 className="text-white font-bold text-base mb-3">{step.title}</h3>
                   <p className="text-white/40 text-sm leading-relaxed">{step.description}</p>
                 </div>
               </AnimatedSection>
-            ))}
+            )) : (
+              <p className="text-white/30 text-sm col-span-4 text-center py-8">Steps coming soon.</p>
+            )}
           </div>
         </div>
       </section>

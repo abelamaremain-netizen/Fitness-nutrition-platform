@@ -101,6 +101,19 @@ export default function AdminContentPage() {
     ));
   };
 
+  const saveStats = async () => {
+    const supabase = createBrowserClient();
+    const keys = [
+      "stat_plans_sold_value",  "stat_plans_sold_suffix",  "stat_plans_sold_label",
+      "stat_satisfaction_value","stat_satisfaction_suffix","stat_satisfaction_label",
+      "stat_expert_plans_value","stat_expert_plans_suffix","stat_expert_plans_label",
+      "stat_happy_clients_value","stat_happy_clients_suffix","stat_happy_clients_label",
+    ];
+    await Promise.all(keys.map((k) =>
+      supabase.from("site_content").upsert({ key: k, value: content[k] ?? "" }, { onConflict: "key" })
+    ));
+  };
+
   const saveAbout = async () => {
     const supabase = createBrowserClient();
     const keys = ["mission_statement","naodi_bio","samri_bio"];
@@ -252,6 +265,39 @@ export default function AdminContentPage() {
           </div>
           <div className="flex justify-end">
             <SaveButton onSave={saveHero} />
+          </div>
+        </div>
+      </Section>
+
+      {/* ── STATS ── */}
+      <Section title="Stats Bar" desc="Numbers shown on home, about, and testimonials pages">
+        <div className="space-y-4">
+          <p className="text-white/30 text-xs">Each stat has a value, suffix (e.g. + or %), and label.</p>
+          <div className="space-y-3">
+            {[
+              { label: "Plans Sold",       vKey: "stat_plans_sold_value",   sKey: "stat_plans_sold_suffix",   lKey: "stat_plans_sold_label",    vPh: "1200", sPh: "+",  lPh: "Plans Sold" },
+              { label: "Satisfaction Rate",vKey: "stat_satisfaction_value", sKey: "stat_satisfaction_suffix", lKey: "stat_satisfaction_label",  vPh: "98",   sPh: "%",  lPh: "Satisfaction Rate" },
+              { label: "Expert Plans",     vKey: "stat_expert_plans_value", sKey: "stat_expert_plans_suffix", lKey: "stat_expert_plans_label",  vPh: "50",   sPh: "+",  lPh: "Expert Plans" },
+              { label: "Happy Clients",    vKey: "stat_happy_clients_value",sKey: "stat_happy_clients_suffix",lKey: "stat_happy_clients_label", vPh: "3000", sPh: "+",  lPh: "Happy Clients" },
+            ].map((stat) => (
+              <div key={stat.vKey} className="grid grid-cols-3 gap-3 items-end border border-white/[0.07] rounded-xl p-4">
+                <div>
+                  <label className="field-label">{stat.label} — Value</label>
+                  <input type="number" value={content[stat.vKey] ?? ""} onChange={(e) => setKey(stat.vKey, e.target.value)} placeholder={stat.vPh} className={inp} />
+                </div>
+                <div>
+                  <label className="field-label">Suffix</label>
+                  <input value={content[stat.sKey] ?? ""} onChange={(e) => setKey(stat.sKey, e.target.value)} placeholder={stat.sPh} className={inp} />
+                </div>
+                <div>
+                  <label className="field-label">Label</label>
+                  <input value={content[stat.lKey] ?? ""} onChange={(e) => setKey(stat.lKey, e.target.value)} placeholder={stat.lPh} className={inp} />
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="flex justify-end">
+            <SaveButton onSave={saveStats} />
           </div>
         </div>
       </Section>

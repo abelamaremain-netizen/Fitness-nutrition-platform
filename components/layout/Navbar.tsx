@@ -7,7 +7,7 @@ import { Menu, X } from "lucide-react";
 import { useLang } from "@/context/LangContext";
 import type { TranslationKey } from "@/lib/i18n";
 
-// Nav links: href is fixed (never translated), label key is looked up
+// All nav items — shown in mobile drawer
 const NAV_ITEMS: { href: string; key: TranslationKey }[] = [
   { href: "/",              key: "nav.home" },
   { href: "/plans",         key: "nav.plans" },
@@ -19,6 +19,17 @@ const NAV_ITEMS: { href: string; key: TranslationKey }[] = [
   { href: "/about",         key: "nav.about" },
   { href: "/contact",       key: "nav.contact" },
   { href: "/my-order",      key: "nav.myOrder" },
+];
+
+// Desktop nav — only the most important pages to avoid overflow
+const DESKTOP_NAV: { href: string; key: TranslationKey }[] = [
+  { href: "/plans",         key: "nav.plans" },
+  { href: "/fitness-plan",  key: "nav.fitnessPlan" },
+  { href: "/meal-plan",     key: "nav.mealPlan" },
+  { href: "/bmi",           key: "nav.bmi" },
+  { href: "/blog",          key: "nav.blog" },
+  { href: "/about",         key: "nav.about" },
+  { href: "/contact",       key: "nav.contact" },
 ];
 
 export default function Navbar() {
@@ -59,10 +70,10 @@ export default function Navbar() {
           </Link>
 
           {/* Desktop nav */}
-          <nav className="hidden lg:flex items-center gap-7">
-            {NAV_ITEMS.map(({ href, key }) => (
+          <nav className="hidden lg:flex items-center gap-5">
+            {DESKTOP_NAV.map(({ href, key }) => (
               <Link key={href} href={href}
-                className={`text-[11px] font-semibold tracking-[0.1em] uppercase transition-colors whitespace-nowrap ${
+                className={`text-[11px] font-semibold tracking-[0.08em] uppercase transition-colors whitespace-nowrap ${
                   pathname === href ? "text-white" : "text-white/45 hover:text-white/80"
                 }`}>
                 {t(key)}
@@ -71,14 +82,22 @@ export default function Navbar() {
           </nav>
 
           {/* Right */}
-          <div className="flex items-center gap-4 flex-shrink-0">
-            {/* Language toggle — switches between EN and አማ */}
+          <div className="flex items-center gap-3 flex-shrink-0">
+            {/* My Order — quick access */}
+            <Link href="/my-order"
+              className={`hidden lg:block text-[11px] font-semibold tracking-[0.08em] uppercase transition-colors whitespace-nowrap ${
+                pathname === "/my-order" ? "text-white" : "text-white/45 hover:text-white/80"
+              }`}>
+              {t("nav.myOrder")}
+            </Link>
+
+            {/* Language toggle */}
             <button onClick={toggleLang}
               className="text-[11px] font-semibold tracking-[0.1em] uppercase text-white/40 hover:text-white transition-colors border border-white/15 hover:border-white/35 px-2.5 py-1 rounded-lg">
               {lang === "en" ? "አማ" : "EN"}
             </button>
 
-            <Link href="/plans" className="hidden lg:block btn btn-white text-[10px] py-2.5 px-6">
+            <Link href="/plans" className="hidden lg:block btn btn-white text-[10px] py-2.5 px-5">
               {t("nav.browsePlans")}
             </Link>
 

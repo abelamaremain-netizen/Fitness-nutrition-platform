@@ -4,7 +4,7 @@ import { ArrowRight, Award, Users, Target, Heart } from "lucide-react";
 import AnimatedSection from "@/components/ui/AnimatedSection";
 import StatCounter from "@/components/ui/StatCounter";
 import { getTeamMembers, getSiteContent } from "@/src/lib/services/content-public";
-import { IMAGES, STATS } from "@/lib/data";
+import { parseStats, IMAGES } from "@/lib/data";
 
 export const revalidate = 0;
 
@@ -23,6 +23,7 @@ export default async function AboutPage() {
 
   const missionStatement = content.mission_statement ||
     "Making expert fitness accessible to everyone.";
+  const stats = parseStats(content);
 
   return (
     <div className="min-h-screen">
@@ -81,7 +82,7 @@ export default async function AboutPage() {
       <section style={{ background: "#111", borderTop: "1px solid rgba(255,255,255,0.07)", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
         <div className="max-w-5xl mx-auto px-8">
           <div className="grid grid-cols-2 md:grid-cols-4">
-            {STATS.map((s) => <StatCounter key={s.label} {...s} />)}
+            {stats.map((s) => <StatCounter key={s.label} {...s} />)}
           </div>
         </div>
       </section>

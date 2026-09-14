@@ -2,13 +2,17 @@ import Image from "next/image";
 import { Star, Quote } from "lucide-react";
 import AnimatedSection from "@/components/ui/AnimatedSection";
 import StatCounter from "@/components/ui/StatCounter";
-import { getPublishedTestimonials } from "@/src/lib/services/content-public";
-import { STATS, IMAGES } from "@/lib/data";
+import { getPublishedTestimonials, getSiteContent } from "@/src/lib/services/content-public";
+import { parseStats, IMAGES } from "@/lib/data";
 
 export const revalidate = 0;
 
 export default async function TestimonialsPage() {
-  const testimonials = await getPublishedTestimonials().catch(() => []);
+  const [testimonials, content] = await Promise.all([
+    getPublishedTestimonials().catch(() => []),
+    getSiteContent().catch(() => ({})),
+  ]);
+  const stats = parseStats(content);
   const [featured, ...rest] = testimonials;
 
   return (
@@ -33,7 +37,7 @@ export default async function TestimonialsPage() {
       <section style={{ background: "#111", borderTop: "1px solid rgba(255,255,255,0.07)", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
         <div className="max-w-5xl mx-auto px-8">
           <div className="grid grid-cols-2 md:grid-cols-4">
-            {STATS.map((s) => <StatCounter key={s.label} {...s} />)}
+            {stats.map((s) => <StatCounter key={s.label} {...s} />)}
           </div>
         </div>
       </section>

@@ -1,7 +1,5 @@
 // ─── DEMO DATA FOR ADMIN PANEL ────────────────────────────────────────────────
 
-import { PLANS } from "./data";
-
 export type OrderStatus = "completed" | "pending" | "failed";
 export type PaymentMethod = "Telebirr" | "CBE Birr" | "Chapa" | "Card";
 
@@ -110,17 +108,7 @@ export const CUSTOMERS: Customer[] = [
   },
 ];
 
-// ─── MOCK ADMIN PLANS ─────────────────────────────────────────────────────────
-export const ADMIN_PLANS: AdminPlan[] = PLANS.map((p, i) => ({
-  id: p.id,
-  title: p.title,
-  level: p.level,
-  goal: p.goalLabel,
-  published: true,
-  sales: [48, 31, 62, 19, 27, 55][i] ?? 20,
-  revenue: [48 * 449, 31 * 849, 62 * 299, 19 * 999, 27 * 479, 55 * 349][i] ?? 5000,
-  createdAt: "2026-07-01",
-}));
+// ─── MOCK ADMIN PLANS (no longer used — admin panel fetches from DB) ──────────
 
 // ─── REVENUE CHART DATA (last 7 days) ────────────────────────────────────────
 export const REVENUE_DATA = [
