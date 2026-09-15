@@ -195,7 +195,7 @@ function CheckoutContent({ id }: { id: string }) {
       // Saved to localStorage so this device can access the plan later
       const deviceToken = crypto.randomUUID();
 
-      const { data: inserted, error: dbError } = await supabase.from("orders").insert({
+      const basePayload = {
         customer_name:  name.trim(),
         customer_email: "",
         customer_phone: "",
@@ -205,10 +205,23 @@ function CheckoutContent({ id }: { id: string }) {
         amount:         duration.price,
         currency:       "ETB",
         payment_method: method,
-        status:         "pending_verification",
+        status:         "pending_verification" as const,
         tx_ref:         txLink.trim(),
-        device_token:   deviceToken,
-      }).select("id").single();
+      };
+
+      // Try insert with device_token first; if column doesn't exist yet fall back without it
+      let insertResult = await supabase.from("orders")
+        .insert({ ...basePayload, device_token: deviceToken })
+        .select("id").single();
+
+      // PGRST204 / 42703 = column does not exist — retry without device_token
+      if (insertResult.error?.code === "42703" || insertResult.error?.message?.includes("device_token")) {
+        insertResult = await supabase.from("orders")
+          .insert(basePayload)
+          .select("id").single();
+      }
+
+      const { data: inserted, error: dbError } = insertResult;
 
       if (dbError?.code === "23505") {
         setError("This transaction link has already been used. Please contact us if you need help.");

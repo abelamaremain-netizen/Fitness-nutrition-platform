@@ -21,7 +21,6 @@ interface OrderData {
   amount: number;
   status: string;
   created_at: string;
-  device_token: string | null;
   // joined from order_access + plans
   access_unlocked: boolean;
   access_granted_at: string | null;
@@ -69,7 +68,7 @@ export default function MyOrderPage() {
       const [ordersRes, accessRes] = await Promise.all([
         supabase
           .from("orders")
-          .select("id, customer_name, plan_id, duration_label, amount, status, created_at, device_token")
+          .select("id, customer_name, plan_id, duration_label, amount, status, created_at")
           .in("id", orderIds),
         supabase
           .from("order_access")
@@ -78,6 +77,19 @@ export default function MyOrderPage() {
       ]);
 
       const dbOrders = ordersRes.data ?? [];
+
+      // Try to fetch device_token separately — column may not exist in DB yet
+      const tokenMap: Record<string, string> = {};
+      const tokenRes = await supabase
+        .from("orders")
+        .select("id, device_token")
+        .in("id", orderIds);
+      if (!tokenRes.error && tokenRes.data) {
+        for (const row of tokenRes.data) {
+          const r = row as { id: string; device_token?: string | null };
+          if (r.device_token) tokenMap[r.id] = r.device_token;
+        }
+      }
       const dbAccess = accessRes.data ?? [];
 
       // Get plan details for all plan IDs
@@ -93,14 +105,21 @@ export default function MyOrderPage() {
         const order = dbOrders.find((o) => o.id === entry.orderId);
         if (!order) continue;
 
-        // Verify token matches — security check
-        if (order.device_token && order.device_token !== entry.deviceToken) continue;
+        // Verify token matches if DB has one stored
+        const dbToken = tokenMap[entry.orderId];
+        if (dbToken && dbToken !== entry.deviceToken) continue;
 
         const access = dbAccess.find((a) => a.order_id === order.id);
         const plan   = plans.find((p) => p.id === order.plan_id);
 
         result.push({
-          ...order,
+          id:                order.id,
+          customer_name:     order.customer_name,
+          plan_id:           order.plan_id,
+          duration_label:    order.duration_label,
+          amount:            order.amount,
+          status:            order.status,
+          created_at:        order.created_at,
           access_unlocked:    access?.unlocked ?? false,
           access_granted_at:  access?.unlocked_at ?? null,
           plan_title:         plan?.title    ?? "Your Plan",
