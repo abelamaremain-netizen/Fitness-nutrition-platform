@@ -115,12 +115,13 @@ export default function Navbar() {
           <>
             <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm"
+              className="fixed inset-0 z-[199] bg-black/70 backdrop-blur-sm"
               onClick={() => setOpen(false)} />
             <motion.div
               initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 28, stiffness: 260 }}
-              className="fixed top-0 right-0 bottom-0 z-50 w-full sm:w-80 bg-[#0f0f0f] border-l border-white/[0.08] flex flex-col">
+              className="fixed top-0 right-0 bottom-0 z-[200] w-full sm:w-80 flex flex-col"
+              style={{ background: "#1a1a1a" }}>
 
               {/* Drawer header */}
               <div className="flex items-center justify-between px-6 h-[72px] border-b border-white/[0.08] flex-shrink-0">
@@ -135,14 +136,14 @@ export default function Navbar() {
               </div>
 
               {/* Nav links — scrollable if needed */}
-              <nav className="flex-1 overflow-y-auto px-4 py-4">
+              <nav className="flex-1 overflow-y-auto px-3 py-3">
                 {NAV_ITEMS.map(({ href, key }) => (
                   <Link key={href} href={href}
                     onClick={() => setOpen(false)}
-                    className={`flex items-center w-full px-4 py-3.5 rounded-xl text-sm font-semibold tracking-wide transition-all mb-1 ${
+                    className={`flex items-center w-full px-4 py-4 rounded-xl text-[15px] font-semibold transition-all mb-1 ${
                       pathname === href
                         ? "bg-white text-black"
-                        : "text-white/55 hover:text-white hover:bg-white/[0.06]"
+                        : "text-white hover:bg-white/[0.08]"
                     }`}>
                     {t(key)}
                   </Link>
