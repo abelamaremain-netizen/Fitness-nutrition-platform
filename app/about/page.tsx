@@ -97,16 +97,21 @@ export default async function AboutPage() {
             </h2>
           </AnimatedSection>
 
-          {teamMembers.map((member, i) => {
+          {teamMembers.length === 0 ? (
+            <p className="text-white/30 text-sm text-center py-12">
+              No team members yet — add them in Admin → Content → Team / Experts.
+            </p>
+          ) : teamMembers.map((member, i) => {
             const isEven = i % 2 === 0;
-            const imgSrc = member.image_url ?? (member.name === "Naodi" ? IMAGES.naodi2 : IMAGES.samri2);
-            // Use site_content bio if admin set it, otherwise fall back to team_members.bio
-            const bioKey = member.name.toLowerCase().includes("naodi") ? "naodi_bio"
-              : member.name.toLowerCase().includes("samri") ? "samri_bio" : null;
-            const bio = (bioKey && content[bioKey]) ? content[bioKey] : member.bio;
+            // Use image from DB, fall back to owner photos based on name
+            const imgSrc = member.image_url
+              ? member.image_url
+              : member.name.toLowerCase().includes("naodi") ? IMAGES.naodi2
+              : member.name.toLowerCase().includes("samri") ? IMAGES.samri2
+              : IMAGES.hero1;
             return (
               <AnimatedSection key={member.id} className={`mb-16 ${i > 0 ? "mt-0" : ""}`}>
-                <div className={`grid md:grid-cols-2 gap-0 card overflow-hidden`}>
+                <div className="grid md:grid-cols-2 gap-0 card overflow-hidden">
                   <div className={`relative h-[520px] ${!isEven ? "md:order-2" : ""}`}>
                     <Image src={imgSrc} alt={member.name} fill className="object-cover object-top" sizes="600px" />
                   </div>
@@ -117,7 +122,7 @@ export default async function AboutPage() {
                     <h3 className="text-4xl font-bold text-white mb-5" style={{ fontFamily: "var(--font-serif)" }}>
                       {member.name}
                     </h3>
-                    <p className="text-white/50 text-sm leading-8">{bio}</p>
+                    <p className="text-white/50 text-sm leading-8">{member.bio}</p>
                   </div>
                 </div>
               </AnimatedSection>
