@@ -52,6 +52,8 @@ function PlanFormModal({
     bestseller:       false,
     video_url:        "",
     video_thumb:      "",
+    image_url:        "",
+    pdf_url:          "",
     tags:             "",
     includes:         "",
     // Recommendation engine fields
@@ -68,8 +70,39 @@ function PlanFormModal({
     }, {} as Record<DurationKey, { enabled: boolean; price: string }>)
   );
 
-  const [saving, setSaving] = useState(false);
-  const [error,  setError]  = useState("");
+  const [saving,   setSaving]   = useState(false);
+  const [error,    setError]    = useState("");
+  const [uploading, setUploading] = useState<"image" | "pdf" | null>(null);
+
+  const uploadFile = async (file: File, type: "image" | "pdf") => {
+    setUploading(type);
+    try {
+      const bucket  = type === "pdf" ? "paid-content" : "public-assets";
+      const folder  = type === "pdf" ? "plans/pdfs" : "plans/images";
+      const ext     = file.name.split(".").pop();
+      const safeName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+      const path    = `${folder}/${safeName}`;
+
+      const fd = new FormData();
+      fd.append("file",   file);
+      fd.append("bucket", bucket);
+      fd.append("path",   path);
+
+      const res  = await fetch("/api/admin/upload", { method: "POST", body: fd });
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error ?? "Upload failed");
+
+      setForm((prev) => ({
+        ...prev,
+        [type === "pdf" ? "pdf_url" : "image_url"]: data.url,
+      }));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Upload failed");
+    } finally {
+      setUploading(null);
+    }
+  };
 
   // Load existing durations when editing
   useEffect(() => {
@@ -95,6 +128,8 @@ function PlanFormModal({
         long_description: data.long_description ?? "",
         video_url:        data.video_url        ?? "",
         video_thumb:      data.video_thumb      ?? "",
+        image_url:        data.image_url        ?? "",
+        pdf_url:          data.pdf_url          ?? "",
         tags:             (data.tags   ?? []).join(", "),
         includes:         (data.includes ?? []).join("\n"),
         featured:         data.featured   ?? false,
@@ -135,6 +170,8 @@ function PlanFormModal({
         bestseller:       form.bestseller,
         video_url:        form.video_url.trim() || null,
         video_thumb:      form.video_thumb.trim() || null,
+        image_url:        form.image_url.trim() || null,
+        pdf_url:          form.pdf_url.trim() || null,
         tags:             form.tags.split(",").map((t) => t.trim()).filter(Boolean),
         includes:         form.includes.split("\n").map((t) => t.trim()).filter(Boolean),
         suitable_for:     form.suitable_for,
@@ -444,6 +481,33 @@ function PlanFormModal({
             </div>
           </div>
 
+          {/* Plan Image */}
+          <div>
+            <label className="field-label">Plan Image</label>
+            <div className="space-y-2">
+              <input type="url" value={form.image_url}
+                onChange={(e) => setForm({ ...form, image_url: e.target.value })}
+                placeholder="https://... (paste URL or upload below)" className={inp} />
+              <label className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-dashed cursor-pointer transition-all ${
+                uploading === "image" ? "border-white/40 text-white/60" : "border-white/20 hover:border-white/40 text-white/40 hover:text-white/70"
+              }`}>
+                <Upload size={15} strokeWidth={1.5} />
+                <span className="text-sm">
+                  {uploading === "image" ? "Uploading…" : "Upload image from device"}
+                </span>
+                <input type="file" accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadFile(f, "image"); }} />
+              </label>
+              {form.image_url && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={form.image_url} alt="preview"
+                  className="h-20 w-32 object-cover rounded-xl border border-white/10"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+              )}
+            </div>
+          </div>
+
           {/* Video URL */}
           <div>
             <label className="field-label">Video URL (hidden until payment)</label>
@@ -460,13 +524,30 @@ function PlanFormModal({
               placeholder="https://img.youtube.com/vi/.../hqdefault.jpg" className={inp} />
           </div>
 
-          {/* PDF */}
+          {/* PDF Guide */}
           <div>
-            <label className="field-label">PDF Guide</label>
-            <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-dashed border-white/20 hover:border-white/40 text-white/40 hover:text-white/70 transition-all">
-              <Upload size={15} strokeWidth={1.5} />
-              <span className="text-sm">Click to upload PDF (Supabase Storage)</span>
-            </button>
+            <label className="field-label">PDF Guide (hidden until payment)</label>
+            <div className="space-y-2">
+              <input type="url" value={form.pdf_url}
+                onChange={(e) => setForm({ ...form, pdf_url: e.target.value })}
+                placeholder="https://... (paste URL or upload below)" className={inp} />
+              <label className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-dashed cursor-pointer transition-all ${
+                uploading === "pdf" ? "border-white/40 text-white/60" : "border-white/20 hover:border-white/40 text-white/40 hover:text-white/70"
+              }`}>
+                <Upload size={15} strokeWidth={1.5} />
+                <span className="text-sm">
+                  {uploading === "pdf" ? "Uploading…" : "Upload PDF from device"}
+                </span>
+                <input type="file" accept="application/pdf"
+                  className="hidden"
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadFile(f, "pdf"); }} />
+              </label>
+              {form.pdf_url && (
+                <p className="text-green-400/70 text-[11px] flex items-center gap-1.5">
+                  ✓ PDF uploaded — will be accessible after payment
+                </p>
+              )}
+            </div>
           </div>
 
           {/* Published toggle */}
