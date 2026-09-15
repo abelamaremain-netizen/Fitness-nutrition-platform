@@ -191,7 +191,11 @@ function CheckoutContent({ id }: { id: string }) {
         return;
       }
 
-      const { error: dbError } = await supabase.from("orders").insert({
+      // Generate a unique device token for this order
+      // Saved to localStorage so this device can access the plan later
+      const deviceToken = crypto.randomUUID();
+
+      const { data: inserted, error: dbError } = await supabase.from("orders").insert({
         customer_name:  name.trim(),
         customer_email: "",
         customer_phone: "",
@@ -203,7 +207,8 @@ function CheckoutContent({ id }: { id: string }) {
         payment_method: method,
         status:         "pending_verification",
         tx_ref:         txLink.trim(),
-      });
+        device_token:   deviceToken,
+      }).select("id").single();
 
       if (dbError?.code === "23505") {
         setError("This transaction link has already been used. Please contact us if you need help.");
@@ -211,7 +216,12 @@ function CheckoutContent({ id }: { id: string }) {
         return;
       }
 
-      if (dbError) throw dbError;
+      if (dbError || !inserted) throw dbError ?? new Error("No order ID returned");
+
+      // Save token to localStorage — this is how the device proves ownership later
+      // Key: ns_order_{orderId} | Value: deviceToken
+      localStorage.setItem(`ns_order_${inserted.id}`, deviceToken);
+
       setStep("submitted");
     } catch {
       setError("Something went wrong saving your order. Please contact us directly.");
@@ -488,11 +498,11 @@ function CheckoutContent({ id }: { id: string }) {
                 We&apos;ve received your order for <span className="text-white font-semibold">{plan.title}</span> ({duration.label}).
               </p>
               <p className="text-white/35 text-sm leading-relaxed mb-4 max-w-sm mx-auto">
-                Our team will verify your transaction link and activate your plan. This usually takes a few hours during business hours.
+                Our team will verify your transaction and activate your plan. This usually takes a few hours during business hours.
               </p>
-              <div className="bg-yellow-500/8 border border-yellow-500/20 rounded-xl px-5 py-3.5 mb-10 max-w-sm mx-auto">
-                <p className="text-yellow-400/90 text-xs leading-relaxed">
-                  ⚠ Save your transaction link. You will need it to retrieve your plan from the <strong>My Order</strong> page after verification.
+              <div className="bg-blue-500/8 border border-blue-500/20 rounded-xl px-5 py-3.5 mb-10 max-w-sm mx-auto">
+                <p className="text-blue-400/90 text-xs leading-relaxed">
+                  ✓ This device is registered for your order. Go to <strong>My Order</strong> from this same device or browser to access your plan once approved.
                 </p>
               </div>
 

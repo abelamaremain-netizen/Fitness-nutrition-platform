@@ -1,139 +1,144 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Search, CheckCircle2, Clock, XCircle,
-  Download, Play, ArrowLeft, AlertTriangle, Lock,
+  CheckCircle2, Clock, XCircle,
+  Download, Play, ArrowLeft, Package,
 } from "lucide-react";
 import { createBrowserClient } from "@/src/lib/supabase/client";
 
-interface OrderResult {
-  order: {
-    id: string;
-    customer_name: string;
-    plan_id: string;
-    duration_label: string;
-    amount: number;
-    status: string;
-    created_at: string;
-  };
-  access: {
-    unlocked: boolean;
-    retrieved_at: string | null;
-    plan_title: string;
-    video_url: string | null;
-    pdf_url: string | null;
-  } | null;
+interface OrderEntry {
+  orderId: string;
+  deviceToken: string;
+}
+
+interface OrderData {
+  id: string;
+  customer_name: string;
+  plan_id: string;
+  duration_label: string;
+  amount: number;
+  status: string;
+  created_at: string;
+  device_token: string | null;
+  // joined from order_access + plans
+  access_unlocked: boolean;
+  access_granted_at: string | null;
+  plan_title: string;
+  plan_video_url: string | null;
+  plan_pdf_url: string | null;
+}
+
+const ACCESS_WINDOW_DAYS = 30; // how long device can access content after approval
+
+function isAccessExpired(grantedAt: string | null): boolean {
+  if (!grantedAt) return false;
+  const granted = new Date(grantedAt).getTime();
+  const now = Date.now();
+  return now - granted > ACCESS_WINDOW_DAYS * 24 * 60 * 60 * 1000;
 }
 
 export default function MyOrderPage() {
-  const [txLink,   setTxLink]   = useState("");
-  const [loading,  setLoading]  = useState(false);
-  const [error,    setError]    = useState("");
-  const [result,   setResult]   = useState<OrderResult | null>(null);
-  const [revealed, setRevealed] = useState(false);
+  const [orders,  setOrders]  = useState<OrderData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [expanded, setExpanded] = useState<string | null>(null);
 
-  const handleLookup = async () => {
-    const link = txLink.trim();
-    if (!link.startsWith("http")) {
-      setError("Please enter a valid transaction link starting with https://");
-      return;
-    }
-    setLoading(true);
-    setError("");
-    setResult(null);
-    setRevealed(false);
+  useEffect(() => {
+    const load = async () => {
+      // Read all order tokens from localStorage
+      const entries: OrderEntry[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key?.startsWith("ns_order_")) {
+          const orderId = key.replace("ns_order_", "");
+          const deviceToken = localStorage.getItem(key) ?? "";
+          entries.push({ orderId, deviceToken });
+        }
+      }
 
-    const supabase = createBrowserClient();
+      if (entries.length === 0) {
+        setLoading(false);
+        return;
+      }
 
-    // Find order by tx_ref
-    const { data: order, error: orderErr } = await supabase
-      .from("orders")
-      .select("id, customer_name, plan_id, duration_label, amount, status, created_at")
-      .eq("tx_ref", link)
-      .maybeSingle();
+      const supabase = createBrowserClient();
+      const orderIds = entries.map((e) => e.orderId);
 
-    if (orderErr || !order) {
-      setError("No order found for this transaction link. Make sure you copied it correctly.");
+      // Fetch orders + access + plan info in parallel
+      const [ordersRes, accessRes] = await Promise.all([
+        supabase
+          .from("orders")
+          .select("id, customer_name, plan_id, duration_label, amount, status, created_at, device_token")
+          .in("id", orderIds),
+        supabase
+          .from("order_access")
+          .select("order_id, unlocked, unlocked_at, plan_id")
+          .in("order_id", orderIds),
+      ]);
+
+      const dbOrders = ordersRes.data ?? [];
+      const dbAccess = accessRes.data ?? [];
+
+      // Get plan details for all plan IDs
+      const planIds = [...new Set(dbOrders.map((o) => o.plan_id))];
+      const plansRes = planIds.length > 0
+        ? await supabase.from("plans").select("id, title, video_url, pdf_url").in("id", planIds)
+        : { data: [] };
+      const plans = plansRes.data ?? [];
+
+      const result: OrderData[] = [];
+
+      for (const entry of entries) {
+        const order = dbOrders.find((o) => o.id === entry.orderId);
+        if (!order) continue;
+
+        // Verify token matches — security check
+        if (order.device_token && order.device_token !== entry.deviceToken) continue;
+
+        const access = dbAccess.find((a) => a.order_id === order.id);
+        const plan   = plans.find((p) => p.id === order.plan_id);
+
+        result.push({
+          ...order,
+          access_unlocked:    access?.unlocked ?? false,
+          access_granted_at:  access?.unlocked_at ?? null,
+          plan_title:         plan?.title    ?? "Your Plan",
+          plan_video_url:     plan?.video_url ?? null,
+          plan_pdf_url:       plan?.pdf_url   ?? null,
+        });
+      }
+
+      // Sort newest first
+      result.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      setOrders(result);
       setLoading(false);
-      return;
-    }
+    };
 
-    // Check if access has been granted
-    const { data: access } = await supabase
-      .from("order_access")
-      .select("unlocked, retrieved_at")
-      .eq("order_id", order.id)
-      .maybeSingle();
-
-    // If access exists and already retrieved → blocked
-    if (access?.retrieved_at) {
-      setError(
-        "This transaction link has already been used to retrieve a plan. " +
-        "For security reasons each link can only be used once. " +
-        "If you believe this is a mistake, please contact us."
-      );
-      setLoading(false);
-      return;
-    }
-
-    // Get plan details
-    const { data: plan } = await supabase
-      .from("plans")
-      .select("title, video_url, pdf_url")
-      .eq("id", order.plan_id)
-      .maybeSingle();
-
-    setResult({
-      order,
-      access: access ? {
-        unlocked:     access.unlocked,
-        retrieved_at: access.retrieved_at,
-        plan_title:   plan?.title   ?? "Your Plan",
-        video_url:    plan?.video_url ?? null,
-        pdf_url:      plan?.pdf_url   ?? null,
-      } : null,
-    });
-
-    setLoading(false);
-  };
-
-  const handleRevealContent = async () => {
-    if (!result?.access || !result.order) return;
-    setLoading(true);
-
-    const supabase = createBrowserClient();
-
-    // Mark as retrieved — this is the one-time use stamp
-    const { error: updateErr } = await supabase
-      .from("order_access")
-      .update({ retrieved_at: new Date().toISOString() })
-      .eq("order_id", result.order.id);
-
-    if (updateErr) {
-      setError("Failed to retrieve plan. Please try again or contact us.");
-      setLoading(false);
-      return;
-    }
-
-    setRevealed(true);
-    setLoading(false);
-  };
+    load();
+  }, []);
 
   const statusIcon = (status: string) => {
-    if (status === "completed")            return <CheckCircle2 size={18} className="text-green-400" />;
-    if (status === "pending_verification") return <Clock size={18} className="text-blue-400" />;
-    if (status === "failed")               return <XCircle size={18} className="text-red-400" />;
-    return <Clock size={18} className="text-yellow-400" />;
+    if (status === "completed")            return <CheckCircle2 size={16} className="text-green-400 flex-shrink-0" />;
+    if (status === "pending_verification") return <Clock size={16} className="text-blue-400 flex-shrink-0" />;
+    if (status === "failed")               return <XCircle size={16} className="text-red-400 flex-shrink-0" />;
+    return <Clock size={16} className="text-yellow-400 flex-shrink-0" />;
   };
 
   const statusText: Record<string, string> = {
     completed:            "Payment verified — plan is ready",
-    pending_verification: "Your payment is being verified by our team. This usually takes a few hours.",
-    failed:               "Payment verification failed. Please contact us.",
+    pending_verification: "Being verified by our team (usually a few hours)",
+    failed:               "Verification failed. Please contact us.",
     pending:              "Awaiting payment verification.",
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-white/20 border-t-white/60 rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen pt-32 pb-20">
@@ -145,185 +150,164 @@ export default function MyOrderPage() {
         </Link>
 
         <p className="text-[10px] font-semibold tracking-[0.28em] uppercase text-white/35 mb-3">
-          Order Lookup
+          My Orders
         </p>
         <h1 style={{ fontFamily: "var(--font-serif)" }}
           className="text-3xl font-bold text-white mb-2">
-          Find Your <em>Order</em>
+          Your <em>Plans</em>
         </h1>
         <p className="text-white/40 text-sm mb-10 leading-relaxed">
-          Paste the transaction link you received after payment to check your order status and access your plan.
+          Orders placed on this device. Once approved, you can access your plan content here for {ACCESS_WINDOW_DAYS} days.
         </p>
 
-        {/* Search box */}
-        <div className="card p-5 mb-6">
-          <label className="field-label mb-2">Your Transaction Link</label>
-          <div className="flex gap-3">
-            <input
-              type="url"
-              placeholder="https://..."
-              value={txLink}
-              onChange={(e) => { setTxLink(e.target.value); setError(""); }}
-              onKeyDown={(e) => e.key === "Enter" && handleLookup()}
-              className="pill-input flex-1"
-            />
-            <button
-              onClick={handleLookup}
-              disabled={loading || !txLink.trim()}
-              className="btn btn-white px-5 py-2.5 disabled:opacity-40 flex-shrink-0">
-              {loading
-                ? <span className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
-                : <Search size={15} />
-              }
-            </button>
+        {/* No orders found */}
+        {orders.length === 0 && (
+          <div className="card p-10 text-center">
+            <Package size={32} className="text-white/20 mx-auto mb-4" strokeWidth={1.5} />
+            <p className="text-white/50 font-semibold mb-2">No orders on this device</p>
+            <p className="text-white/30 text-sm leading-relaxed mb-6">
+              Orders are linked to the device and browser you used at checkout.
+              If you ordered on a different device, switch to that device.
+            </p>
+            <Link href="/plans" className="btn btn-white py-3 px-8">Browse Plans</Link>
           </div>
-          <p className="text-white/22 text-[11px] mt-2">
-            This is the link you copied from Telebirr or CBE after making payment.
-          </p>
+        )}
+
+        {/* Order list */}
+        <div className="space-y-4">
+          {orders.map((order) => {
+            const isOpen    = expanded === order.id;
+            const approved  = order.access_unlocked && order.status === "completed";
+            const expired   = approved && isAccessExpired(order.access_granted_at);
+            const canAccess = approved && !expired;
+
+            return (
+              <motion.div key={order.id} layout
+                className="card overflow-hidden">
+
+                {/* Header row */}
+                <button
+                  onClick={() => setExpanded(isOpen ? null : order.id)}
+                  className="w-full flex items-center gap-4 px-5 py-4 text-left hover:bg-white/[0.02] transition-colors">
+                  {statusIcon(order.status)}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white font-semibold text-sm truncate">{order.plan_title}</p>
+                    <p className="text-white/35 text-[11px] mt-0.5">
+                      {order.duration_label} · {order.amount.toLocaleString()} ETB · {new Date(order.created_at).toLocaleDateString("en-GB")}
+                    </p>
+                  </div>
+                  {canAccess && (
+                    <span className="text-[9px] font-bold tracking-widest uppercase px-2.5 py-1 rounded-full bg-green-500/15 text-green-400 flex-shrink-0">
+                      Ready
+                    </span>
+                  )}
+                  {expired && (
+                    <span className="text-[9px] font-bold tracking-widest uppercase px-2.5 py-1 rounded-full bg-white/10 text-white/40 flex-shrink-0">
+                      Expired
+                    </span>
+                  )}
+                  <motion.span animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.2 }}
+                    className="text-white/25 text-xs flex-shrink-0">↑</motion.span>
+                </button>
+
+                {/* Expanded detail */}
+                <AnimatePresence initial={false}>
+                  {isOpen && (
+                    <motion.div
+                      initial={{ height: 0 }} animate={{ height: "auto" }} exit={{ height: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="overflow-hidden border-t border-white/[0.07]">
+                      <div className="px-5 py-5 space-y-4">
+
+                        {/* Status message */}
+                        <p className="text-sm text-white/55 leading-relaxed">
+                          {statusText[order.status] ?? "Unknown status"}
+                        </p>
+
+                        {/* Pending — waiting for admin */}
+                        {(order.status === "pending_verification" || order.status === "pending") && (
+                          <div className="flex items-start gap-3 p-4 rounded-xl bg-blue-500/8 border border-blue-500/15">
+                            <Clock size={14} className="text-blue-400 mt-0.5 flex-shrink-0" />
+                            <p className="text-blue-400/80 text-xs leading-relaxed">
+                              Come back to this page once our team notifies you. Your access will appear here automatically — no action needed.
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Expired */}
+                        {expired && (
+                          <div className="flex items-start gap-3 p-4 rounded-xl bg-white/[0.04] border border-white/10">
+                            <XCircle size={14} className="text-white/40 mt-0.5 flex-shrink-0" />
+                            <p className="text-white/40 text-xs leading-relaxed">
+                              Access to this plan expired {ACCESS_WINDOW_DAYS} days after it was granted.
+                              To regain access, contact us or purchase the plan again.
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Failed */}
+                        {order.status === "failed" && (
+                          <Link href="/contact"
+                            className="btn btn-outline w-full py-3 text-[11px] flex items-center justify-center gap-2">
+                            Contact Us
+                          </Link>
+                        )}
+
+                        {/* Content — accessible */}
+                        {canAccess && (
+                          <div className="space-y-3">
+                            <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-white/35">
+                              Your Content
+                            </p>
+
+                            {order.plan_pdf_url ? (
+                              <a href={order.plan_pdf_url} target="_blank" rel="noopener noreferrer"
+                                className="btn btn-white w-full py-3.5 flex items-center justify-center gap-2">
+                                <Download size={15} /> Download PDF Guide
+                              </a>
+                            ) : (
+                              <div className="flex items-center gap-2 text-white/30 text-sm py-1">
+                                <Download size={14} />
+                                <span>PDF not yet available — contact us</span>
+                              </div>
+                            )}
+
+                            {order.plan_video_url ? (
+                              <a href={order.plan_video_url} target="_blank" rel="noopener noreferrer"
+                                className="btn btn-outline w-full py-3.5 flex items-center justify-center gap-2">
+                                <Play size={15} /> Watch Video Plan
+                              </a>
+                            ) : (
+                              <div className="flex items-center gap-2 text-white/30 text-sm py-1">
+                                <Play size={14} />
+                                <span>Video not yet available — contact us</span>
+                              </div>
+                            )}
+
+                            {order.access_granted_at && (
+                              <p className="text-white/22 text-[11px] text-center">
+                                Access expires {new Date(new Date(order.access_granted_at).getTime() + ACCESS_WINDOW_DAYS * 24 * 60 * 60 * 1000).toLocaleDateString("en-GB")}
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            );
+          })}
         </div>
 
-        {/* Error */}
-        <AnimatePresence>
-          {error && (
-            <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-              className="flex items-start gap-3 p-4 rounded-xl bg-red-500/8 border border-red-500/20 mb-6">
-              <AlertTriangle size={15} className="text-red-400 mt-0.5 flex-shrink-0" />
-              <p className="text-red-400/90 text-sm leading-relaxed">{error}</p>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Result */}
-        <AnimatePresence>
-          {result && (
-            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-              className="space-y-4">
-
-              {/* Order summary */}
-              <div className="card p-5">
-                <p className="text-[10px] font-semibold tracking-[0.22em] uppercase text-white/30 mb-4">
-                  Order Found
-                </p>
-                <div className="space-y-2.5">
-                  {[
-                    { label: "Customer",  value: result.order.customer_name || "—" },
-                    { label: "Plan",      value: result.access?.plan_title ?? result.order.plan_id },
-                    { label: "Duration",  value: result.order.duration_label },
-                    { label: "Amount",    value: `${result.order.amount.toLocaleString()} ETB` },
-                    { label: "Date",      value: new Date(result.order.created_at).toLocaleDateString("en-GB") },
-                  ].map((row) => (
-                    <div key={row.label} className="flex justify-between gap-4">
-                      <span className="text-[11px] font-semibold tracking-widest uppercase text-white/30">
-                        {row.label}
-                      </span>
-                      <span className="text-sm text-white/65 text-right">{row.value}</span>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Status */}
-                <div className="flex items-center gap-2.5 mt-5 pt-4 border-t border-white/[0.07]">
-                  {statusIcon(result.order.status)}
-                  <p className="text-sm text-white/60 leading-relaxed">
-                    {statusText[result.order.status] ?? "Unknown status"}
-                  </p>
-                </div>
-              </div>
-
-              {/* Access — only if approved */}
-              {result.access?.unlocked && !revealed && (
-                <div className="card p-5">
-                  <div className="flex items-start gap-3 mb-5">
-                    <CheckCircle2 size={18} className="text-green-400 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-white font-semibold text-sm">Your plan is ready</p>
-                      <p className="text-white/35 text-xs mt-1 leading-relaxed">
-                        Click below to access your plan content.{" "}
-                        <span className="text-yellow-400/80">
-                          You can only do this once — save your files after accessing.
-                        </span>
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={handleRevealContent}
-                    disabled={loading}
-                    className="btn btn-white w-full py-3.5">
-                    {loading
-                      ? <span className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
-                      : <><Lock size={14} /> Access My Plan</>
-                    }
-                  </button>
-                </div>
-              )}
-
-              {/* Revealed content */}
-              {revealed && result.access && (
-                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-                  className="card p-6 space-y-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <CheckCircle2 size={16} className="text-green-400" />
-                    <p className="text-white font-semibold">
-                      {result.access.plan_title}
-                    </p>
-                  </div>
-
-                  <p className="text-yellow-400/80 text-xs leading-relaxed bg-yellow-500/8 border border-yellow-500/15 rounded-lg px-3 py-2.5">
-                    ⚠ Save these links now. For security, this page cannot be used to retrieve this plan again.
-                  </p>
-
-                  {/* PDF */}
-                  {result.access.pdf_url ? (
-                    <a href={result.access.pdf_url} target="_blank" rel="noopener noreferrer"
-                      className="btn btn-white w-full py-3.5 flex items-center justify-center gap-2">
-                      <Download size={15} /> Download PDF Guide
-                    </a>
-                  ) : (
-                    <div className="flex items-center gap-2 text-white/30 text-sm py-2">
-                      <Download size={14} />
-                      <span>PDF guide not yet available — contact us</span>
-                    </div>
-                  )}
-
-                  {/* Video */}
-                  {result.access.video_url ? (
-                    <a href={result.access.video_url} target="_blank" rel="noopener noreferrer"
-                      className="btn btn-outline w-full py-3.5 flex items-center justify-center gap-2">
-                      <Play size={15} /> Watch Video Plan
-                    </a>
-                  ) : (
-                    <div className="flex items-center gap-2 text-white/30 text-sm py-2">
-                      <Play size={14} />
-                      <span>Video not yet available — contact us</span>
-                    </div>
-                  )}
-                </motion.div>
-              )}
-
-              {/* Pending — no access yet */}
-              {!result.access && result.order.status !== "failed" && (
-                <div className="card p-5 flex items-start gap-3">
-                  <Clock size={16} className="text-blue-400 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="text-white/70 text-sm font-medium">Verification in progress</p>
-                    <p className="text-white/35 text-xs mt-1 leading-relaxed">
-                      Our team is reviewing your payment. Come back here with the same transaction link once notified. Usually takes a few hours during business hours.
-                    </p>
-                  </div>
-                </div>
-              )}
-
-            </motion.div>
-          )}
-        </AnimatePresence>
-
         {/* Help */}
-        <div className="mt-10 text-center">
+        <div className="mt-10 text-center space-y-2">
           <p className="text-white/25 text-xs">
-            Having trouble?{" "}
+            Ordered on a different device?{" "}
             <Link href="/contact" className="text-white/45 hover:text-white underline transition-colors">
               Contact us
             </Link>
+            {" "}and we&apos;ll help you access your plan.
           </p>
         </div>
       </div>

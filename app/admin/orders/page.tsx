@@ -63,17 +63,6 @@ function OrderModal({ order, onClose, onStatusChange }: {
     setUpdateError("");
     const supabase = createBrowserClient();
 
-    // Compute expiry based on the purchased duration
-    const durationDays: Record<string, number> = {
-      "1-week":   7,
-      "1-month":  30,
-      "3-months": 90,
-      "6-months": 180,
-    };
-    const days = durationDays[order.duration_key] ?? 30;
-    const now = new Date();
-    const expiresAt = new Date(now.getTime() + days * 24 * 60 * 60 * 1000).toISOString();
-
     // Mark order completed
     const { error: orderErr } = await supabase
       .from("orders").update({ status: "completed" }).eq("id", order.id);
@@ -83,15 +72,14 @@ function OrderModal({ order, onClose, onStatusChange }: {
       return;
     }
 
-    // Create order_access row — delete existing first (if any), then insert fresh
+    // Create order_access row — delete existing first, then insert fresh
     await supabase.from("order_access").delete().eq("order_id", order.id);
     const { error: accessErr } = await supabase.from("order_access").insert({
       order_id:    order.id,
       plan_id:     order.plan_id,
       email:       order.customer_name || order.id,
       unlocked:    true,
-      unlocked_at: now.toISOString(),
-      expires_at:  expiresAt,
+      unlocked_at: new Date().toISOString(),
     });
 
     if (accessErr) {
@@ -180,13 +168,6 @@ function OrderModal({ order, onClose, onStatusChange }: {
                 : <>✓ Verify &amp; Grant Access</>
               }
             </button>
-          )}
-          {isPendingVerification && (
-            <p className="text-white/25 text-[11px] text-center -mt-1">
-              Access will expire after {
-                ({ "1-week": "1 week", "1-month": "1 month", "3-months": "3 months", "6-months": "6 months" } as Record<string,string>)[order.duration_key] ?? order.duration_label
-              } from grant date
-            </p>
           )}
 
           {/* Reject */}

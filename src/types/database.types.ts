@@ -168,6 +168,7 @@ export type Database = {
           payment_method: Database["public"]["Enums"]["payment_method"];
           status: Database["public"]["Enums"]["order_status"];
           tx_ref: string | null;
+          device_token: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -184,6 +185,7 @@ export type Database = {
           payment_method: Database["public"]["Enums"]["payment_method"];
           status?: Database["public"]["Enums"]["order_status"];
           tx_ref?: string | null;
+          device_token?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -200,6 +202,7 @@ export type Database = {
           payment_method?: Database["public"]["Enums"]["payment_method"];
           status?: Database["public"]["Enums"]["order_status"];
           tx_ref?: string | null;
+          device_token?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -223,7 +226,6 @@ export type Database = {
           unlocked: boolean;
           unlocked_at: string | null;
           expires_at: string | null;
-          retrieved_at: string | null;
           created_at: string;
         };
         Insert: {
@@ -234,7 +236,6 @@ export type Database = {
           unlocked?: boolean;
           unlocked_at?: string | null;
           expires_at?: string | null;
-          retrieved_at?: string | null;
           created_at?: string;
         };
         Update: {
@@ -245,7 +246,6 @@ export type Database = {
           unlocked?: boolean;
           unlocked_at?: string | null;
           expires_at?: string | null;
-          retrieved_at?: string | null;
           created_at?: string;
         };
         Relationships: [
