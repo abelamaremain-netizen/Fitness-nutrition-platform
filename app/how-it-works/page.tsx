@@ -3,6 +3,19 @@ import Link from "next/link";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
 import AnimatedSection from "@/components/ui/AnimatedSection";
 import { getHowItWorksSteps } from "@/src/lib/services/content-public";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "How It Works",
+  description:
+    "Four simple steps from browsing to accessing your plan — fill your profile, get matched, pay via Telebirr or CBE, and access your PDF and video content instantly.",
+  alternates: { canonical: "/how-it-works" },
+  openGraph: {
+    title:       "How It Works | Naodi & Samri Fitness",
+    description: "Simple, fast, and secure. Browse plans, get matched, pay, and start your transformation.",
+    url:         "/how-it-works",
+  },
+};
 import { IMAGES } from "@/lib/data";
 
 export const revalidate = 0; // always fetch fresh from DB

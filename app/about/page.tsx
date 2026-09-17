@@ -3,6 +3,19 @@ import Link from "next/link";
 import { ArrowRight, Award, Users, Target, Heart } from "lucide-react";
 import AnimatedSection from "@/components/ui/AnimatedSection";
 import StatCounter from "@/components/ui/StatCounter";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "About Us",
+  description:
+    "Meet Naodi & Samri — certified fitness coaches and nutrition specialists from Ethiopia. Learn our story, mission, and why we built this platform.",
+  alternates: { canonical: "/about" },
+  openGraph: {
+    title:       "About Naodi & Samri Fitness",
+    description: "Real coaches. Real results. Every plan on this platform is designed and tested by Naodi & Samri themselves.",
+    url:         "/about",
+  },
+};
 import { getTeamMembers, getSiteContent } from "@/src/lib/services/content-public";
 import { parseStats, IMAGES } from "@/lib/data";
 

@@ -2,6 +2,18 @@ import Image from "next/image";
 import { IMAGES } from "@/lib/data";
 import FitnessPlanClient from "./FitnessPlanClient";
 import type { Plan } from "@/lib/data";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Fitness Plans",
+  description: "Get a personalised workout plan based on your BMI, age, gender, and fitness goals. Expert programs by Naodi & Samri for weight loss, muscle gain, and more.",
+  alternates: { canonical: "/fitness-plan" },
+  openGraph: {
+    title:       "Personalised Fitness Plans | Naodi & Samri",
+    description: "Fill in your profile and get matched to the fitness plan that fits your body and goals.",
+    url: "/fitness-plan",
+  },
+};
 
 export const revalidate = 0;
 

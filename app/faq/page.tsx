@@ -3,6 +3,19 @@ import { ArrowRight, MessageCircle } from "lucide-react";
 import AnimatedSection from "@/components/ui/AnimatedSection";
 import FaqAccordion from "./FaqAccordion";
 import { getFaqs } from "@/src/lib/services/content-public";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "FAQ",
+  description:
+    "Answers to common questions about Naodi & Samri Fitness — plans, payments, access, refunds, Amharic support, equipment requirements, and more.",
+  alternates: { canonical: "/faq" },
+  openGraph: {
+    title:       "Frequently Asked Questions | Naodi & Samri Fitness",
+    description: "Everything you need to know before buying a plan.",
+    url:         "/faq",
+  },
+};
 
 export const revalidate = 0;
 

@@ -2,10 +2,12 @@ import Link from "next/link";
 import AnimatedSection from "@/components/ui/AnimatedSection";
 import { getSiteContent } from "@/src/lib/services/content-public";
 
-export const revalidate = 0; // always fetch fresh from DB
+export const revalidate = 0;
 
 export const metadata = {
-  title: "Terms & Conditions — Naodi & Samri Fitness",
+  title: "Terms & Conditions",
+  description: "Read the terms and conditions for using Naodi & Samri Fitness, purchasing plans, and accessing digital content.",
+  alternates: { canonical: "/terms" },
 };
 
 // Default content shown if admin hasn't set it yet

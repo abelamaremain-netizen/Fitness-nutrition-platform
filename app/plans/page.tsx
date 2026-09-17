@@ -2,6 +2,18 @@ import Image from "next/image";
 import PlansGrid from "@/components/ui/PlansGrid";
 import { IMAGES } from "@/lib/data";
 import type { Plan } from "@/lib/data";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Browse Plans",
+  description: "Explore all fitness and meal plans by Naodi & Samri. Filter by goal, level, and duration to find the perfect plan for your body and budget.",
+  alternates: { canonical: "/plans" },
+  openGraph: {
+    title:       "Browse Fitness & Meal Plans | Naodi & Samri",
+    description: "Science-backed plans for weight loss, muscle gain, nutrition, and lifestyle — built for Ethiopia.",
+    url: "/plans",
+  },
+};
 
 export const revalidate = 0;
 

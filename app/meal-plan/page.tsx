@@ -1,6 +1,18 @@
 import { IMAGES } from "@/lib/data";
 import MealPlanClient from "./MealPlanClient";
 import type { Plan } from "@/lib/data";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Meal Plans",
+  description: "Get a personalised nutrition plan based on your body measurements, allergies, and health goals. Ethiopian and international meal plans by Naodi & Samri.",
+  alternates: { canonical: "/meal-plan" },
+  openGraph: {
+    title:       "Personalised Meal & Nutrition Plans | Naodi & Samri",
+    description: "Tell us about your dietary needs and get matched to the right nutrition plan. Built for Ethiopian lifestyles.",
+    url: "/meal-plan",
+  },
+};
 
 export const revalidate = 0;
 

@@ -1,10 +1,45 @@
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { getPlanBySlug, getPlanDurations } from "@/src/lib/services/plans";
 import { getPublishedTestimonials } from "@/src/lib/services/content-public";
 import { mapPlan } from "@/lib/mappers";
 import PlanDetailClient from "./PlanDetailClient";
 
 export const revalidate = 0;
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const plan = await getPlanBySlug(id).catch(() => null);
+  if (!plan) return { title: "Plan Not Found" };
+
+  const title       = plan.title;
+  const description = plan.description ||
+    `${plan.title} — a ${plan.level} level ${plan.goal.replace("-", " ")} plan by Naodi & Samri Fitness.`;
+  const image       = plan.image_url ?? undefined;
+
+  return {
+    title,
+    description,
+    alternates: { canonical: `/plans/${id}` },
+    openGraph: {
+      title:       `${title} | Naodi & Samri Fitness`,
+      description,
+      url:         `/plans/${id}`,
+      type:        "article",
+      ...(image ? { images: [{ url: image, width: 1200, height: 630, alt: title }] } : {}),
+    },
+    twitter: {
+      card:        "summary_large_image",
+      title:       `${title} | Naodi & Samri Fitness`,
+      description,
+      ...(image ? { images: [image] } : {}),
+    },
+  };
+}
 
 export default async function PlanDetailPage({
   params,

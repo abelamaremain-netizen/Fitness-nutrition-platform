@@ -2,10 +2,12 @@ import Link from "next/link";
 import AnimatedSection from "@/components/ui/AnimatedSection";
 import { getSiteContent } from "@/src/lib/services/content-public";
 
-export const revalidate = 0; // always fetch fresh from DB
+export const revalidate = 0;
 
 export const metadata = {
-  title: "Privacy Policy — Naodi & Samri Fitness",
+  title: "Privacy Policy",
+  description: "Read the privacy policy for Naodi & Samri Fitness. Learn how we collect, use, and protect your personal data.",
+  alternates: { canonical: "/privacy" },
 };
 
 const DEFAULT_PRIVACY = `1. Information We Collect

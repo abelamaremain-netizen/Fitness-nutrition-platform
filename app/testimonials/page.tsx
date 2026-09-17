@@ -3,6 +3,19 @@ import { Star, Quote } from "lucide-react";
 import AnimatedSection from "@/components/ui/AnimatedSection";
 import StatCounter from "@/components/ui/StatCounter";
 import { getPublishedTestimonials, getSiteContent } from "@/src/lib/services/content-public";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Success Stories",
+  description:
+    "Real results from real people. Read transformation stories from clients who used Naodi & Samri fitness and meal plans to reach their goals.",
+  alternates: { canonical: "/testimonials" },
+  openGraph: {
+    title:       "Client Success Stories | Naodi & Samri Fitness",
+    description: "Hundreds of Ethiopians have transformed their bodies with our plans. See their stories.",
+    url:         "/testimonials",
+  },
+};
 import { parseStats, IMAGES } from "@/lib/data";
 
 export const revalidate = 0;

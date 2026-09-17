@@ -1,8 +1,22 @@
 import HomeClient from "./HomeClient";
 import type { Plan } from "@/lib/data";
+import type { Metadata } from "next";
 import type { Testimonial, HowItWorksStep } from "@/src/types/database.types";
 
 export const revalidate = 0;
+
+export const metadata: Metadata = {
+  title: "Transform Your Body — Expert Fitness & Nutrition Plans",
+  description:
+    "Personalised fitness and meal plans by Naodi & Samri. Calculate your BMI, get matched to the right plan, and start your transformation today.",
+  alternates: { canonical: "/" },
+  openGraph: {
+    title:       "Naodi & Samri Fitness — Transform Your Body",
+    description: "Science-backed fitness and nutrition plans tailored to your goals. Built for Ethiopia.",
+    url:         "/",
+    images:      [{ url: "/og-default.jpg", width: 1200, height: 630 }],
+  },
+};
 
 async function fetchHomeData(): Promise<{
   featured:   Plan[];
@@ -40,5 +54,36 @@ async function fetchHomeData(): Promise<{
 
 export default async function HomePage() {
   const { featured, testimonials, content, howItWorks } = await fetchHomeData();
-  return <HomeClient featured={featured} testimonials={testimonials} content={content} howItWorks={howItWorks} />;
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    "name": "Naodi & Samri Fitness",
+    "description": "Science-backed fitness and nutrition plans tailored to your goals. Built for Ethiopia.",
+    "url": "https://fitness-nutrition-platform.vercel.app",
+    "logo": "https://fitness-nutrition-platform.vercel.app/og-default.jpg",
+    "image": "https://fitness-nutrition-platform.vercel.app/og-default.jpg",
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "Addis Ababa",
+      "addressCountry": "ET",
+    },
+    "sameAs": [],
+    "offers": {
+      "@type": "AggregateOffer",
+      "priceCurrency": "ETB",
+      "offerCount": featured.length,
+      "lowPrice": Math.min(...featured.flatMap(p => p.durations.map(d => d.price)).filter(Boolean), 99),
+    },
+  };
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <HomeClient featured={featured} testimonials={testimonials} content={content} howItWorks={howItWorks} />
+    </>
+  );
 }

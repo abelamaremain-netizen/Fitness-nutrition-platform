@@ -3,6 +3,19 @@ import Link from "next/link";
 import { Clock, ArrowRight } from "lucide-react";
 import AnimatedSection from "@/components/ui/AnimatedSection";
 import BlogFilters from "./BlogFilters";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Blog",
+  description:
+    "Fitness and nutrition articles by Naodi & Samri. Learn about macros, HIIT, Ethiopian foods for fitness, BMI, recovery, and more.",
+  alternates: { canonical: "/blog" },
+  openGraph: {
+    title:       "Fitness & Nutrition Blog | Naodi & Samri",
+    description: "Expert articles on fitness, nutrition, health, and lifestyle — written for the Ethiopian community.",
+    url:         "/blog",
+  },
+};
 import { getPublishedBlogPosts } from "@/src/lib/services/content-public";
 import { IMAGES } from "@/lib/data";
 

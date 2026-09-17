@@ -4,8 +4,43 @@ import Link from "next/link";
 import { ArrowLeft, Clock } from "lucide-react";
 import AnimatedSection from "@/components/ui/AnimatedSection";
 import { getBlogPost, getPublishedBlogPosts } from "@/src/lib/services/content-public";
+import type { Metadata } from "next";
 
 export const revalidate = 0;
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const post = await getBlogPost(id).catch(() => null);
+  if (!post) return { title: "Post Not Found" };
+
+  const description = post.excerpt || post.title;
+  const image       = post.image_url ?? undefined;
+
+  return {
+    title:       post.title,
+    description,
+    alternates:  { canonical: `/blog/${id}` },
+    openGraph: {
+      title:       `${post.title} | Naodi & Samri Fitness`,
+      description,
+      url:         `/blog/${id}`,
+      type:        "article",
+      authors:     [post.author],
+      publishedTime: post.created_at,
+      ...(image ? { images: [{ url: image, width: 1200, height: 630, alt: post.title }] } : {}),
+    },
+    twitter: {
+      card:        "summary_large_image",
+      title:       `${post.title} | Naodi & Samri Fitness`,
+      description,
+      ...(image ? { images: [image] } : {}),
+    },
+  };
+}
 
 export default async function BlogPostPage({
   params,
