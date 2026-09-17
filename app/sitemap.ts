@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { createServerClient } from "@/src/lib/supabase/server";
 
-const SITE_URL = "https://fitness-nutrition-platform.vercel.app";
+const SITE_URL = "https://naodi-samri-fitness.vercel.app";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Static routes

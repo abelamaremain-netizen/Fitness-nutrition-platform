@@ -13,7 +13,7 @@ const playfair = Playfair_Display({
   weight: ["400", "700", "900"],
 });
 
-const SITE_URL  = "https://fitness-nutrition-platform.vercel.app";
+const SITE_URL  = "https://naodi-samri-fitness.vercel.app";
 const SITE_NAME = "Naodi & Samri Fitness";
 const OG_IMAGE  = `${SITE_URL}/og-default.jpg`;
 
