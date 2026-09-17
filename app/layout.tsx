@@ -94,8 +94,8 @@ export const metadata: Metadata = {
     apple: "/apple-touch-icon.png",
   },
 
-  // Verification (add your Search Console ID when you have it)
-  // verification: { google: "your-google-verification-code" },
+  // Verification
+  verification: { google: "JDUCcuym368lHfM2DwLcuRIq7L43YDP5pSr39Haae1g" },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
