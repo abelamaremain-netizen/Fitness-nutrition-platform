@@ -5,6 +5,7 @@ import "./globals.css";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { LangProvider } from "@/context/LangContext";
+import { createServerClient } from "@/src/lib/supabase/server";
 
 const geist    = Geist({ variable: "--font-sans", subsets: ["latin"] });
 const playfair = Playfair_Display({
@@ -98,7 +99,24 @@ export const metadata: Metadata = {
   verification: { google: "JDUCcuym368lHfM2DwLcuRIq7L43YDP5pSr39Haae1g" },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // Fetch social links for footer
+  let instagram: string | undefined;
+  let youtube:   string | undefined;
+  let tiktok:    string | undefined;
+  try {
+    const supabase = await createServerClient();
+    const { data } = await supabase
+      .from("site_content")
+      .select("key, value")
+      .in("key", ["social_instagram", "social_youtube", "social_tiktok"]);
+    for (const row of data ?? []) {
+      if (row.key === "social_instagram" && row.value) instagram = row.value;
+      if (row.key === "social_youtube"   && row.value) youtube   = row.value;
+      if (row.key === "social_tiktok"    && row.value) tiktok    = row.value;
+    }
+  } catch { /* social links are optional */ }
+
   return (
     <html lang="en" className={`${geist.variable} ${playfair.variable}`}>
       <body
@@ -108,7 +126,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <LangProvider>
           <Navbar />
           <main className="flex-1">{children}</main>
-          <Footer />
+          <Footer instagram={instagram} youtube={youtube} tiktok={tiktok} />
         </LangProvider>
       </body>
     </html>

@@ -137,6 +137,17 @@ export default function AdminContentPage() {
     "stat_happy_clients_value","stat_happy_clients_suffix","stat_happy_clients_label",
   ]);
   const saveMission = saveSiteContentKeys(["mission_statement"]);
+  const saveAboutStory = saveSiteContentKeys(["about_story_1", "about_story_2"]);
+  const saveAboutValues = saveSiteContentKeys([
+    "value_1_title","value_1_desc",
+    "value_2_title","value_2_desc",
+    "value_3_title","value_3_desc",
+    "value_4_title","value_4_desc",
+  ]);
+  const saveFeatures = saveSiteContentKeys([
+    "feature_1","feature_2","feature_3","feature_4",
+    "feature_5","feature_6","feature_7","feature_8",
+  ]);
   const saveContact = saveSiteContentKeys([
     "contact_email","contact_phone","contact_whatsapp","contact_location",
     "social_instagram","social_youtube","social_tiktok",
@@ -373,6 +384,85 @@ export default function AdminContentPage() {
               placeholder="Making expert fitness accessible to everyone." className={inp} />
           </div>
           <div className="flex justify-end"><SaveButton onSave={saveMission} /></div>
+        </div>
+      </Section>
+
+      {/* ── ABOUT STORY ── */}
+      <Section title="About Us — Story" desc="Two body paragraphs shown under the mission statement">
+        <div className="space-y-4">
+          <p className="text-white/30 text-xs leading-relaxed">
+            These paragraphs appear on the About page below the mission headline. Write your origin story, motivation, or background.
+          </p>
+          <div>
+            <label className="field-label">Paragraph 1</label>
+            <textarea rows={3} value={content.about_story_1 ?? ""}
+              onChange={(e) => setKey("about_story_1", e.target.value)}
+              placeholder="Tell your story — why you built this platform..." className={ta} />
+          </div>
+          <div>
+            <label className="field-label">Paragraph 2</label>
+            <textarea rows={3} value={content.about_story_2 ?? ""}
+              onChange={(e) => setKey("about_story_2", e.target.value)}
+              placeholder="Continue your story..." className={ta} />
+          </div>
+          <div className="flex justify-end"><SaveButton onSave={saveAboutStory} /></div>
+        </div>
+      </Section>
+
+      {/* ── ABOUT VALUES ── */}
+      <Section title="About Us — Values" desc="Four value cards shown on the About page">
+        <div className="space-y-4">
+          <p className="text-white/30 text-xs leading-relaxed">
+            Each value has a title and a short description. Leave a title empty to hide that card.
+          </p>
+          {[1, 2, 3, 4].map((n) => (
+            <div key={n} className="grid grid-cols-2 gap-3 p-4 border border-white/[0.07] rounded-xl">
+              <div>
+                <label className="field-label">Value {n} — Title</label>
+                <input value={content[`value_${n}_title`] ?? ""}
+                  onChange={(e) => setKey(`value_${n}_title`, e.target.value)}
+                  placeholder={["Science First","Community Driven","Inclusive Approach","Quality Guaranteed"][n - 1]}
+                  className={inp} />
+              </div>
+              <div>
+                <label className="field-label">Value {n} — Description</label>
+                <input value={content[`value_${n}_desc`] ?? ""}
+                  onChange={(e) => setKey(`value_${n}_desc`, e.target.value)}
+                  placeholder="Short description..." className={inp} />
+              </div>
+            </div>
+          ))}
+          <div className="flex justify-end"><SaveButton onSave={saveAboutValues} /></div>
+        </div>
+      </Section>
+
+      {/* ── HOW IT WORKS — FEATURES ── */}
+      <Section title="How It Works — Features List" desc="Bullet points shown in the 'Everything you need' section">
+        <div className="space-y-4">
+          <p className="text-white/30 text-xs leading-relaxed">
+            Up to 8 features shown as bullet points on the How It Works page. Leave empty to hide.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+              <div key={n}>
+                <label className="field-label">Feature {n}</label>
+                <input value={content[`feature_${n}`] ?? ""}
+                  onChange={(e) => setKey(`feature_${n}`, e.target.value)}
+                  placeholder={[
+                    "Instant PDF download after purchase",
+                    "Video content via YouTube / Vimeo",
+                    "Amharic & English plan documents",
+                    "BMI-based plan recommendations",
+                    "Secure payment via Telebirr & CBE",
+                    "Mobile-friendly access",
+                    "Expert-reviewed plans",
+                    "Fast activation after verification",
+                  ][n - 1]}
+                  className={inp} />
+              </div>
+            ))}
+          </div>
+          <div className="flex justify-end"><SaveButton onSave={saveFeatures} /></div>
         </div>
       </Section>
 

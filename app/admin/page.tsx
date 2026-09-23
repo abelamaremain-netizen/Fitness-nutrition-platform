@@ -5,7 +5,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { TrendingUp, ShoppingBag, Users, Package, ArrowRight, ArrowUpRight } from "lucide-react";
 import { createBrowserClient } from "@/src/lib/supabase/client";
-import { REVENUE_DATA, type AdminPlan } from "@/lib/admin-data";
+import type { AdminPlan } from "@/lib/admin-data";
 
 interface DBOrder {
   id: string;
@@ -44,9 +44,28 @@ function StatCard({ label, value, sub, icon: Icon, trend }: {
   );
 }
 
-// ─── REVENUE CHART ────────────────────────────────────────────────────────────
-function RevenueChart({ revenue }: { revenue: number }) {
-  const max = Math.max(...REVENUE_DATA.map((d) => d.revenue));
+// ─── REVENUE CHART — built from real DB orders (last 7 days) ─────────────────
+function RevenueChart({ revenue, orders }: { revenue: number; orders: DBOrder[] }) {
+  // Build last-7-days buckets from completed orders
+  const days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (6 - i));
+    return {
+      label: d.toLocaleDateString("en-GB", { weekday: "short" }),
+      date:  d.toISOString().slice(0, 10),
+      revenue: 0,
+    };
+  });
+
+  for (const order of orders) {
+    if (order.status !== "completed") continue;
+    const orderDate = order.created_at.slice(0, 10);
+    const bucket = days.find((d) => d.date === orderDate);
+    if (bucket) bucket.revenue += order.amount;
+  }
+
+  const max = Math.max(...days.map((d) => d.revenue), 1); // avoid div by zero
+
   return (
     <div className="card p-6">
       <div className="flex items-center justify-between mb-6">
@@ -59,48 +78,53 @@ function RevenueChart({ revenue }: { revenue: number }) {
         </div>
       </div>
       <div className="flex items-end gap-2 h-32">
-        {REVENUE_DATA.map((d) => {
+        {days.map((d) => {
           const pct = (d.revenue / max) * 100;
           return (
-            <div key={d.day} className="flex-1 flex flex-col items-center gap-1.5">
+            <div key={d.date} className="flex-1 flex flex-col items-center gap-1.5">
               <motion.div
                 initial={{ height: 0 }}
-                animate={{ height: `${pct}%` }}
+                animate={{ height: `${Math.max(pct, 2)}%` }}
                 transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                className="w-full rounded-t-sm bg-white/80 hover:bg-white transition-colors cursor-default"
-                title={`${d.revenue.toLocaleString()} ETB`}
+                className={`w-full rounded-t-sm transition-colors ${
+                  d.revenue > 0 ? "bg-white/80 hover:bg-white" : "bg-white/10"
+                }`}
+                title={d.revenue > 0 ? `${d.revenue.toLocaleString()} ETB` : "No orders"}
               />
-              <p className="text-[10px] text-white/30">{d.day}</p>
+              <p className="text-[10px] text-white/30">{d.label}</p>
             </div>
           );
         })}
       </div>
+      {days.every((d) => d.revenue === 0) && (
+        <p className="text-white/20 text-[11px] text-center mt-3">No completed orders in the last 7 days</p>
+      )}
     </div>
   );
 }
 
 function StatusBadge({ status }: { status: string }) {
   const s: Record<string, string> = {
-    completed: "bg-white/10 text-white/70",
-    pending:   "bg-yellow-500/15 text-yellow-400",
-    failed:    "bg-red-500/15 text-red-400",
+    completed:            "bg-white/10 text-white/70",
+    pending:              "bg-yellow-500/15 text-yellow-400",
+    failed:               "bg-red-500/15 text-red-400",
+    pending_verification: "bg-blue-500/15 text-blue-400",
   };
   return (
     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-widest uppercase ${s[status] ?? s.pending}`}>
-      {status}
+      {status.replace("_", " ")}
     </span>
   );
 }
 
 // ─── DASHBOARD ────────────────────────────────────────────────────────────────
 export default function AdminDashboard() {
-  const [orders,    setOrders]    = useState<DBOrder[]>([]);
-  const [plans,     setPlans]     = useState<AdminPlan[]>([]);
-  const [loading,   setLoading]   = useState(true);
+  const [orders,  setOrders]  = useState<DBOrder[]>([]);
+  const [plans,   setPlans]   = useState<AdminPlan[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const supabase = createBrowserClient();
-
     Promise.all([
       supabase.from("orders").select("*").order("created_at", { ascending: false }),
       supabase.from("plans").select("id, title, level, goal, published, created_at").order("created_at", { ascending: false }),
@@ -121,10 +145,11 @@ export default function AdminDashboard() {
   }, []);
 
   const completedOrders = orders.filter((o) => o.status === "completed");
-  const totalRevenue    = completedOrders.reduce((s, o) => s + o.amount, 0);
-  const uniqueEmails    = new Set(orders.map((o) => o.customer_email)).size;
+  const totalRevenue    = completedOrders.reduce((s, o) => s + (Number(o.amount) || 0), 0);
+  const uniqueCustomers = new Set(orders.map((o) => o.customer_name).filter(Boolean)).size;
   const recentOrders    = orders.slice(0, 5);
-  const topPlans        = [...plans].slice(0, 4);
+  const topPlans        = plans.slice(0, 4);
+  const pendingCount    = orders.filter((o) => o.status === "pending_verification" || o.status === "pending").length;
 
   return (
     <div className="space-y-8 max-w-6xl">
@@ -137,16 +162,16 @@ export default function AdminDashboard() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Total Revenue"  value={`${totalRevenue.toLocaleString()}`}  sub="ETB completed"      icon={TrendingUp}  />
-        <StatCard label="Total Orders"   value={String(orders.length)}               sub={`${completedOrders.length} completed`} icon={ShoppingBag} />
-        <StatCard label="Customers"      value={String(uniqueEmails)}                sub="Unique emails"      icon={Users}       />
-        <StatCard label="Active Plans"   value={String(plans.filter(p => p.published).length)} sub="Published" icon={Package}  />
+        <StatCard label="Total Revenue"  value={`${totalRevenue.toLocaleString()}`} sub="ETB completed"                         icon={TrendingUp}  />
+        <StatCard label="Total Orders"   value={String(orders.length)}              sub={`${completedOrders.length} completed`}  icon={ShoppingBag} />
+        <StatCard label="Buyers"         value={String(uniqueCustomers)}            sub="Unique buyers"                          icon={Users}       />
+        <StatCard label="Active Plans"   value={String(plans.filter(p => p.published).length)} sub={`${pendingCount} pending verification`} icon={Package} />
       </div>
 
       {/* Chart + Top plans */}
       <div className="grid lg:grid-cols-5 gap-6">
         <div className="lg:col-span-3">
-          <RevenueChart revenue={totalRevenue} />
+          <RevenueChart revenue={totalRevenue} orders={orders} />
         </div>
         <div className="lg:col-span-2 card p-6">
           <div className="flex items-center justify-between mb-5">
@@ -160,6 +185,8 @@ export default function AdminDashboard() {
             <div className="flex items-center justify-center py-10">
               <div className="w-6 h-6 border-2 border-white/20 border-t-white/60 rounded-full animate-spin" />
             </div>
+          ) : topPlans.length === 0 ? (
+            <p className="text-white/25 text-xs text-center py-4">No plans yet.</p>
           ) : (
             <div className="space-y-4">
               {topPlans.map((plan, i) => (
@@ -167,16 +194,15 @@ export default function AdminDashboard() {
                   <span className="text-[10px] text-white/25 w-4 flex-shrink-0">#{i + 1}</span>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs text-white/70 truncate">{plan.title}</p>
-                    <p className="text-[10px] text-white/30">{plan.level}</p>
+                    <p className="text-[10px] text-white/30 capitalize">{plan.level}</p>
                   </div>
-                  <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-semibold ${plan.published ? "bg-white/10 text-white/50" : "bg-red-500/15 text-red-400"}`}>
+                  <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-semibold ${
+                    plan.published ? "bg-white/10 text-white/50" : "bg-yellow-500/15 text-yellow-400"
+                  }`}>
                     {plan.published ? "Live" : "Draft"}
                   </span>
                 </div>
               ))}
-              {topPlans.length === 0 && (
-                <p className="text-white/25 text-xs text-center py-4">No plans yet.</p>
-              )}
             </div>
           )}
         </div>
@@ -213,12 +239,13 @@ export default function AdminDashboard() {
                 {recentOrders.map((order) => (
                   <tr key={order.id} className="border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors">
                     <td className="px-6 py-3.5">
-                      <p className="text-sm text-white/80 font-medium">{order.customer_name || order.customer_email}</p>
-                      <p className="text-[11px] text-white/25">{order.customer_email}</p>
+                      <p className="text-sm text-white/80 font-medium">{order.customer_name || "—"}</p>
                     </td>
                     <td className="px-6 py-3.5 text-sm text-white/50 max-w-[140px] truncate">{order.plan_id}</td>
                     <td className="px-6 py-3.5 text-sm text-white/40">{order.duration_label}</td>
-                    <td className="px-6 py-3.5 text-sm font-semibold text-white/80">{order.amount.toLocaleString()} ETB</td>
+                    <td className="px-6 py-3.5 text-sm font-semibold text-white/80">
+                      {(Number(order.amount) || 0).toLocaleString()} ETB
+                    </td>
                     <td className="px-6 py-3.5"><StatusBadge status={order.status} /></td>
                     <td className="px-6 py-3.5 text-[11px] text-white/30">
                       {new Date(order.created_at).toLocaleDateString("en-GB")}
@@ -236,7 +263,7 @@ export default function AdminDashboard() {
         {[
           { label: "Manage Plans",  href: "/admin/plans",     desc: "Add, edit, publish" },
           { label: "View Orders",   href: "/admin/orders",    desc: "Track all purchases" },
-          { label: "Customers",     href: "/admin/customers", desc: "Order history" },
+          { label: "Buyers",        href: "/admin/customers", desc: "Order history" },
           { label: "Edit Content",  href: "/admin/content",   desc: "About, FAQ, Hero" },
         ].map((l) => (
           <Link key={l.href} href={l.href}

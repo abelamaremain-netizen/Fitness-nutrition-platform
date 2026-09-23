@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Award, Users, Target, Heart } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import AnimatedSection from "@/components/ui/AnimatedSection";
 import StatCounter from "@/components/ui/StatCounter";
 import type { Metadata } from "next";
@@ -21,13 +21,6 @@ import { parseStats, IMAGES } from "@/lib/data";
 
 export const revalidate = 0;
 
-const VALUES = [
-  { icon: Target, title: "Science First",      description: "Every plan is grounded in exercise science and nutritional research — not trends." },
-  { icon: Users,  title: "Community Driven",   description: "Built for the Ethiopian community, with respect for local culture, food, and lifestyle." },
-  { icon: Heart,  title: "Inclusive Approach", description: "Plans for all body types, fitness levels, and dietary needs — no one is left behind." },
-  { icon: Award,  title: "Quality Guaranteed", description: "Each plan is personally designed and tested by Naodi & Samri before publishing." },
-];
-
 export default async function AboutPage() {
   const [teamMembers, content] = await Promise.all([
     getTeamMembers().catch(() => []),
@@ -37,6 +30,16 @@ export default async function AboutPage() {
   const missionStatement = content.mission_statement ||
     "Making expert fitness accessible to everyone.";
   const stats = parseStats(content);
+
+  // Story paragraphs — editable from admin content page
+  const storyPara1 = content.about_story_1 || "";
+  const storyPara2 = content.about_story_2 || "";
+
+  // Values — editable from admin (value_1_title, value_1_desc … value_4_title, value_4_desc)
+  const values = [1, 2, 3, 4].map((n) => ({
+    title:       content[`value_${n}_title`] ?? "",
+    description: content[`value_${n}_desc`]  ?? "",
+  })).filter((v) => v.title);
 
   return (
     <div className="min-h-screen">
@@ -60,16 +63,17 @@ export default async function AboutPage() {
             <h2 className="text-4xl font-bold text-white mb-7 leading-tight" style={{ fontFamily: "var(--font-serif)" }}>
               {missionStatement}
             </h2>
-            <p className="text-white/45 text-sm leading-8 mb-5">
-              Naodi &amp; Samri built this platform from a simple frustration: quality fitness and nutrition
-              guidance in Ethiopia was either too expensive, too generic, or not designed with Ethiopian
-              bodies, culture, and food in mind.
-            </p>
-            <p className="text-white/45 text-sm leading-8 mb-8">
-              As certified coaches and nutrition specialists, they created a platform where science-backed
-              plans meet cultural relevance — and where every plan is something they&apos;ve personally
-              designed, tested, and stand behind.
-            </p>
+            {storyPara1 && (
+              <p className="text-white/45 text-sm leading-8 mb-5">{storyPara1}</p>
+            )}
+            {storyPara2 && (
+              <p className="text-white/45 text-sm leading-8 mb-8">{storyPara2}</p>
+            )}
+            {!storyPara1 && !storyPara2 && (
+              <p className="text-white/25 text-sm mb-8">
+                Add your story in Admin → Content → About Us.
+              </p>
+            )}
             <Link href="/plans" className="btn btn-white py-3.5 px-8 inline-flex">
               Browse Our Plans <ArrowRight size={14} />
             </Link>
@@ -154,17 +158,18 @@ export default async function AboutPage() {
             </h2>
           </AnimatedSection>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {VALUES.map((v, i) => (
+            {values.length > 0 ? values.map((v, i) => (
               <AnimatedSection key={v.title} delay={i * 0.1}>
                 <div className="card p-7 h-full hover:border-white/20 transition-colors">
-                  <div className="w-10 h-10 rounded-xl card flex items-center justify-center mb-5">
-                    <v.icon size={18} className="text-white/50" strokeWidth={1.5} />
-                  </div>
                   <h3 className="text-white font-bold text-base mb-3">{v.title}</h3>
                   <p className="text-white/40 text-sm leading-relaxed">{v.description}</p>
                 </div>
               </AnimatedSection>
-            ))}
+            )) : (
+              <p className="text-white/25 text-sm col-span-4 text-center py-8">
+                Add your values in Admin → Content → About Us Values.
+              </p>
+            )}
           </div>
         </div>
       </section>

@@ -2,7 +2,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
 import AnimatedSection from "@/components/ui/AnimatedSection";
-import { getHowItWorksSteps } from "@/src/lib/services/content-public";
+import { getHowItWorksSteps, getSiteContent } from "@/src/lib/services/content-public";
+import { IMAGES } from "@/lib/data";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -16,23 +17,27 @@ export const metadata: Metadata = {
     url:         "/how-it-works",
   },
 };
-import { IMAGES } from "@/lib/data";
 
-export const revalidate = 0; // always fetch fresh from DB
-
-const FEATURES = [
-  "Instant PDF download after purchase",
-  "Video content via YouTube / Vimeo",
-  "Amharic & English plan documents",
-  "Normal, Pro, and VIP levels",
-  "BMI-based plan recommendations",
-  "Secure payment via Chapa & Stripe",
-  "Mobile-friendly access",
-  "Expert-reviewed plans",
-];
+export const revalidate = 0;
 
 export default async function HowItWorksPage() {
-  const steps = await getHowItWorksSteps().catch(() => []);
+  const [steps, content] = await Promise.all([
+    getHowItWorksSteps().catch(() => []),
+    getSiteContent().catch(() => ({} as Record<string, string>)),
+  ]);
+
+  // Features list — editable from admin content page via site_content keys
+  // feature_1 … feature_8 (admin can set any number)
+  const features = [
+    content.feature_1,
+    content.feature_2,
+    content.feature_3,
+    content.feature_4,
+    content.feature_5,
+    content.feature_6,
+    content.feature_7,
+    content.feature_8,
+  ].filter(Boolean) as string[];
 
   return (
     <div className="min-h-screen">
@@ -99,12 +104,16 @@ export default async function HowItWorksPage() {
                   Everything you need<br /><em>to succeed</em>
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {FEATURES.map((f) => (
+                  {features.length > 0 ? features.map((f) => (
                     <div key={f} className="flex items-start gap-3">
                       <CheckCircle2 size={15} className="text-white/50 mt-0.5 flex-shrink-0" strokeWidth={1.5} />
                       <span className="text-white/55 text-sm leading-relaxed">{f}</span>
                     </div>
-                  ))}
+                  )) : (
+                    <p className="text-white/25 text-sm col-span-2">
+                      Add features in Admin → Content → How It Works Features.
+                    </p>
+                  )}
                 </div>
               </div>
               <div className="relative h-64 md:h-80 rounded-xl overflow-hidden">

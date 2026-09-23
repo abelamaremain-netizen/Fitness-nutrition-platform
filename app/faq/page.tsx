@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowRight, MessageCircle } from "lucide-react";
 import AnimatedSection from "@/components/ui/AnimatedSection";
 import FaqAccordion from "./FaqAccordion";
-import { getFaqs } from "@/src/lib/services/content-public";
+import { getFaqs, getSiteContent } from "@/src/lib/services/content-public";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -20,8 +20,12 @@ export const metadata: Metadata = {
 export const revalidate = 0;
 
 export default async function FaqPage() {
-  const dbFaqs = await getFaqs().catch(() => []);
-  const faqs = dbFaqs.map((f) => ({ id: f.id, q: f.question, a: f.answer }));
+  const [dbFaqs, content] = await Promise.all([
+    getFaqs().catch(() => []),
+    getSiteContent().catch(() => ({} as Record<string, string>)),
+  ]);
+  const faqs     = dbFaqs.map((f) => ({ id: f.id, q: f.question, a: f.answer }));
+  const whatsapp = content.contact_whatsapp || content.whatsapp_number || "";
 
   return (
     <div className="min-h-screen">
@@ -62,10 +66,13 @@ export default async function FaqPage() {
               <Link href="/contact" className="btn btn-white py-3 px-8">
                 Contact Us <ArrowRight size={13} />
               </Link>
-              <a href="https://wa.me/251912345678" target="_blank" rel="noopener noreferrer"
-                className="btn btn-outline py-3 px-8">
-                WhatsApp Us
-              </a>
+              {whatsapp && (
+                <a href={`https://wa.me/${whatsapp.replace(/\D/g, "")}`}
+                  target="_blank" rel="noopener noreferrer"
+                  className="btn btn-outline py-3 px-8">
+                  WhatsApp Us
+                </a>
+              )}
             </div>
           </div>
         </AnimatedSection>

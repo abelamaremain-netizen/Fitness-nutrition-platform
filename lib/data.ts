@@ -18,19 +18,6 @@ export const IMAGES = {
   both:   "/images/owners/both-1.JPG",
 };
 
-// ─── NAVIGATION ─────────────────────────────────────────────────────────────
-export const NAV_LINKS = [
-  { label: "Home",          href: "/" },
-  { label: "Plans",         href: "/plans" },
-  { label: "Fitness Plan",  href: "/fitness-plan" },
-  { label: "Meal Plan",     href: "/meal-plan" },
-  { label: "BMI Calculator",href: "/bmi" },
-  { label: "How It Works",  href: "/how-it-works" },
-  { label: "Blog",          href: "/blog" },
-  { label: "About",         href: "/about" },
-  { label: "Contact",       href: "/contact" },
-];
-
 // ─── STATS ───────────────────────────────────────────────────────────────────
 // Default stats — shown if admin hasn't set values in site_content yet
 export const DEFAULT_STATS = [

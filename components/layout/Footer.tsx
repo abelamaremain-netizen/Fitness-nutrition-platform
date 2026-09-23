@@ -1,45 +1,49 @@
-"use client";
 import Link from "next/link";
-import { useLang } from "@/context/LangContext";
 
-export default function Footer() {
-  const { t } = useLang();
+interface Props {
+  instagram?: string;
+  youtube?:   string;
+  tiktok?:    string;
+}
 
+export default function Footer({ instagram, youtube, tiktok }: Props) {
   const cols = [
     {
-      titleKey: "footer.plans" as const,
+      title: "Plans",
       links: [
-        { key: "footer.allPlans"     as const, href: "/plans" },
-        { key: "footer.fitnessPlans" as const, href: "/fitness-plan" },
-        { key: "footer.mealPlans"    as const, href: "/meal-plan" },
-        { key: "footer.bmiCalc"      as const, href: "/bmi" },
+        { label: "All Plans",       href: "/plans" },
+        { label: "Fitness Plans",   href: "/fitness-plan" },
+        { label: "Meal Plans",      href: "/meal-plan" },
+        { label: "BMI Calculator",  href: "/bmi" },
       ],
     },
     {
-      titleKey: "footer.company" as const,
+      title: "Company",
       links: [
-        { key: "footer.aboutUs"      as const, href: "/about" },
-        { key: "footer.howItWorks"   as const, href: "/how-it-works" },
-        { key: "footer.blog"         as const, href: "/blog" },
-        { key: "footer.testimonials" as const, href: "/testimonials" },
+        { label: "About Us",        href: "/about" },
+        { label: "How It Works",    href: "/how-it-works" },
+        { label: "Blog",            href: "/blog" },
+        { label: "Testimonials",    href: "/testimonials" },
       ],
     },
     {
-      titleKey: "footer.support" as const,
+      title: "Support",
       links: [
-        { key: "footer.contact"      as const, href: "/contact" },
-        { key: "footer.faq"          as const, href: "/faq" },
-        { key: "footer.terms"        as const, href: "/terms" },
-        { key: "footer.privacy"      as const, href: "/privacy" },
+        { label: "Contact",         href: "/contact" },
+        { label: "FAQ",             href: "/faq" },
+        { label: "My Order",        href: "/my-order" },
+        { label: "Terms",           href: "/terms" },
+        { label: "Privacy",         href: "/privacy" },
       ],
     },
   ];
 
+  // Only show social links that have a real URL set in admin
   const socials = [
-    { label: "Instagram", abbr: "IG", href: "#" },
-    { label: "YouTube",   abbr: "YT", href: "#" },
-    { label: "TikTok",    abbr: "TK", href: "#" },
-  ];
+    { label: "Instagram", abbr: "IG", href: instagram },
+    { label: "YouTube",   abbr: "YT", href: youtube },
+    { label: "TikTok",    abbr: "TK", href: tiktok },
+  ].filter((s) => s.href);
 
   return (
     <footer style={{ background: "#0a0a0a", borderTop: "1px solid rgba(255,255,255,0.08)" }}>
@@ -61,28 +65,31 @@ export default function Footer() {
             <p className="text-white/40 text-sm leading-7 max-w-[220px] mb-8">
               Science-backed fitness &amp; nutrition plans. Built for Ethiopia, built for results.
             </p>
-            <div className="flex gap-3">
-              {socials.map(({ abbr, href, label }) => (
-                <a key={label} href={href} aria-label={label}
-                  className="w-9 h-9 rounded-lg border border-white/15 hover:border-white/45 flex items-center justify-center text-[10px] font-bold text-white/35 hover:text-white transition-all tracking-wider">
-                  {abbr}
-                </a>
-              ))}
-            </div>
+            {socials.length > 0 && (
+              <div className="flex gap-3">
+                {socials.map(({ abbr, href, label }) => (
+                  <a key={label} href={href} target="_blank" rel="noopener noreferrer"
+                    aria-label={label}
+                    className="w-9 h-9 rounded-lg border border-white/15 hover:border-white/45 flex items-center justify-center text-[10px] font-bold text-white/35 hover:text-white transition-all tracking-wider">
+                    {abbr}
+                  </a>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Link columns */}
           {cols.map((col) => (
-            <div key={col.titleKey}>
+            <div key={col.title}>
               <p className="text-[9px] font-bold tracking-[0.26em] uppercase text-white/35 mb-6">
-                {t(col.titleKey)}
+                {col.title}
               </p>
               <ul className="space-y-4">
                 {col.links.map((l) => (
                   <li key={l.href}>
                     <Link href={l.href}
                       className="text-sm leading-relaxed text-white/40 hover:text-white/80 transition-colors">
-                      {t(l.key)}
+                      {l.label}
                     </Link>
                   </li>
                 ))}
@@ -94,11 +101,11 @@ export default function Footer() {
         {/* Bottom bar */}
         <div className="pt-8 border-t border-white/[0.07] flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-[11px] text-white/20 tracking-widest uppercase">
-            © 2026 Naodi &amp; Samri Fitness. {t("footer.rights")}
+            © {new Date().getFullYear()} Naodi &amp; Samri Fitness. All rights reserved.
           </p>
           <div className="flex items-center gap-6">
             <p className="text-[11px] text-white/20 tracking-widest uppercase">
-              {t("footer.madeIn")}
+              Made in Ethiopia 🇪🇹
             </p>
             <Link href="/admin/login"
               className="text-[10px] text-white/15 hover:text-white/40 tracking-widest uppercase transition-colors">

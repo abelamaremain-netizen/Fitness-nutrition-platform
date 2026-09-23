@@ -18,11 +18,11 @@ export default function ContactClient({ content }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Use DB values with hardcoded fallbacks
-  const email     = content.contact_email    || "hello@naodiansamri.com";
-  const phone     = content.contact_phone    || "+251 91 234 5678";
-  const whatsapp  = content.contact_whatsapp || content.whatsapp_number || "251912345678";
-  const location  = content.contact_location || "Addis Ababa, Ethiopia";
+  // Contact details from DB — show nothing if not set (no fake fallbacks)
+  const email    = content.contact_email    || "";
+  const phone    = content.contact_phone    || "";
+  const whatsapp = content.contact_whatsapp || content.whatsapp_number || "";
+  const location = content.contact_location || "";
 
   const set = (k: string, v: string) => setForm((p) => ({ ...p, [k]: v }));
 
@@ -121,29 +121,48 @@ export default function ContactClient({ content }: Props) {
 
       {/* ── CONTACT INFO — from DB ── */}
       <section className="border-t border-white/10 max-w-5xl mx-auto px-8 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          {[
-            { icon: Mail,    label: "Email",    value: email,    href: `mailto:${email}` },
-            { icon: Phone,   label: "Phone",    value: phone,    href: `tel:${phone.replace(/\s/g, "")}` },
-            { icon: MapPin,  label: "Location", value: location, href: "#" },
-          ].map((info, i) => (
-            <a key={i} href={info.href}
-              className="card flex flex-col items-center text-center py-8 px-6 hover:border-white/20 transition-colors group">
-              <info.icon size={18} className="text-white/30 group-hover:text-white/60 transition-colors mb-3" strokeWidth={1.5} />
-              <p className="text-[9px] font-semibold tracking-[0.22em] uppercase text-white/30 mb-1.5">{info.label}</p>
-              <p className="text-white/60 text-sm group-hover:text-white transition-colors">{info.value}</p>
-            </a>
-          ))}
-        </div>
+        {(email || phone || location) && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-10">
+            {email && (
+              <a href={`mailto:${email}`}
+                className="card flex flex-col items-center text-center py-8 px-6 hover:border-white/20 transition-colors group">
+                <Mail size={18} className="text-white/30 group-hover:text-white/60 transition-colors mb-3" strokeWidth={1.5} />
+                <p className="text-[9px] font-semibold tracking-[0.22em] uppercase text-white/30 mb-1.5">Email</p>
+                <p className="text-white/60 text-sm group-hover:text-white transition-colors">{email}</p>
+              </a>
+            )}
+            {phone && (
+              <a href={`tel:${phone.replace(/\s/g, "")}`}
+                className="card flex flex-col items-center text-center py-8 px-6 hover:border-white/20 transition-colors group">
+                <Phone size={18} className="text-white/30 group-hover:text-white/60 transition-colors mb-3" strokeWidth={1.5} />
+                <p className="text-[9px] font-semibold tracking-[0.22em] uppercase text-white/30 mb-1.5">Phone</p>
+                <p className="text-white/60 text-sm group-hover:text-white transition-colors">{phone}</p>
+              </a>
+            )}
+            {location && (
+              <div className="card flex flex-col items-center text-center py-8 px-6">
+                <MapPin size={18} className="text-white/30 mb-3" strokeWidth={1.5} />
+                <p className="text-[9px] font-semibold tracking-[0.22em] uppercase text-white/30 mb-1.5">Location</p>
+                <p className="text-white/60 text-sm">{location}</p>
+              </div>
+            )}
+          </div>
+        )}
 
         {whatsapp && (
-          <div className="mt-10 text-center">
+          <div className="text-center">
             <a href={`https://wa.me/${whatsapp.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer"
               className="inline-flex items-center gap-3 btn btn-outline py-3.5 px-10 text-[11px]">
               <MessageCircle size={15} strokeWidth={1.5} />
               {t("contact.whatsapp")}
             </a>
           </div>
+        )}
+
+        {!email && !phone && !location && !whatsapp && (
+          <p className="text-white/25 text-sm text-center py-8">
+            Contact details not set yet — add them in Admin → Content → Contact Info.
+          </p>
         )}
       </section>
     </div>
