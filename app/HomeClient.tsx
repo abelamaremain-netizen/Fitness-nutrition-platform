@@ -25,8 +25,14 @@ export default function HomeClient({ featured, testimonials, content, howItWorks
   const heroBody        = content.hero_body        || "Expert-crafted fitness and nutrition plans by Naodi & Samri, tailored to your goals.";
   const heroCta1        = content.hero_cta_primary  || "Calculate My BMI";
   const heroCta2        = content.hero_cta_secondary || "Browse Plans";
-  const naodiBio        = content.naodi_bio || "Certified fitness coach specialising in body recomposition, strength training, and women's wellness.";
-  const samriBio        = content.samri_bio || "Nutrition specialist and certified personal trainer focused on sustainable diet plans and hormonal health.";
+  const heroTagline     = content.hero_tagline     || "";
+  const naodiBio        = content.naodi_bio || "";
+  const samriBio        = content.samri_bio || "";
+  const expertsSubtext  = content.experts_subtext  || "";
+  const promoHeadline   = content.promo_headline   || "The plan that fits your exact goals.";
+  const promoBody       = content.promo_body       || "Our recommendation engine analyses your BMI, age, gender, activity level, and goals to surface the plans designed specifically for your profile.";
+  const ctaHeadline     = content.cta_headline     || "Ready to Transform?";
+  const ctaBody         = content.cta_body         || "Calculate your BMI, get a personalised plan recommendation, and take the first step.";
   const stats           = parseStats(content);
   return (
     <div>
@@ -39,7 +45,7 @@ export default function HomeClient({ featured, testimonials, content, howItWorks
         <div className="relative z-10 w-full max-w-4xl mx-auto px-8 pt-20">
           <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
             className="text-[10px] font-semibold tracking-[0.3em] uppercase text-white/55 mb-6">
-            Science-Backed Fitness &amp; Diet Plans
+            {heroTagline || "Fitness & Nutrition Plans"}
           </motion.p>
           <motion.h1 initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
             style={{ fontFamily: "var(--font-serif)" }}
@@ -85,9 +91,11 @@ export default function HomeClient({ featured, testimonials, content, howItWorks
               className="text-4xl md:text-5xl font-bold text-white">
               Meet <em>Naodi &amp; Samri</em>
             </h2>
-            <p className="text-white/40 mt-4 max-w-lg mx-auto text-sm leading-relaxed">
-              Real coaches. Real results. Every plan on this platform is designed and tested by Naodi &amp; Samri themselves.
-            </p>
+            {expertsSubtext && (
+              <p className="text-white/40 mt-4 max-w-lg mx-auto text-sm leading-relaxed">
+                {expertsSubtext}
+              </p>
+            )}
           </AnimatedSection>
           <div className="grid md:grid-cols-2 gap-8">
             <AnimatedSection direction="left">
@@ -100,9 +108,9 @@ export default function HomeClient({ featured, testimonials, content, howItWorks
                   <div className="absolute bottom-0 left-0 right-0 p-7">
                     <p className="text-[10px] font-semibold tracking-[0.22em] uppercase text-white/45 mb-1">Co-Founder</p>
                     <h3 className="text-white text-3xl font-bold mb-2" style={{ fontFamily: "var(--font-serif)" }}>Naodi</h3>
-                    <p className="text-white/60 text-sm leading-relaxed">
-                      {naodiBio}
-                    </p>
+                    {naodiBio && (
+                      <p className="text-white/60 text-sm leading-relaxed">{naodiBio}</p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -117,9 +125,9 @@ export default function HomeClient({ featured, testimonials, content, howItWorks
                   <div className="absolute bottom-0 left-0 right-0 p-7">
                     <p className="text-[10px] font-semibold tracking-[0.22em] uppercase text-white/45 mb-1">Co-Founder</p>
                     <h3 className="text-white text-3xl font-bold mb-2" style={{ fontFamily: "var(--font-serif)" }}>Samri</h3>
-                    <p className="text-white/60 text-sm leading-relaxed">
-                      {samriBio}
-                    </p>
+                    {samriBio && (
+                      <p className="text-white/60 text-sm leading-relaxed">{samriBio}</p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -142,7 +150,7 @@ export default function HomeClient({ featured, testimonials, content, howItWorks
               How It <em>Works</em>
             </h2>
             <p className="text-white/40 mt-4 max-w-md mx-auto text-sm leading-relaxed">
-              Four simple steps from your first visit to your first result.
+              {content.how_it_works_subtext || "From your first visit to your first result."}
             </p>
           </AnimatedSection>
           <div className="grid md:grid-cols-4 gap-6">
@@ -172,11 +180,14 @@ export default function HomeClient({ featured, testimonials, content, howItWorks
           <AnimatedSection direction="left">
             <p className="text-[10px] font-semibold tracking-[0.28em] uppercase text-white/35 mb-5">Personalised</p>
             <h2 style={{ fontFamily: "var(--font-serif)" }} className="text-4xl font-bold text-white leading-tight mb-6">
-              The plan that fits<br /><em>your exact goals.</em>
+              {promoHeadline.includes("<em>") ? (
+                <span dangerouslySetInnerHTML={{ __html: promoHeadline }} />
+              ) : (
+                <>{promoHeadline}</>
+              )}
             </h2>
             <p className="text-white/45 text-sm leading-relaxed mb-8 max-w-sm">
-              Our recommendation engine analyses your BMI, age, gender, activity level, and goals to surface
-              the plans Naodi &amp; Samri designed specifically for your profile.
+              {promoBody}
             </p>
             <Link href="/fitness-plan" className="btn btn-white py-3.5 px-8 inline-flex">
               Get My Recommendation <ArrowRight size={14} />
@@ -269,10 +280,10 @@ export default function HomeClient({ featured, testimonials, content, howItWorks
         <AnimatedSection className="relative z-10 max-w-2xl mx-auto px-8">
           <p className="text-[10px] font-semibold tracking-[0.28em] uppercase text-white/40 mb-5">Start Today</p>
           <h2 style={{ fontFamily: "var(--font-serif)" }} className="text-4xl md:text-6xl font-bold text-white mb-6">
-            Ready to <em>Transform?</em>
+            {ctaHeadline}
           </h2>
           <p className="text-white/45 text-base leading-relaxed mb-10 max-w-lg mx-auto">
-            Calculate your BMI, get a personalised plan recommendation from Naodi &amp; Samri, and take the first step.
+            {ctaBody}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/bmi" className="btn btn-white py-4 px-12">

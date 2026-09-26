@@ -255,6 +255,10 @@ export default function AdminContentPage() {
       {/* ── HOMEPAGE HERO ── */}
       <Section title="Homepage Hero" desc="Main banner on the home page">
         <div className="space-y-4">
+          <div>
+            <label className="field-label">Tagline (small text above headline)</label>
+            <input value={content.hero_tagline ?? ""} onChange={(e) => setKey("hero_tagline", e.target.value)} className={inp} placeholder="Fitness &amp; Nutrition Plans" />
+          </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="field-label">Main Headline</label>
@@ -280,6 +284,51 @@ export default function AdminContentPage() {
             </div>
           </div>
           <div className="flex justify-end"><SaveButton onSave={saveHero} /></div>
+        </div>
+      </Section>
+
+      {/* ── HOME — ADDITIONAL COPY ── */}
+      <Section title="Home — Additional Copy" desc="Experts section, promo section, CTA section">
+        <div className="space-y-4">
+          <div>
+            <label className="field-label">Experts Sub-text (below "Meet Naodi &amp; Samri")</label>
+            <input value={content.experts_subtext ?? ""} onChange={(e) => setKey("experts_subtext", e.target.value)} className={inp} placeholder="Real coaches. Real results." />
+          </div>
+          <div>
+            <label className="field-label">Naodi — Short Bio (shown on home page)</label>
+            <textarea rows={2} value={content.naodi_bio ?? ""} onChange={(e) => setKey("naodi_bio", e.target.value)} className={ta} placeholder="Certified fitness coach..." />
+          </div>
+          <div>
+            <label className="field-label">Samri — Short Bio (shown on home page)</label>
+            <textarea rows={2} value={content.samri_bio ?? ""} onChange={(e) => setKey("samri_bio", e.target.value)} className={ta} placeholder="Nutrition specialist..." />
+          </div>
+          <div>
+            <label className="field-label">How It Works sub-text</label>
+            <input value={content.how_it_works_subtext ?? ""} onChange={(e) => setKey("how_it_works_subtext", e.target.value)} className={inp} placeholder="From your first visit to your first result." />
+          </div>
+          <div>
+            <label className="field-label">Promo Headline ("The plan that fits…")</label>
+            <input value={content.promo_headline ?? ""} onChange={(e) => setKey("promo_headline", e.target.value)} className={inp} placeholder="The plan that fits your exact goals." />
+          </div>
+          <div>
+            <label className="field-label">Promo Body Paragraph</label>
+            <textarea rows={2} value={content.promo_body ?? ""} onChange={(e) => setKey("promo_body", e.target.value)} className={ta} placeholder="Our recommendation engine analyses your BMI..." />
+          </div>
+          <div>
+            <label className="field-label">CTA Headline ("Ready to Transform?")</label>
+            <input value={content.cta_headline ?? ""} onChange={(e) => setKey("cta_headline", e.target.value)} className={inp} placeholder="Ready to Transform?" />
+          </div>
+          <div>
+            <label className="field-label">CTA Body</label>
+            <textarea rows={2} value={content.cta_body ?? ""} onChange={(e) => setKey("cta_body", e.target.value)} className={ta} placeholder="Calculate your BMI, get a plan recommendation..." />
+          </div>
+          <div className="flex justify-end">
+            <SaveButton onSave={saveSiteContentKeys([
+              "experts_subtext","naodi_bio","samri_bio",
+              "how_it_works_subtext","promo_headline","promo_body",
+              "cta_headline","cta_body","hero_tagline",
+            ])} />
+          </div>
         </div>
       </Section>
 
