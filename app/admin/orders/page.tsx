@@ -4,7 +4,6 @@ import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, X, Eye, ChevronDown, Download, ExternalLink } from "lucide-react";
 import { createBrowserClient } from "@/src/lib/supabase/client";
-
 interface DBOrder {
   id: string;
   customer_name: string;
@@ -48,10 +47,14 @@ function OrderModal({ order, onClose, onStatusChange }: {
   const changeStatus = async (status: OrderStatus) => {
     setUpdating(true);
     setUpdateError("");
-    const supabase = createBrowserClient();
-    const { error } = await supabase.from("orders").update({ status }).eq("id", order.id);
-    if (error) {
-      setUpdateError("Failed to update status. Please try again.");
+    const res = await fetch("/api/admin/content", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "update_order_status", payload: { orderId: order.id, status } }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      setUpdateError(data.error ?? "Failed to update status. Please try again.");
     } else {
       onStatusChange(order.id, status);
     }
@@ -61,33 +64,24 @@ function OrderModal({ order, onClose, onStatusChange }: {
   const grantAccess = async () => {
     setUpdating(true);
     setUpdateError("");
-    const supabase = createBrowserClient();
-
-    // Mark order completed
-    const { error: orderErr } = await supabase
-      .from("orders").update({ status: "completed" }).eq("id", order.id);
-    if (orderErr) {
-      setUpdateError("Failed to update order status. Please try again.");
-      setUpdating(false);
-      return;
-    }
-
-    // Create order_access row — delete existing first, then insert fresh
-    await supabase.from("order_access").delete().eq("order_id", order.id);
-    const { error: accessErr } = await supabase.from("order_access").insert({
-      order_id:    order.id,
-      plan_id:     order.plan_id,
-      email:       order.customer_name || order.id,
-      unlocked:    true,
-      unlocked_at: new Date().toISOString(),
+    const res = await fetch("/api/admin/content", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "grant_order_access",
+        payload: {
+          orderId:      order.id,
+          planId:       order.plan_id,
+          customerName: order.customer_name || order.id,
+        },
+      }),
     });
-
-    if (accessErr) {
-      setUpdateError("Order marked complete but access record failed. Check DB manually.");
+    const data = await res.json();
+    if (!res.ok) {
+      setUpdateError(data.error ?? "Failed to grant access. Please try again.");
       setUpdating(false);
       return;
     }
-
     onStatusChange(order.id, "completed");
     setUpdating(false);
   };

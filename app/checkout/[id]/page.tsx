@@ -172,16 +172,26 @@ function CheckoutContent({ id }: { id: string }) {
     setError("");
 
     try {
-      const supabase = createBrowserClient();
+      // Generate device token before calling the server
+      const deviceToken = crypto.randomUUID();
 
-      // Check uniqueness BEFORE inserting
-      const { data: existing } = await supabase
-        .from("orders")
-        .select("id")
-        .eq("tx_ref", txLink.trim())
-        .maybeSingle();
+      // Call server-side API — price is re-verified from DB, not trusted from client
+      const res = await fetch("/api/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          planId:        plan.id,
+          durationKey:   duration.key,
+          customerName:  name.trim(),
+          txRef:         txLink.trim(),
+          paymentMethod: method,
+          deviceToken,
+        }),
+      });
 
-      if (existing) {
+      const data = await res.json();
+
+      if (res.status === 409) {
         setError(
           "This transaction link has already been used for another order. " +
           "Each payment must have a unique transaction link. " +
@@ -191,49 +201,14 @@ function CheckoutContent({ id }: { id: string }) {
         return;
       }
 
-      // Generate a unique device token for this order
-      // Saved to localStorage so this device can access the plan later
-      const deviceToken = crypto.randomUUID();
-
-      const basePayload = {
-        customer_name:  name.trim(),
-        customer_email: "",
-        customer_phone: "",
-        plan_id:        plan.id,
-        duration_key:   duration.key,
-        duration_label: duration.label,
-        amount:         duration.price,
-        currency:       "ETB",
-        payment_method: method,
-        status:         "pending_verification" as const,
-        tx_ref:         txLink.trim(),
-      };
-
-      // Try insert with device_token first; if column doesn't exist yet fall back without it
-      let insertResult = await supabase.from("orders")
-        .insert({ ...basePayload, device_token: deviceToken })
-        .select("id").single();
-
-      // PGRST204 / 42703 = column does not exist — retry without device_token
-      if (insertResult.error?.code === "42703" || insertResult.error?.message?.includes("device_token")) {
-        insertResult = await supabase.from("orders")
-          .insert(basePayload)
-          .select("id").single();
-      }
-
-      const { data: inserted, error: dbError } = insertResult;
-
-      if (dbError?.code === "23505") {
-        setError("This transaction link has already been used. Please contact us if you need help.");
+      if (!res.ok) {
+        setError(data.error ?? "Something went wrong saving your order. Please contact us directly.");
         setLoading(false);
         return;
       }
 
-      if (dbError || !inserted) throw dbError ?? new Error("No order ID returned");
-
-      // Save token to localStorage — this is how the device proves ownership later
-      // Key: ns_order_{orderId} | Value: deviceToken
-      localStorage.setItem(`ns_order_${inserted.id}`, deviceToken);
+      // Save token to localStorage — device ownership proof for /my-order
+      localStorage.setItem(`ns_order_${data.orderId}`, deviceToken);
 
       setStep("submitted");
     } catch {

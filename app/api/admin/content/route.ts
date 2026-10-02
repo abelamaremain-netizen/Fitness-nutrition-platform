@@ -167,6 +167,37 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ ok: true });
       }
 
+      // ── Orders ─────────────────────────────────────────────────────────
+      case "update_order_status": {
+        // payload: { orderId: string, status: string }
+        const { error } = await db.from("orders")
+          .update({ status: payload.status })
+          .eq("id", payload.orderId);
+        if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ ok: true });
+      }
+
+      case "grant_order_access": {
+        // payload: { orderId: string, planId: string, customerName: string }
+        // Mark completed
+        const { error: orderErr } = await db.from("orders")
+          .update({ status: "completed" })
+          .eq("id", payload.orderId);
+        if (orderErr) return NextResponse.json({ error: orderErr.message }, { status: 500 });
+
+        // Delete any existing access row then insert fresh
+        await db.from("order_access").delete().eq("order_id", payload.orderId);
+        const { error: accessErr } = await db.from("order_access").insert({
+          order_id:    payload.orderId,
+          plan_id:     payload.planId,
+          email:       payload.customerName || payload.orderId,
+          unlocked:    true,
+          unlocked_at: new Date().toISOString(),
+        });
+        if (accessErr) return NextResponse.json({ error: accessErr.message }, { status: 500 });
+        return NextResponse.json({ ok: true });
+      }
+
       default:
         return NextResponse.json({ error: `Unknown action: ${action}` }, { status: 400 });
     }

@@ -52,7 +52,9 @@ export default function AdminLoginPage() {
       }
 
       // 3. Redirect — go back to the page they tried to access, or dashboard
-      const redirect = searchParams.get("redirect") ?? "/admin";
+      // Validate redirect is an internal path to prevent open redirect attacks
+      const rawRedirect = searchParams.get("redirect") ?? "/admin";
+      const redirect = rawRedirect.startsWith("/") && !rawRedirect.startsWith("//") ? rawRedirect : "/admin";
       router.push(redirect);
       router.refresh();
 

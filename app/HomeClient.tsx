@@ -180,11 +180,7 @@ export default function HomeClient({ featured, testimonials, content, howItWorks
           <AnimatedSection direction="left">
             <p className="text-[10px] font-semibold tracking-[0.28em] uppercase text-white/35 mb-5">Personalised</p>
             <h2 style={{ fontFamily: "var(--font-serif)" }} className="text-4xl font-bold text-white leading-tight mb-6">
-              {promoHeadline.includes("<em>") ? (
-                <span dangerouslySetInnerHTML={{ __html: promoHeadline }} />
-              ) : (
-                <>{promoHeadline}</>
-              )}
+              {promoHeadline}
             </h2>
             <p className="text-white/45 text-sm leading-relaxed mb-8 max-w-sm">
               {promoBody}

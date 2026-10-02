@@ -2,13 +2,9 @@ import { type NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
 /**
- * Proxy (formerly Middleware) — runs on the server before any page is rendered.
- *
- * Protects ALL /admin/* routes except /admin/login:
- * - Valid Supabase session  → allow through
- * - No session             → redirect to /admin/login
- *
- * Also refreshes the auth cookie on every request so sessions stay alive.
+ * Proxy — runs on the server before any page is rendered (Next.js 16).
+ * Protects ALL /admin/* routes except /admin/login.
+ * Valid session → allow | No session → redirect to /admin/login
  */
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -16,7 +12,6 @@ export async function proxy(request: NextRequest) {
   const url  = process.env.NEXT_PUBLIC_SUPABASE_URL  ?? "";
   const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
 
-  // Skip if env vars are missing (shouldn't happen in production)
   if (!url || !anon) {
     return supabaseResponse;
   }
@@ -38,14 +33,14 @@ export async function proxy(request: NextRequest) {
     },
   });
 
-  // IMPORTANT: must call getUser() to refresh session tokens
+  // Refresh session tokens on every request
   const { data: { user } } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
   const isAdminRoute = pathname.startsWith("/admin");
   const isLoginPage  = pathname === "/admin/login";
 
-  // ── No session → redirect to login ──────────────────────────────────────
+  // No session → redirect to login
   if (isAdminRoute && !isLoginPage && !user) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = "/admin/login";
@@ -53,7 +48,7 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // ── Already logged in + visiting login page → go to dashboard ───────────
+  // Already logged in + visiting login → go to dashboard
   if (isLoginPage && user) {
     const dashboardUrl = request.nextUrl.clone();
     dashboardUrl.pathname = "/admin";
