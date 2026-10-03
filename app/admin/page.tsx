@@ -141,7 +141,10 @@ export default function AdminDashboard() {
         })));
       }
       setLoading(false);
-    }).catch(() => setLoading(false));
+    }).catch((err) => {
+      console.error("[admin/dashboard] load failed:", err instanceof Error ? err.message : err);
+      setLoading(false);
+    });
   }, []);
 
   const completedOrders = orders.filter((o) => o.status === "completed");

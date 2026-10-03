@@ -86,18 +86,19 @@ export async function POST(request: NextRequest) {
       });
 
     if (uploadError) {
-      return NextResponse.json({ error: uploadError.message }, { status: 500 });
+      console.error("[api/admin/upload] storage error:", uploadError.message);
+      return NextResponse.json({ error: "Upload failed. Please try again." }, { status: 500 });
     }
 
-    // Get the public URL (for public-assets bucket) or a signed URL concept
+    // Get the public URL (for public-assets) or storage path (for paid-content)
     let publicUrl: string | null = null;
     if (bucket === "public-assets") {
       const { data } = db.storage.from(bucket).getPublicUrl(path);
       publicUrl = data.publicUrl;
     } else {
-      // For paid-content — return the storage path; the app will generate signed URLs when needed
-      // For now we store the path and the admin can see it was uploaded
-      publicUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/sign/${bucket}/${path}`;
+      // For paid-content — return only the storage path
+      // Signed URLs are generated when content is served after purchase verification
+      publicUrl = `${bucket}/${path}`;
     }
 
     return NextResponse.json({ ok: true, url: publicUrl, path });

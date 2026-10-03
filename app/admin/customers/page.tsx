@@ -112,7 +112,8 @@ export default function AdminCustomersPage() {
       .from("orders")
       .select("id, customer_name, customer_phone, plan_id, duration_label, amount, status, payment_method, created_at")
       .order("created_at", { ascending: false })
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (error) console.error("[admin/customers] load:", error.message);
         setOrders((data as DBOrder[]) ?? []);
         setLoading(false);
       });

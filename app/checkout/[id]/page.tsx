@@ -70,7 +70,8 @@ function CheckoutContent({ id }: { id: string }) {
           getPlanDurationsBrowser(id).catch(() => []),
         ]);
         if (dbPlan) setPlan(mapPlan(dbPlan, dbDurations));
-      } catch {
+      } catch (err) {
+        console.error("[checkout] Failed to load plan:", err instanceof Error ? err.message : err);
         // plan stays null → renders "Plan not found"
       } finally {
         setPlanLoading(false);

@@ -45,21 +45,21 @@ export default function MyOrderPage() {
 
   useEffect(() => {
     const load = async () => {
-      // Read all order tokens from localStorage
-      const entries: OrderEntry[] = [];
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key?.startsWith("ns_order_")) {
-          const orderId = key.replace("ns_order_", "");
-          const deviceToken = localStorage.getItem(key) ?? "";
-          entries.push({ orderId, deviceToken });
+      try {
+        // Read all order tokens from localStorage
+        const entries: OrderEntry[] = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key?.startsWith("ns_order_")) {
+            const orderId = key.replace("ns_order_", "");
+            const deviceToken = localStorage.getItem(key) ?? "";
+            entries.push({ orderId, deviceToken });
+          }
         }
-      }
 
-      if (entries.length === 0) {
-        setLoading(false);
-        return;
-      }
+        if (entries.length === 0) {
+          return; // finally will setLoading(false)
+        }
 
       const supabase = createBrowserClient();
       const orderIds = entries.map((e) => e.orderId);
@@ -131,7 +131,13 @@ export default function MyOrderPage() {
       // Sort newest first
       result.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
       setOrders(result);
-      setLoading(false);
+      } catch (err) {
+        console.error("[my-order] failed to load orders:", err instanceof Error ? err.message : err);
+        // Error boundary (my-order/error.tsx) will catch thrown errors from render
+        // For async errors in useEffect we just log and show empty state
+      } finally {
+        setLoading(false);
+      }
     };
 
     load();

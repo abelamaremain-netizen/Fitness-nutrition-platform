@@ -593,9 +593,10 @@ export default function AdminPlansPage() {
   const loadPlans = async () => {
     const supabase = createBrowserClient();
     setLoading(true);
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("plans").select("id, title, description, goal, level, plan_type, published, created_at")
       .order("created_at", { ascending: false });
+    if (error) console.error("[admin/plans] loadPlans:", error.message);
     setPlans((data as DBPlan[]) ?? []);
     setLoading(false);
   };
@@ -608,13 +609,22 @@ export default function AdminPlansPage() {
 
   const togglePublish = async (id: string, current: boolean) => {
     const supabase = createBrowserClient();
-    await supabase.from("plans").update({ published: !current }).eq("id", id);
+    const { error } = await supabase.from("plans").update({ published: !current }).eq("id", id);
+    if (error) {
+      console.error("[admin/plans] togglePublish:", error.message);
+      return; // don't update UI if DB write failed
+    }
     setPlans((prev) => prev.map((p) => p.id === id ? { ...p, published: !current } : p));
   };
 
   const confirmDelete = async (id: string) => {
     const supabase = createBrowserClient();
-    await supabase.from("plans").delete().eq("id", id);
+    const { error } = await supabase.from("plans").delete().eq("id", id);
+    if (error) {
+      console.error("[admin/plans] confirmDelete:", error.message);
+      setDeleteId(null);
+      return; // keep plan in UI if delete failed
+    }
     setPlans((prev) => prev.filter((p) => p.id !== id));
     setDeleteId(null);
   };

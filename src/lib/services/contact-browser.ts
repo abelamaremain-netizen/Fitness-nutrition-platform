@@ -1,8 +1,7 @@
 /**
  * contact-browser.ts
  * Browser-safe contact form submission.
- * Keep separate from content-public.ts so client components
- * don't pull in server-only imports (next/headers).
+ * Logs server-side errors safely — never exposes internal details to users.
  */
 import { createBrowserClient } from "@/src/lib/supabase/client";
 
@@ -14,5 +13,8 @@ export async function submitContactMessage(input: {
 }): Promise<void> {
   const supabase = createBrowserClient();
   const { error } = await supabase.from("contact_messages").insert(input);
-  if (error) throw error;
+  if (error) {
+    console.error("[contact] submitContactMessage:", error.message);
+    throw new Error("Failed to submit message");
+  }
 }
