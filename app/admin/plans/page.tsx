@@ -485,7 +485,7 @@ function PlanFormModal({
           <div>
             <label className="field-label">Plan Image</label>
             <div className="space-y-2">
-              <input type="url" value={form.image_url}
+              <input type="url" value={form.image_url ?? ""}
                 onChange={(e) => setForm({ ...form, image_url: e.target.value })}
                 placeholder="https://... (paste URL or upload below)" className={inp} />
               <label className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-dashed cursor-pointer transition-all ${
@@ -511,7 +511,7 @@ function PlanFormModal({
           {/* Video URL */}
           <div>
             <label className="field-label">Video URL (hidden until payment)</label>
-            <input type="url" value={form.video_url}
+            <input type="url" value={form.video_url ?? ""}
               onChange={(e) => setForm({ ...form, video_url: e.target.value })}
               placeholder="https://youtube.com/watch?v=..." className={inp} />
           </div>
@@ -519,7 +519,7 @@ function PlanFormModal({
           {/* Video Thumbnail */}
           <div>
             <label className="field-label">Video Thumbnail URL</label>
-            <input type="url" value={form.video_thumb}
+            <input type="url" value={form.video_thumb ?? ""}
               onChange={(e) => setForm({ ...form, video_thumb: e.target.value })}
               placeholder="https://img.youtube.com/vi/.../hqdefault.jpg" className={inp} />
           </div>
@@ -528,7 +528,7 @@ function PlanFormModal({
           <div>
             <label className="field-label">PDF Guide (hidden until payment)</label>
             <div className="space-y-2">
-              <input type="url" value={form.pdf_url}
+              <input type="url" value={form.pdf_url ?? ""}
                 onChange={(e) => setForm({ ...form, pdf_url: e.target.value })}
                 placeholder="https://... (paste URL or upload below)" className={inp} />
               <label className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-dashed cursor-pointer transition-all ${
@@ -754,3 +754,4 @@ export default function AdminPlansPage() {
     </>
   );
 }
+

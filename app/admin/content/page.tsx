@@ -405,7 +405,7 @@ export default function AdminContentPage() {
               </div>
               <div>
                 <label className="field-label">Photo URL</label>
-                <input value={m.image_url} onChange={(e) => updateTeamMember(m.id, "image_url", e.target.value)}
+                <input value={m.image_url ?? ""} onChange={(e) => updateTeamMember(m.id, "image_url", e.target.value)}
                   placeholder="https://... (Supabase Storage URL or any public image link)" className={inp} />
                 {m.image_url && (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -695,7 +695,7 @@ export default function AdminContentPage() {
                     <div className="grid grid-cols-2 gap-3">
                       <div className="col-span-2">
                         <label className="field-label">Title</label>
-                        <input value={editingPost.title}
+                        <input value={editingPost.title ?? ""}
                           onChange={(e) => setEditingPost({ ...editingPost, title: e.target.value })}
                           placeholder="Post title" className={inp} />
                       </div>
@@ -710,19 +710,19 @@ export default function AdminContentPage() {
                       </div>
                       <div>
                         <label className="field-label">Author</label>
-                        <input value={editingPost.author}
+                        <input value={editingPost.author ?? ""}
                           onChange={(e) => setEditingPost({ ...editingPost, author: e.target.value })}
                           className={inp} />
                       </div>
                       <div className="col-span-2">
                         <label className="field-label">Excerpt</label>
-                        <textarea rows={2} value={editingPost.excerpt}
+                        <textarea rows={2} value={editingPost.excerpt ?? ""}
                           onChange={(e) => setEditingPost({ ...editingPost, excerpt: e.target.value })}
                           placeholder="Short summary..." className={ta} />
                       </div>
                       <div className="col-span-2">
                         <label className="field-label">Body</label>
-                        <textarea rows={12} value={editingPost.body}
+                        <textarea rows={12} value={editingPost.body ?? ""}
                           onChange={(e) => setEditingPost({ ...editingPost, body: e.target.value })}
                           placeholder="Full article content..." className={ta} />
                       </div>
@@ -788,3 +788,4 @@ export default function AdminContentPage() {
     </div>
   );
 }
+
