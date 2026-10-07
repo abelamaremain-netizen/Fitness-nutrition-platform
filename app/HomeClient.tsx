@@ -34,11 +34,17 @@ export default function HomeClient({ featured, testimonials, content, howItWorks
   const ctaHeadline     = content.cta_headline     || "Ready to Transform?";
   const ctaBody         = content.cta_body         || "Calculate your BMI, get a personalised plan recommendation, and take the first step.";
   const stats           = parseStats(content);
+  // Images — from DB with static fallbacks
+  const homeHeroImg    = content.home_hero_image           || IMAGES.both;
+  const naodi1Img      = content.home_naodi_image          || IMAGES.naodi1;
+  const samri3Img      = content.home_samri_image          || IMAGES.samri3;
+  const promoImg       = content.home_promo_image          || IMAGES.samri1;
+  const ctaImg         = content.home_cta_image            || IMAGES.naodi2;
   return (
     <div>
       {/* ── HERO ─────────────────────────────────────────────── */}
       <section className="relative min-h-screen flex items-center justify-center text-center">
-        <Image src={IMAGES.both} alt="Naodi & Samri Fitness" fill priority
+        <Image src={homeHeroImg} alt="Naodi & Samri Fitness" fill priority
           className="object-cover object-top" sizes="100vw" />
         <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-[#0d0d0d]" />
         <div className="absolute inset-0 bg-black/25" />
@@ -101,7 +107,7 @@ export default function HomeClient({ featured, testimonials, content, howItWorks
             <AnimatedSection direction="left">
               <div className="card overflow-hidden group hover:border-white/20 transition-colors">
                 <div className="relative h-[480px] overflow-hidden">
-                  <Image src={IMAGES.naodi1} alt="Naodi" fill
+                  <Image src={naodi1Img} alt="Naodi" fill
                     className="object-cover object-top transition-transform duration-700 group-hover:scale-105"
                     sizes="600px" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
@@ -118,7 +124,7 @@ export default function HomeClient({ featured, testimonials, content, howItWorks
             <AnimatedSection direction="right" delay={0.1}>
               <div className="card overflow-hidden group hover:border-white/20 transition-colors">
                 <div className="relative h-[480px] overflow-hidden">
-                  <Image src={IMAGES.samri3} alt="Samri" fill
+                  <Image src={samri3Img} alt="Samri" fill
                     className="object-cover object-top transition-transform duration-700 group-hover:scale-105"
                     sizes="600px" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
@@ -174,7 +180,7 @@ export default function HomeClient({ featured, testimonials, content, howItWorks
       <section style={{ borderTop: "1px solid rgba(255,255,255,0.07)", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
         <div className="max-w-6xl mx-auto px-8 grid md:grid-cols-2 gap-12 items-center py-20">
           <div className="relative h-80 md:h-[500px] rounded-2xl overflow-hidden">
-            <Image src={IMAGES.samri1} alt="Samri training" fill className="object-cover object-top" sizes="50vw" />
+            <Image src={promoImg} alt="Training" fill className="object-cover object-top" sizes="50vw" />
             <div className="absolute inset-0 bg-black/20" />
           </div>
           <AnimatedSection direction="left">
@@ -271,7 +277,7 @@ export default function HomeClient({ featured, testimonials, content, howItWorks
 
       {/* ── CTA ───────────────────────────────────────────────── */}
       <section className="relative overflow-hidden py-32 text-center">
-        <Image src={IMAGES.naodi2} alt="" fill className="object-cover object-top" sizes="100vw" />
+        <Image src={ctaImg} alt="" fill className="object-cover object-top" sizes="100vw" />
         <div className="absolute inset-0 bg-black/75" />
         <AnimatedSection className="relative z-10 max-w-2xl mx-auto px-8">
           <p className="text-[10px] font-semibold tracking-[0.28em] uppercase text-white/40 mb-5">Start Today</p>

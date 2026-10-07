@@ -34,13 +34,17 @@ async function fetchPlans(): Promise<Plan[]> {
 }
 
 export default async function PlansPage() {
-  const plans = await fetchPlans();
+  const [plans, siteContent] = await Promise.all([
+    fetchPlans(),
+    import("@/src/lib/services/content-public").then(m => m.getSiteContent().catch(() => ({} as Record<string,string>))),
+  ]);
+  const heroImg = siteContent.plans_hero_image || IMAGES.hero2;
 
   return (
     <div className="min-h-screen">
       {/* Hero */}
       <div className="relative h-64 md:h-80">
-        <Image src={IMAGES.hero2} alt="All Plans" fill priority
+        <Image src={heroImg} alt="All Plans" fill priority
           className="object-cover object-top" sizes="100vw" />
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-[#0d0d0d]" />
         <div className="absolute inset-0 flex flex-col items-start justify-end pb-12 max-w-6xl mx-auto px-8 left-0 right-0">

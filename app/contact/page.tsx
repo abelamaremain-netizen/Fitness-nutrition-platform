@@ -1,4 +1,5 @@
 import { getSiteContent } from "@/src/lib/services/content-public";
+import { IMAGES } from "@/lib/data";
 import ContactClient from "./ContactClient";
 import type { Metadata } from "next";
 
@@ -18,5 +19,6 @@ export const revalidate = 0;
 
 export default async function ContactPage() {
   const content = await getSiteContent().catch(() => ({} as Record<string, string>));
-  return <ContactClient content={content} />;
+  const heroImg = content.contact_hero_image || IMAGES.hero4;
+  return <ContactClient content={content} heroImg={heroImg} />;
 }

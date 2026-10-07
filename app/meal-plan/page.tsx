@@ -33,6 +33,10 @@ async function fetchPlans(): Promise<Plan[]> {
 }
 
 export default async function MealPlanPage() {
-  const plans = await fetchPlans();
-  return <MealPlanClient plans={plans} />;
+  const [plans, siteContent] = await Promise.all([
+    fetchPlans(),
+    import("@/src/lib/services/content-public").then(m => m.getSiteContent().catch(() => ({} as Record<string,string>))),
+  ]);
+  const heroImg = siteContent.meal_plan_hero_image || IMAGES.samri2;
+  return <MealPlanClient plans={plans} heroImg={heroImg} />;
 }

@@ -122,6 +122,20 @@ export default function AdminContentPage() {
   const setKey = (key: string, value: string) =>
     setContent((prev) => ({ ...prev, [key]: value }));
 
+  // ── Upload image to Supabase Storage via admin API ─────────────────────────
+  const uploadImage = async (file: File, contentKey: string) => {
+    const ext      = file.name.split(".").pop();
+    const safeName = `${contentKey}-${Date.now()}.${ext}`;
+    const fd = new FormData();
+    fd.append("file",   file);
+    fd.append("bucket", "public-assets");
+    fd.append("path",   `site/${safeName}`);
+    const res  = await fetch("/api/admin/upload", { method: "POST", body: fd });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error ?? "Upload failed");
+    setKey(contentKey, data.url);
+  };
+
   // ── SAVE HANDLERS — all go through /api/admin/content (service role key) ──
 
   const saveSiteContentKeys = (keys: string[]) => async () => {
@@ -138,6 +152,13 @@ export default function AdminContentPage() {
   ]);
   const saveMission = saveSiteContentKeys(["mission_statement"]);
   const saveAboutStory = saveSiteContentKeys(["about_story_1", "about_story_2"]);
+  const saveImages = saveSiteContentKeys([
+    "home_hero_image", "home_naodi_image", "home_samri_image",
+    "home_promo_image", "home_cta_image",
+    "about_hero_image", "about_mission_image_1", "about_mission_image_2", "about_mission_image_3",
+    "plans_hero_image", "fitness_plan_hero_image", "meal_plan_hero_image",
+    "contact_hero_image", "blog_hero_image", "how_it_works_features_image",
+  ]);
   const saveAboutValues = saveSiteContentKeys([
     "value_1_title","value_1_desc",
     "value_2_title","value_2_desc",
@@ -251,6 +272,66 @@ export default function AdminContentPage() {
         <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "var(--font-serif)" }}>Content</h1>
         <p className="text-white/35 text-sm mt-1">Changes go live immediately after saving.</p>
       </div>
+
+      {/* ── IMAGES ── */}
+      <Section title="Images" desc="All page backgrounds, hero banners, and section photos">
+        <div className="space-y-3">
+          <p className="text-white/30 text-xs leading-relaxed">
+            Paste any public image URL, or click Upload to upload from your device. Changes go live immediately after saving.
+          </p>
+
+          {([
+            { key: "home_hero_image",              label: "Home — Hero Background",          hint: "Full-screen image behind the main headline" },
+            { key: "home_naodi_image",             label: "Home — Naodi Expert Card",         hint: "Photo shown in the 'Meet Naodi' section" },
+            { key: "home_samri_image",             label: "Home — Samri Expert Card",         hint: "Photo shown in the 'Meet Samri' section" },
+            { key: "home_promo_image",             label: "Home — Promo Section Photo",       hint: "Left column image in the 'personalised plan' section" },
+            { key: "home_cta_image",               label: "Home — CTA Background",            hint: "Background behind 'Ready to Transform?'" },
+            { key: "about_hero_image",             label: "About — Hero Background",          hint: "Full-width hero banner on the About page" },
+            { key: "about_mission_image_1",        label: "About — Mission Photo (large)",    hint: "Tall left column in the mission mosaic" },
+            { key: "about_mission_image_2",        label: "About — Mission Photo (top right)","hint": "Top-right image in the mission mosaic" },
+            { key: "about_mission_image_3",        label: "About — Mission Photo (bottom right)", hint: "Bottom-right image in the mission mosaic" },
+            { key: "plans_hero_image",             label: "Plans — Hero Banner",              hint: "Banner at the top of the Plans listing page" },
+            { key: "fitness_plan_hero_image",      label: "Fitness Plan — Hero Banner",       hint: "Banner at the top of the Fitness Plan page" },
+            { key: "meal_plan_hero_image",         label: "Meal Plan — Hero Banner",          hint: "Banner at the top of the Meal Plan page" },
+            { key: "blog_hero_image",              label: "Blog — Hero Banner",               hint: "Banner at the top of the Blog page" },
+            { key: "contact_hero_image",           label: "Contact — Background",             hint: "Background image behind the contact form" },
+            { key: "how_it_works_features_image",  label: "How It Works — Features Photo",    hint: "Photo in the 'Everything you need' card" },
+          ] as { key: string; label: string; hint: string }[]).map(({ key, label, hint }) => (
+            <div key={key} className="border border-white/[0.07] rounded-xl p-4 space-y-2">
+              <div>
+                <p className="text-sm font-semibold text-white">{label}</p>
+                <p className="text-[11px] text-white/30">{hint}</p>
+              </div>
+              <div className="flex gap-2">
+                <input
+                  value={content[key] ?? ""}
+                  onChange={(e) => setKey(key, e.target.value)}
+                  placeholder="https://... (paste URL or upload below)"
+                  className={`${inp} flex-1`}
+                />
+                <label className="flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl border border-dashed border-white/20 hover:border-white/40 text-white/40 hover:text-white/70 text-xs cursor-pointer transition-all whitespace-nowrap">
+                  ↑ Upload
+                  <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) uploadImage(f, key).catch((err) => console.error(err));
+                    }} />
+                </label>
+              </div>
+              {content[key] && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={content[key]} alt={label}
+                  className="h-16 w-28 object-cover rounded-lg border border-white/10"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+              )}
+            </div>
+          ))}
+
+          <div className="flex justify-end pt-2">
+            <SaveButton onSave={saveImages} />
+          </div>
+        </div>
+      </Section>
 
       {/* ── HOMEPAGE HERO ── */}
       <Section title="Homepage Hero" desc="Main banner on the home page">

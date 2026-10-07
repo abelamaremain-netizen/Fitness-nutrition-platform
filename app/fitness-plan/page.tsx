@@ -34,6 +34,10 @@ async function fetchPlans(): Promise<Plan[]> {
 }
 
 export default async function FitnessPlanPage() {
-  const plans = await fetchPlans();
-  return <FitnessPlanClient plans={plans} />;
+  const [plans, siteContent] = await Promise.all([
+    fetchPlans(),
+    import("@/src/lib/services/content-public").then(m => m.getSiteContent().catch(() => ({} as Record<string,string>))),
+  ]);
+  const heroImg = siteContent.fitness_plan_hero_image || IMAGES.naodi1;
+  return <FitnessPlanClient plans={plans} heroImg={heroImg} />;
 }

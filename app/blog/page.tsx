@@ -16,20 +16,24 @@ export const metadata: Metadata = {
     url:         "/blog",
   },
 };
-import { getPublishedBlogPosts } from "@/src/lib/services/content-public";
+import { getPublishedBlogPosts, getSiteContent } from "@/src/lib/services/content-public";
 import { IMAGES } from "@/lib/data";
 
-export const revalidate = 0; // always fetch fresh from DB
+export const revalidate = 0;
 
 export default async function BlogPage() {
-  const posts = await getPublishedBlogPosts().catch(() => []);
+  const [posts, siteContent] = await Promise.all([
+    getPublishedBlogPosts().catch(() => []),
+    getSiteContent().catch(() => ({} as Record<string,string>)),
+  ]);
+  const heroImg = siteContent.blog_hero_image || IMAGES.hero3;
   const [featured, ...rest] = posts;
 
   return (
     <div className="min-h-screen">
       {/* Hero */}
       <div className="relative h-64 md:h-80">
-        <Image src={IMAGES.hero3} alt="Blog" fill className="object-cover object-center" sizes="100vw" priority />
+        <Image src={heroImg} alt="Blog" fill className="object-cover object-center" sizes="100vw" priority />
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/55 to-[#0d0d0d]" />
         <div className="absolute inset-0 flex flex-col items-start justify-end pb-12 max-w-6xl mx-auto px-8 left-0 right-0">
           <p className="text-[10px] font-semibold tracking-[0.28em] uppercase text-white/45 mb-3">Knowledge</p>

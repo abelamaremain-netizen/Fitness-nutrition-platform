@@ -6,9 +6,9 @@ import RecommendationForm from "@/components/ui/RecommendationForm";
 import RecommendationResults from "@/components/ui/RecommendationResults";
 import { IMAGES, recommendPlans, type UserProfile, type Plan } from "@/lib/data";
 
-interface Props { plans: Plan[] }
+interface Props { plans: Plan[]; heroImg: string; }
 
-export default function FitnessPlanClient({ plans }: Props) {
+export default function FitnessPlanClient({ plans, heroImg }: Props) {
   const [results, setResults] = useState<Plan[] | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
 
@@ -23,7 +23,7 @@ export default function FitnessPlanClient({ plans }: Props) {
     <div className="min-h-screen">
       {/* Hero */}
       <section className="relative h-64 md:h-80 flex items-end">
-        <Image src={IMAGES.naodi1} alt="Fitness Plan" fill priority
+        <Image src={heroImg} alt="Fitness Plan" fill priority
           className="object-cover object-top" sizes="100vw" />
         <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/40 to-[#0d0d0d]" />
         <div className="relative z-10 w-full max-w-5xl mx-auto px-8 pb-12">

@@ -9,9 +9,10 @@ import { IMAGES } from "@/lib/data";
 
 interface Props {
   content: Record<string, string>;
+  heroImg: string;
 }
 
-export default function ContactClient({ content }: Props) {
+export default function ContactClient({ content, heroImg }: Props) {
   const { t } = useLang();
   const [form, setForm] = useState({ name: "", email: "", message: "" });
   const [sent, setSent] = useState(false);
@@ -49,7 +50,7 @@ export default function ContactClient({ content }: Props) {
     <div className="min-h-screen bg-black">
       {/* ── HERO SECTION ── */}
       <section className="relative min-h-screen flex flex-col items-center justify-center px-4 overflow-hidden">
-        <Image src={IMAGES.hero4} alt="Contact" fill priority
+        <Image src={heroImg} alt="Contact" fill priority
           className="object-cover object-center grayscale opacity-25"
           sizes="100vw" />
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-black" />

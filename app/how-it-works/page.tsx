@@ -26,17 +26,11 @@ export default async function HowItWorksPage() {
     getSiteContent().catch(() => ({} as Record<string, string>)),
   ]);
 
-  // Features list — editable from admin content page via site_content keys
-  // feature_1 … feature_8 (admin can set any number)
+  const featuresImg = content.how_it_works_features_image || IMAGES.hero3;
+
   const features = [
-    content.feature_1,
-    content.feature_2,
-    content.feature_3,
-    content.feature_4,
-    content.feature_5,
-    content.feature_6,
-    content.feature_7,
-    content.feature_8,
+    content.feature_1, content.feature_2, content.feature_3, content.feature_4,
+    content.feature_5, content.feature_6, content.feature_7, content.feature_8,
   ].filter(Boolean) as string[];
 
   return (
@@ -59,8 +53,7 @@ export default async function HowItWorksPage() {
         <div className="space-y-24">
           {steps.map((step, i) => {
             const isEven = i % 2 === 0;
-            const imgSrc = step.image_url ?? IMAGES.hero1;
-            return (
+            const imgSrc = step.image_url ?? IMAGES.hero1;            return (
               <AnimatedSection key={step.id} direction={isEven ? "left" : "right"}>
                 <div className={`grid md:grid-cols-2 gap-12 items-center`}>
                   <div className={!isEven ? "md:order-2" : ""}>
@@ -117,7 +110,7 @@ export default async function HowItWorksPage() {
                 </div>
               </div>
               <div className="relative h-64 md:h-80 rounded-xl overflow-hidden">
-                <Image src={IMAGES.hero3} alt="Features" fill className="object-cover" sizes="500px" />
+                <Image src={featuresImg} alt="Features" fill className="object-cover" sizes="500px" />
                 <div className="absolute inset-0 bg-black/30" />
               </div>
             </div>

@@ -35,17 +35,23 @@ export default async function AboutPage() {
   const storyPara1 = content.about_story_1 || "";
   const storyPara2 = content.about_story_2 || "";
 
-  // Values — editable from admin (value_1_title, value_1_desc … value_4_title, value_4_desc)
+  // Values
   const values = [1, 2, 3, 4].map((n) => ({
     title:       content[`value_${n}_title`] ?? "",
     description: content[`value_${n}_desc`]  ?? "",
   })).filter((v) => v.title);
 
+  // Images — from DB with static fallbacks
+  const aboutHeroImg    = content.about_hero_image         || IMAGES.both;
+  const missionImg1     = content.about_mission_image_1    || IMAGES.naodi3;
+  const missionImg2     = content.about_mission_image_2    || IMAGES.samri2;
+  const missionImg3     = content.about_mission_image_3    || IMAGES.samri1;
+
   return (
     <div className="min-h-screen">
       {/* Hero */}
       <div className="relative h-72 md:h-[480px]">
-        <Image src={IMAGES.both} alt="Naodi & Samri" fill className="object-cover object-top" sizes="100vw" priority />
+        <Image src={aboutHeroImg} alt="Naodi & Samri" fill className="object-cover object-top" sizes="100vw" priority />
         <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/40 to-[#0d0d0d]" />
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-8 pt-16">
           <p className="text-[10px] font-semibold tracking-[0.28em] uppercase text-white/45 mb-4">Our Story</p>
@@ -82,13 +88,13 @@ export default async function AboutPage() {
           <AnimatedSection direction="right" delay={0.1}>
             <div className="grid grid-cols-2 gap-4 h-[420px]">
               <div className="relative rounded-2xl overflow-hidden row-span-2">
-                <Image src={IMAGES.naodi3} alt="Naodi" fill className="object-cover object-top" sizes="300px" />
+                <Image src={missionImg1} alt="Naodi" fill className="object-cover object-top" sizes="300px" />
               </div>
               <div className="relative rounded-2xl overflow-hidden">
-                <Image src={IMAGES.samri2} alt="Samri" fill className="object-cover object-top" sizes="200px" />
+                <Image src={missionImg2} alt="Samri" fill className="object-cover object-top" sizes="200px" />
               </div>
               <div className="relative rounded-2xl overflow-hidden">
-                <Image src={IMAGES.samri1} alt="Samri training" fill className="object-cover object-top" sizes="200px" />
+                <Image src={missionImg3} alt="Samri training" fill className="object-cover object-top" sizes="200px" />
               </div>
             </div>
           </AnimatedSection>
