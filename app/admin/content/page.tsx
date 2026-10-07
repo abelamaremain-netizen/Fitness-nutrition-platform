@@ -281,51 +281,69 @@ export default function AdminContentPage() {
           </p>
 
           {([
-            { key: "home_hero_image",              label: "Home — Hero Background",          hint: "Full-screen image behind the main headline" },
-            { key: "home_naodi_image",             label: "Home — Naodi Expert Card",         hint: "Photo shown in the 'Meet Naodi' section" },
-            { key: "home_samri_image",             label: "Home — Samri Expert Card",         hint: "Photo shown in the 'Meet Samri' section" },
-            { key: "home_promo_image",             label: "Home — Promo Section Photo",       hint: "Left column image in the 'personalised plan' section" },
-            { key: "home_cta_image",               label: "Home — CTA Background",            hint: "Background behind 'Ready to Transform?'" },
-            { key: "about_hero_image",             label: "About — Hero Background",          hint: "Full-width hero banner on the About page" },
-            { key: "about_mission_image_1",        label: "About — Mission Photo (large)",    hint: "Tall left column in the mission mosaic" },
-            { key: "about_mission_image_2",        label: "About — Mission Photo (top right)","hint": "Top-right image in the mission mosaic" },
-            { key: "about_mission_image_3",        label: "About — Mission Photo (bottom right)", hint: "Bottom-right image in the mission mosaic" },
-            { key: "plans_hero_image",             label: "Plans — Hero Banner",              hint: "Banner at the top of the Plans listing page" },
-            { key: "fitness_plan_hero_image",      label: "Fitness Plan — Hero Banner",       hint: "Banner at the top of the Fitness Plan page" },
-            { key: "meal_plan_hero_image",         label: "Meal Plan — Hero Banner",          hint: "Banner at the top of the Meal Plan page" },
-            { key: "blog_hero_image",              label: "Blog — Hero Banner",               hint: "Banner at the top of the Blog page" },
-            { key: "contact_hero_image",           label: "Contact — Background",             hint: "Background image behind the contact form" },
-            { key: "how_it_works_features_image",  label: "How It Works — Features Photo",    hint: "Photo in the 'Everything you need' card" },
-          ] as { key: string; label: string; hint: string }[]).map(({ key, label, hint }) => (
-            <div key={key} className="border border-white/[0.07] rounded-xl p-4 space-y-2">
-              <div>
-                <p className="text-sm font-semibold text-white">{label}</p>
-                <p className="text-[11px] text-white/30">{hint}</p>
+            { group: "🏠 Home Page" },
+            { key: "home_hero_image",              label: "Hero Background",          hint: "Full-screen image behind the main headline" },
+            { key: "home_naodi_image",             label: "Naodi Expert Card",         hint: "Photo in the 'Meet Naodi' section" },
+            { key: "home_samri_image",             label: "Samri Expert Card",         hint: "Photo in the 'Meet Samri' section" },
+            { key: "home_promo_image",             label: "Promo Section Photo",       hint: "Left column photo in the 'personalised plan' section" },
+            { key: "home_cta_image",               label: "CTA Background",            hint: "Background behind 'Ready to Transform?'" },
+            { group: "ℹ️ About Page" },
+            { key: "about_hero_image",             label: "Hero Background",          hint: "Full-width banner at the top of the About page" },
+            { key: "about_mission_image_1",        label: "Mission Photo — Large",    hint: "Tall left column in the mission mosaic" },
+            { key: "about_mission_image_2",        label: "Mission Photo — Top Right", hint: "Top-right image in the mission mosaic" },
+            { key: "about_mission_image_3",        label: "Mission Photo — Bottom Right", hint: "Bottom-right image in the mission mosaic" },
+            { group: "💪 Fitness Plan Page" },
+            { key: "fitness_plan_hero_image",      label: "Hero Banner",              hint: "Banner at the top of the Fitness Plan page" },
+            { group: "🥗 Meal Plan Page" },
+            { key: "meal_plan_hero_image",         label: "Hero Banner",              hint: "Banner at the top of the Meal Plan page" },
+            { group: "📋 Plans Page" },
+            { key: "plans_hero_image",             label: "Hero Banner",              hint: "Banner at the top of the Plans listing page" },
+            { group: "📝 Blog Page" },
+            { key: "blog_hero_image",              label: "Hero Banner",              hint: "Banner at the top of the Blog page" },
+            { group: "📞 Contact Page" },
+            { key: "contact_hero_image",           label: "Background",               hint: "Background image behind the contact form" },
+            { group: "⚙️ How It Works Page" },
+            { key: "how_it_works_features_image",  label: "Features Section Photo",   hint: "Photo in the 'Everything you need' card" },
+          ] as ({ group: string } | { key: string; label: string; hint: string })[]).map((item, i) => {
+            if ("group" in item) {
+              return (
+                <p key={i} className="text-[10px] font-bold tracking-[0.2em] uppercase text-white/50 pt-3 pb-1 border-t border-white/[0.07] first:border-0 first:pt-0">
+                  {item.group}
+                </p>
+              );
+            }
+            const { key, label, hint } = item;
+            return (
+              <div key={key} className="border border-white/[0.07] rounded-xl p-4 space-y-2">
+                <div>
+                  <p className="text-sm font-semibold text-white">{label}</p>
+                  <p className="text-[11px] text-white/30">{hint}</p>
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    value={content[key] ?? ""}
+                    onChange={(e) => setKey(key, e.target.value)}
+                    placeholder="https://... (paste URL or upload)"
+                    className={`${inp} flex-1`}
+                  />
+                  <label className="flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl border border-dashed border-white/20 hover:border-white/40 text-white/40 hover:text-white/70 text-xs cursor-pointer transition-all whitespace-nowrap">
+                    ↑ Upload
+                    <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) uploadImage(f, key).catch((err) => console.error(err));
+                      }} />
+                  </label>
+                </div>
+                {content[key] && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={content[key]} alt={label}
+                    className="h-16 w-28 object-cover rounded-lg border border-white/10"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                )}
               </div>
-              <div className="flex gap-2">
-                <input
-                  value={content[key] ?? ""}
-                  onChange={(e) => setKey(key, e.target.value)}
-                  placeholder="https://... (paste URL or upload below)"
-                  className={`${inp} flex-1`}
-                />
-                <label className="flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl border border-dashed border-white/20 hover:border-white/40 text-white/40 hover:text-white/70 text-xs cursor-pointer transition-all whitespace-nowrap">
-                  ↑ Upload
-                  <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden"
-                    onChange={(e) => {
-                      const f = e.target.files?.[0];
-                      if (f) uploadImage(f, key).catch((err) => console.error(err));
-                    }} />
-                </label>
-              </div>
-              {content[key] && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={content[key]} alt={label}
-                  className="h-16 w-28 object-cover rounded-lg border border-white/10"
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
-              )}
-            </div>
-          ))}
+            );
+          })}
 
           <div className="flex justify-end pt-2">
             <SaveButton onSave={saveImages} />

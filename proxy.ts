@@ -27,7 +27,13 @@ export async function proxy(request: NextRequest) {
         );
         supabaseResponse = NextResponse.next({ request });
         cookiesToSet.forEach(({ name, value, options }) =>
-          supabaseResponse.cookies.set(name, value, options)
+          supabaseResponse.cookies.set(name, value, {
+            ...options,
+            maxAge: 86400, // 1 day in seconds
+            httpOnly: true,
+            sameSite: "lax",
+            secure: process.env.NODE_ENV === "production",
+          })
         );
       },
     },
@@ -55,6 +61,9 @@ export async function proxy(request: NextRequest) {
     dashboardUrl.searchParams.delete("redirect");
     return NextResponse.redirect(dashboardUrl);
   }
+
+  // Set a header so layout.tsx knows this is an admin route
+  supabaseResponse.headers.set("x-is-admin", "1");
 
   return supabaseResponse;
 }

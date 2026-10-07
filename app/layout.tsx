@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import { Playfair_Display } from "next/font/google";
+import { headers } from "next/headers";
 import "./globals.css";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -100,22 +101,27 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  // Fetch social links for footer
+  const headersList = await headers();
+  const isAdmin = headersList.get("x-is-admin") === "1";
+
+  // Fetch social links for footer (skip on admin pages)
   let instagram: string | undefined;
   let youtube:   string | undefined;
   let tiktok:    string | undefined;
-  try {
-    const supabase = await createServerClient();
-    const { data } = await supabase
-      .from("site_content")
-      .select("key, value")
-      .in("key", ["social_instagram", "social_youtube", "social_tiktok"]);
-    for (const row of data ?? []) {
-      if (row.key === "social_instagram" && row.value) instagram = row.value;
-      if (row.key === "social_youtube"   && row.value) youtube   = row.value;
-      if (row.key === "social_tiktok"    && row.value) tiktok    = row.value;
-    }
-  } catch { /* social links are optional */ }
+  if (!isAdmin) {
+    try {
+      const supabase = await createServerClient();
+      const { data } = await supabase
+        .from("site_content")
+        .select("key, value")
+        .in("key", ["social_instagram", "social_youtube", "social_tiktok"]);
+      for (const row of data ?? []) {
+        if (row.key === "social_instagram" && row.value) instagram = row.value;
+        if (row.key === "social_youtube"   && row.value) youtube   = row.value;
+        if (row.key === "social_tiktok"    && row.value) tiktok    = row.value;
+      }
+    } catch { /* social links are optional */ }
+  }
 
   return (
     <html lang="en" className={`${geist.variable} ${playfair.variable}`}>
@@ -124,9 +130,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         className="min-h-screen flex flex-col antialiased"
       >
         <LangProvider>
-          <Navbar />
+          {!isAdmin && <Navbar />}
           <main className="flex-1">{children}</main>
-          <Footer instagram={instagram} youtube={youtube} tiktok={tiktok} />
+          {!isAdmin && <Footer instagram={instagram} youtube={youtube} tiktok={tiktok} />}
         </LangProvider>
       </body>
     </html>
