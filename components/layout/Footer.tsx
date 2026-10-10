@@ -107,10 +107,10 @@ export default function Footer({ instagram, youtube, tiktok }: Props) {
             <p className="text-[11px] text-white/20 tracking-widest uppercase">
               Made in Ethiopia 🇪🇹
             </p>
-            <Link href="/admin/login"
-              className="text-[10px] text-white/15 hover:text-white/40 tracking-widest uppercase transition-colors">
-              Admin
-            </Link>
+            <a href="/admin/login"
+              className="text-[10px] text-white/15 hover:text-white/40 transition-colors">
+              A
+            </a>
           </div>
         </div>
       </div>
