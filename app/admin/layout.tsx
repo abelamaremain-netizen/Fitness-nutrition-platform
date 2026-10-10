@@ -36,9 +36,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }, [pathname, router]);
 
   const handleLogout = async () => {
-    const supabase = createBrowserClient();
-    await supabase.auth.signOut();
-    router.replace("/admin/login");
+    // Call server-side logout route which clears SSR cookies properly
+    await fetch("/api/admin/logout", { method: "POST" });
+    window.location.href = "/admin/login";
   };
 
   // Don't render admin chrome on the login page
